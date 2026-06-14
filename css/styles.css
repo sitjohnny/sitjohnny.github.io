@@ -51,6 +51,76 @@ body {
   transition: width 0.2s ease;
 }
 
+.next-stop-banner {
+  display: block;
+  width: calc(100% - 2rem);
+  max-width: 42rem;
+  margin: 1rem auto 0;
+  padding: 0.875rem 1rem;
+  border: 2px solid var(--color-red);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(192, 57, 43, 0.12);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    box-shadow 0.15s ease,
+    transform 0.15s ease;
+}
+
+.next-stop-banner:hover {
+  background: rgba(192, 57, 43, 0.04);
+  box-shadow: 0 3px 10px rgba(192, 57, 43, 0.18);
+}
+
+.next-stop-banner:active {
+  transform: scale(0.99);
+}
+
+.next-stop-banner--complete {
+  border-color: var(--color-green);
+  background: rgba(39, 174, 96, 0.08);
+  box-shadow: 0 2px 6px rgba(39, 174, 96, 0.12);
+  cursor: default;
+  text-align: center;
+}
+
+.next-stop-banner--complete:hover {
+  background: rgba(39, 174, 96, 0.08);
+  box-shadow: 0 2px 6px rgba(39, 174, 96, 0.12);
+}
+
+.next-stop-banner--complete:active {
+  transform: none;
+}
+
+.next-stop-banner__title {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-charcoal);
+}
+
+.next-stop-banner--complete .next-stop-banner__title {
+  font-size: 1rem;
+}
+
+.next-stop-banner__address {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-gray);
+}
+
+.next-stop-banner--complete .next-stop-banner__address:empty {
+  display: none;
+}
+
 #app {
   max-width: 42rem;
   margin: 0 auto;

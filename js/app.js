@@ -111,6 +111,79 @@ function renderStop(stop, index) {
   `;
 }
 
+function findNextStop() {
+  for (let index = 0; index < STOPS.length; index += 1) {
+    const stopNumber = index + 1;
+    if (getState(stopNumber) === "pending") {
+      return { stopNumber, stop: STOPS[index] };
+    }
+  }
+  return null;
+}
+
+function scrollToStopCard(stopId) {
+  const card = document.querySelector(`.stop-card[data-id="${stopId}"]`);
+  const header = document.getElementById("progress-header");
+  if (!card || !header) return;
+
+  const headerOffset = header.getBoundingClientRect().height + 12;
+  const cardTop = card.getBoundingClientRect().top + window.scrollY;
+
+  window.scrollTo({
+    top: cardTop - headerOffset,
+    behavior: "smooth",
+  });
+}
+
+function updateNextStopBanner() {
+  const banner = document.getElementById("next-stop-banner");
+  if (!banner) return;
+
+  const titleEl = banner.querySelector(".next-stop-banner__title");
+  const addressEl = banner.querySelector(".next-stop-banner__address");
+  const next = findNextStop();
+
+  if (!next) {
+    banner.classList.add("next-stop-banner--complete");
+    banner.classList.remove("next-stop-banner--active");
+    banner.disabled = true;
+    banner.removeAttribute("data-target-id");
+    banner.setAttribute("aria-label", "Crawl complete");
+    if (titleEl) {
+      titleEl.textContent = "🎉 Crawl complete! Great eating.";
+    }
+    if (addressEl) {
+      addressEl.textContent = "";
+    }
+    return;
+  }
+
+  banner.classList.remove("next-stop-banner--complete");
+  banner.classList.add("next-stop-banner--active");
+  banner.disabled = false;
+  banner.dataset.targetId = String(next.stopNumber);
+  banner.setAttribute(
+    "aria-label",
+    `Go to stop ${next.stopNumber}, ${next.stop.name}`,
+  );
+  if (titleEl) {
+    titleEl.textContent = `Next Stop → #${next.stopNumber} ${next.stop.name}`;
+  }
+  if (addressEl) {
+    addressEl.textContent = next.stop.address;
+  }
+}
+
+function handleBannerClick() {
+  const banner = document.getElementById("next-stop-banner");
+  if (!banner || banner.disabled) return;
+
+  const stopId = banner.dataset.targetId;
+  if (!stopId) return;
+
+  scrollToStopCard(stopId);
+}
+
 function updateHeader() {
   const countsEl = document.getElementById("progress-counts");
   const fillEl = document.getElementById("progress-fill");
@@ -169,10 +242,19 @@ function init() {
   const app = document.getElementById("app");
   if (!app) return;
 
+  const banner = document.getElementById("next-stop-banner");
+  if (banner) {
+    banner.addEventListener("click", handleBannerClick);
+  }
+
   app.addEventListener("click", handleToggleClick);
-  window.addEventListener("progressChanged", updateHeader);
+  window.addEventListener("progressChanged", () => {
+    updateHeader();
+    updateNextStopBanner();
+  });
   render();
   updateHeader();
+  updateNextStopBanner();
 }
 
 init();
