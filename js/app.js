@@ -3,6 +3,9 @@ import { getAllState, getState, setState } from "./state.js";
 
 const TOTAL_STOPS = STOPS.length;
 
+let activeCategory = null;
+let searchQuery = "";
+
 const CATEGORY_LABELS = {
   latino: "Latino",
   himalayan: "Himalayan",
@@ -220,6 +223,66 @@ function render() {
       ${STOPS.map(renderStop).join("")}
     </ol>
   `;
+
+  applyFilters();
+}
+
+function matchesCategory(category) {
+  return !activeCategory || category === activeCategory;
+}
+
+function matchesSearch(name, address) {
+  if (!searchQuery) return true;
+  const query = searchQuery.toLowerCase();
+  return (
+    name.toLowerCase().includes(query) ||
+    address.toLowerCase().includes(query)
+  );
+}
+
+function applyFilters() {
+  const stops = document.querySelectorAll(".crawl-stop");
+  stops.forEach((stopEl) => {
+    const card = stopEl.querySelector(".stop-card");
+    if (!card) return;
+
+    const category = card.dataset.category;
+    const name = card.dataset.name;
+    const address =
+      card.querySelector(".crawl-card__address")?.textContent ?? "";
+
+    const visible =
+      matchesCategory(category) && matchesSearch(name, address);
+    stopEl.hidden = !visible;
+  });
+}
+
+function updateFilterButtons() {
+  const buttons = document.querySelectorAll(".category-filter__btn");
+  buttons.forEach((btn) => {
+    const category = btn.dataset.category || null;
+    const isActive = category ? category === activeCategory : !activeCategory;
+    btn.classList.toggle("category-filter__btn--active", isActive);
+    btn.setAttribute("aria-pressed", isActive ? "true" : "false");
+  });
+}
+
+function handleFilterClick(event) {
+  const btn = event.target.closest(".category-filter__btn");
+  if (!btn) return;
+
+  const category = btn.dataset.category || null;
+
+  if (category && category === activeCategory) {
+    activeCategory = null;
+  } else if (category) {
+    activeCategory = category;
+  } else {
+    activeCategory = null;
+  }
+
+  updateFilterButtons();
+  applyFilters();
 }
 
 function handleToggleClick(event) {
@@ -245,6 +308,11 @@ function init() {
   const banner = document.getElementById("next-stop-banner");
   if (banner) {
     banner.addEventListener("click", handleBannerClick);
+  }
+
+  const filterBar = document.getElementById("category-filter");
+  if (filterBar) {
+    filterBar.addEventListener("click", handleFilterClick);
   }
 
   app.addEventListener("click", handleToggleClick);

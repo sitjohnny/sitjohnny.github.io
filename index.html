@@ -40,6 +40,78 @@
       <span class="next-stop-banner__title"></span>
       <span class="next-stop-banner__address"></span>
     </button>
+    <nav
+      id="category-filter"
+      class="category-filter"
+      aria-label="Filter by cuisine"
+    >
+      <div class="category-filter__scroll" role="group" aria-label="Cuisine categories">
+        <button
+          type="button"
+          class="category-filter__btn category-filter__btn--active"
+          data-category=""
+          aria-pressed="true"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="latino"
+          aria-pressed="false"
+        >
+          Latino
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="himalayan"
+          aria-pressed="false"
+        >
+          Himalayan
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="indian-bengali"
+          aria-pressed="false"
+        >
+          Indian/Bengali
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="filipino"
+          aria-pressed="false"
+        >
+          Filipino
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="coffee-cafe"
+          aria-pressed="false"
+        >
+          Coffee &amp; Cafe
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="desserts"
+          aria-pressed="false"
+        >
+          Desserts
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="chinese-peruvian"
+          aria-pressed="false"
+        >
+          Chinese-Peruvian
+        </button>
+      </div>
+    </nav>
     <div id="app"></div>
     <script type="module" src="js/app.js"></script>
   </body>

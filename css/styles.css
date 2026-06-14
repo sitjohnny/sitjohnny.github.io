@@ -121,6 +121,136 @@ body {
   display: none;
 }
 
+.category-filter {
+  max-width: 42rem;
+  margin: 0.875rem auto 0;
+  padding: 0 1rem;
+}
+
+.category-filter__scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.25rem;
+}
+
+.category-filter__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.category-filter__btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--color-charcoal);
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--color-charcoal);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.category-filter__btn:hover {
+  background: rgba(44, 44, 44, 0.04);
+}
+
+.category-filter__btn--active {
+  background: var(--color-charcoal);
+  border-color: var(--color-charcoal);
+  color: #fff;
+}
+
+.category-filter__btn--active:hover {
+  background: var(--color-charcoal);
+}
+
+.category-filter__btn[data-category="latino"] {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.category-filter__btn[data-category="latino"].category-filter__btn--active {
+  background-color: #c0392b;
+  border-color: #c0392b;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="himalayan"] {
+  border-color: #8e44ad;
+  color: #8e44ad;
+}
+
+.category-filter__btn[data-category="himalayan"].category-filter__btn--active {
+  background-color: #8e44ad;
+  border-color: #8e44ad;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="indian-bengali"] {
+  border-color: #e67e22;
+  color: #e67e22;
+}
+
+.category-filter__btn[data-category="indian-bengali"].category-filter__btn--active {
+  background-color: #e67e22;
+  border-color: #e67e22;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="filipino"] {
+  border-color: #2980b9;
+  color: #2980b9;
+}
+
+.category-filter__btn[data-category="filipino"].category-filter__btn--active {
+  background-color: #2980b9;
+  border-color: #2980b9;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="coffee-cafe"] {
+  border-color: #795548;
+  color: #795548;
+}
+
+.category-filter__btn[data-category="coffee-cafe"].category-filter__btn--active {
+  background-color: #795548;
+  border-color: #795548;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="desserts"] {
+  border-color: #e91e63;
+  color: #e91e63;
+}
+
+.category-filter__btn[data-category="desserts"].category-filter__btn--active {
+  background-color: #e91e63;
+  border-color: #e91e63;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="chinese-peruvian"] {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.category-filter__btn[data-category="chinese-peruvian"].category-filter__btn--active {
+  background-color: #27ae60;
+  border-color: #27ae60;
+  color: #fff;
+}
+
 #app {
   max-width: 42rem;
   margin: 0 auto;
