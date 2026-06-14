@@ -95,7 +95,6 @@ function renderStop(stop, index) {
         data-search-text="${searchText}"
       >
         <header class="crawl-card__header">
-          <span class="crawl-card__badge">${stopNumber}</span>
           <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
           <span class="category-pill" data-category="${escapeHtml(stop.category)}">${escapeHtml(categoryLabel)}</span>
           <button
