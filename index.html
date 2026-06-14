@@ -31,21 +31,30 @@
         </div>
       </div>
     </header>
-    <button
-      id="next-stop-banner"
-      class="next-stop-banner"
-      type="button"
-      aria-live="polite"
-    >
-      <span class="next-stop-banner__title"></span>
-      <span class="next-stop-banner__address"></span>
-    </button>
+    <div id="next-stop-banner" class="next-stop-banner" aria-live="polite">
+      <button type="button" class="next-stop-banner__scroll">
+        <span class="next-stop-banner__title"></span>
+        <span class="next-stop-banner__address"></span>
+      </button>
+      <a
+        class="next-stop-banner__directions btn btn-directions"
+        href="#"
+        target="_blank"
+        rel="noopener"
+      >
+        📍 Directions
+      </a>
+    </div>
     <nav
       id="category-filter"
       class="category-filter"
       aria-label="Filter by cuisine"
     >
-      <div class="category-filter__scroll" role="group" aria-label="Cuisine categories">
+      <div
+        class="category-filter__scroll"
+        role="group"
+        aria-label="Cuisine categories"
+      >
         <button
           type="button"
           class="category-filter__btn category-filter__btn--active"

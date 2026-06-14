@@ -155,6 +155,8 @@ function updateNextStopBanner() {
   const banner = document.getElementById("next-stop-banner");
   if (!banner) return;
 
+  const scrollBtn = banner.querySelector(".next-stop-banner__scroll");
+  const directionsEl = banner.querySelector(".next-stop-banner__directions");
   const titleEl = banner.querySelector(".next-stop-banner__title");
   const addressEl = banner.querySelector(".next-stop-banner__address");
   const next = findNextStop();
@@ -162,9 +164,14 @@ function updateNextStopBanner() {
   if (!next) {
     banner.classList.add("next-stop-banner--complete");
     banner.classList.remove("next-stop-banner--active");
-    banner.disabled = true;
     banner.removeAttribute("data-target-id");
-    banner.setAttribute("aria-label", "Crawl complete");
+    if (scrollBtn) {
+      scrollBtn.disabled = true;
+      scrollBtn.setAttribute("aria-label", "Crawl complete");
+    }
+    if (directionsEl) {
+      directionsEl.hidden = true;
+    }
     if (titleEl) {
       titleEl.textContent = "🎉 Crawl complete! Great eating.";
     }
@@ -176,12 +183,19 @@ function updateNextStopBanner() {
 
   banner.classList.remove("next-stop-banner--complete");
   banner.classList.add("next-stop-banner--active");
-  banner.disabled = false;
   banner.dataset.targetId = String(next.stopNumber);
-  banner.setAttribute(
-    "aria-label",
-    `Go to stop ${next.stopNumber}, ${next.stop.name}`,
-  );
+  if (scrollBtn) {
+    scrollBtn.disabled = false;
+    scrollBtn.setAttribute(
+      "aria-label",
+      `Go to stop ${next.stopNumber}, ${next.stop.name}`,
+    );
+  }
+  if (directionsEl) {
+    directionsEl.hidden = false;
+    directionsEl.href = next.stop.mapsUrl;
+    directionsEl.setAttribute("aria-label", `Directions to ${next.stop.name}`);
+  }
   if (titleEl) {
     titleEl.textContent = `Next Stop → #${next.stopNumber} ${next.stop.name}`;
   }
@@ -192,7 +206,10 @@ function updateNextStopBanner() {
 
 function handleBannerClick() {
   const banner = document.getElementById("next-stop-banner");
-  if (!banner || banner.disabled) return;
+  if (!banner) return;
+
+  const scrollBtn = banner.querySelector(".next-stop-banner__scroll");
+  if (!scrollBtn || scrollBtn.disabled) return;
 
   const stopId = banner.dataset.targetId;
   if (!stopId) return;
@@ -454,8 +471,9 @@ function init() {
   injectSearchUI();
 
   const banner = document.getElementById("next-stop-banner");
-  if (banner) {
-    banner.addEventListener("click", handleBannerClick);
+  const bannerScrollBtn = banner?.querySelector(".next-stop-banner__scroll");
+  if (bannerScrollBtn) {
+    bannerScrollBtn.addEventListener("click", handleBannerClick);
   }
 
   const filterBar = document.getElementById("category-filter");
