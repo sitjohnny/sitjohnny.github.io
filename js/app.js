@@ -11,6 +11,7 @@ let favorites = new Set(
   JSON.parse(localStorage.getItem("crawl_favorites") || "[]").map(String),
 );
 let showFavoritesOnly = false;
+let showRemainingOnly = localStorage.getItem("crawl_remaining_only") === "true";
 
 function saveFavorites() {
   localStorage.setItem("crawl_favorites", JSON.stringify([...favorites]));
@@ -295,6 +296,13 @@ function updateFavoritesBadge() {
   badge.classList.toggle("active", showFavoritesOnly);
 }
 
+function updateRemainingFilter() {
+  const btn = document.getElementById("remaining-filter");
+  if (!btn) return;
+  btn.classList.toggle("active", showRemainingOnly);
+  btn.setAttribute("aria-pressed", showRemainingOnly ? "true" : "false");
+}
+
 function initFavorites() {
   favorites.forEach((id) => updateFavoriteUI(id));
   updateFavoritesBadge();
@@ -312,7 +320,10 @@ function applyFilters() {
       !activeSearch || card.dataset.searchText.includes(activeSearch);
     const matchesFavorites =
       !showFavoritesOnly || favorites.has(card.dataset.id);
-    const visible = matchesSearch && matchesFilter && matchesFavorites;
+    const matchesRemaining =
+      !showRemainingOnly || getState(card.dataset.id) === "pending";
+    const visible =
+      matchesSearch && matchesFilter && matchesFavorites && matchesRemaining;
 
     card.style.display = visible ? "" : "none";
     stopEl.style.display = visible ? "" : "none";
@@ -326,7 +337,9 @@ function applyFilters() {
     noResults.style.display = anyVisible ? "none" : "block";
     noResults.textContent = showFavoritesOnly
       ? "No favorites yet — tap ☆ on any stop to save it."
-      : "No stops match — try a different search.";
+      : showRemainingOnly
+        ? "All done — every stop is visited or skipped."
+        : "No stops match — try a different search.";
   }
 }
 
@@ -407,6 +420,7 @@ function injectSearchUI() {
     />
     <button id="search-clear" type="button" aria-label="Clear search" style="display:none">×</button>
   </div>
+  <button id="remaining-filter" type="button" aria-label="Show remaining stops only" aria-pressed="false">To go</button>
   <button id="favorites-badge" type="button" aria-label="View favorites" style="display:none">⭐ 0</button>
 </div>`,
   );
@@ -451,6 +465,15 @@ function injectSearchUI() {
     updateFavoritesBadge();
     applyFilters();
   });
+
+  document.getElementById("remaining-filter").addEventListener("click", () => {
+    showRemainingOnly = !showRemainingOnly;
+    localStorage.setItem("crawl_remaining_only", String(showRemainingOnly));
+    updateRemainingFilter();
+    applyFilters();
+  });
+
+  updateRemainingFilter();
 }
 
 function handleFavoriteClick(event) {
@@ -487,6 +510,7 @@ function init() {
   window.addEventListener("progressChanged", () => {
     updateHeader();
     updateNextStopBanner();
+    applyFilters();
   });
   render();
   updateHeader();
