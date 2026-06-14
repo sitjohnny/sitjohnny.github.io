@@ -107,10 +107,16 @@ function renderStop(stop, index) {
           </button>
         </header>
         <p class="crawl-card__address">${escapeHtml(stop.address)}</p>
-        <div class="crawl-move">
-          <p class="crawl-move__label">💡 Crawl Move</p>
-          <p class="crawl-move__text">${escapeHtml(stop.crawlMove)}</p>
+        ${
+          stop.crawlMove
+            ? `
+        <div class="crawl-move-box">
+          <span class="crawl-move-label">💡 Crawl Move</span>
+          <p class="crawl-move-text">${escapeHtml(stop.crawlMove)}</p>
         </div>
+        `
+            : ""
+        }
         <p class="crawl-card__snapshot">${escapeHtml(stop.snapshot)}</p>
         <div class="crawl-card__actions">
           <a class="btn btn-menu" href="${escapeHtml(stop.menuUrl)}" target="_blank" rel="noopener">📋 Menu</a>
