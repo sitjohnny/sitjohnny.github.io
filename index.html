@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Roosevelt Ave Food Crawl</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/styles.css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+  </head>
+  <body>
+    <header id="progress-header" class="progress-header">
+      <div class="progress-header__inner">
+        <p
+          id="progress-counts"
+          class="progress-header__counts"
+          aria-live="polite"
+        ></p>
+        <div
+          class="progress-header__track"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          aria-label="Crawl completion"
+        >
+          <div id="progress-fill" class="progress-header__fill"></div>
+        </div>
+      </div>
+    </header>
+    <div id="next-stop-banner" class="next-stop-banner" aria-live="polite">
+      <button type="button" class="next-stop-banner__scroll">
+        <span class="next-stop-banner__title"></span>
+        <span class="next-stop-banner__address"></span>
+      </button>
+      <a
+        class="next-stop-banner__directions btn btn-directions"
+        href="#"
+        target="_blank"
+        rel="noopener"
+      >
+        📍 Directions
+      </a>
+    </div>
+    <nav
+      id="category-filter"
+      class="category-filter"
+      aria-label="Filter by cuisine"
+    >
+      <div
+        class="category-filter__scroll"
+        role="group"
+        aria-label="Cuisine categories"
+      >
+        <button
+          type="button"
+          class="category-filter__btn category-filter__btn--active"
+          data-category=""
+          aria-pressed="true"
+        >
+          All
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="latino"
+          aria-pressed="false"
+        >
+          Latino
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="himalayan"
+          aria-pressed="false"
+        >
+          Himalayan
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="indian-bengali"
+          aria-pressed="false"
+        >
+          Indian/Bengali
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="filipino"
+          aria-pressed="false"
+        >
+          Filipino
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="coffee-cafe"
+          aria-pressed="false"
+        >
+          Coffee &amp; Cafe
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="desserts"
+          aria-pressed="false"
+        >
+          Desserts
+        </button>
+        <button
+          type="button"
+          class="category-filter__btn"
+          data-category="chinese-peruvian"
+          aria-pressed="false"
+        >
+          Chinese-Peruvian
+        </button>
+      </div>
+    </nav>
+    <div id="app"></div>
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
