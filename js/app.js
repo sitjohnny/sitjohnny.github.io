@@ -7,6 +7,15 @@ let activeCategory = null;
 let activeSearch = "";
 let searchDebounceTimer = null;
 
+let favorites = new Set(
+  JSON.parse(localStorage.getItem("crawl_favorites") || "[]").map(String),
+);
+let showFavoritesOnly = false;
+
+function saveFavorites() {
+  localStorage.setItem("crawl_favorites", JSON.stringify([...favorites]));
+}
+
 const CATEGORY_LABELS = {
   latino: "Latino",
   himalayan: "Himalayan",
@@ -104,6 +113,7 @@ function renderStop(stop, index) {
           >
             <span class="stop-card__toggle-icon" aria-hidden="true"></span>
           </button>
+          <button class="btn-favorite" type="button" aria-label="Add to favorites">☆</button>
         </header>
         <p class="crawl-card__address">${escapeHtml(stop.address)}</p>
         ${
@@ -237,6 +247,49 @@ function render() {
   `;
 
   applyFilters();
+  initFavorites();
+}
+
+function toggleFavorite(id) {
+  const sid = String(id);
+  if (favorites.has(sid)) {
+    favorites.delete(sid);
+  } else {
+    favorites.add(sid);
+  }
+  saveFavorites();
+  updateFavoriteUI(sid);
+  updateFavoritesBadge();
+  applyFilters();
+}
+
+function updateFavoriteUI(id) {
+  const sid = String(id);
+  const card = document.querySelector(`.stop-card[data-id="${sid}"]`);
+  if (!card) return;
+  const btn = card.querySelector(".btn-favorite");
+  if (!btn) return;
+  const isFav = favorites.has(sid);
+  btn.textContent = isFav ? "⭐" : "☆";
+  btn.setAttribute(
+    "aria-label",
+    isFav ? "Remove from favorites" : "Add to favorites",
+  );
+  card.classList.toggle("stop-favorited", isFav);
+}
+
+function updateFavoritesBadge() {
+  const badge = document.getElementById("favorites-badge");
+  if (!badge) return;
+  const count = favorites.size;
+  badge.textContent = `⭐ ${count}`;
+  badge.style.display = count > 0 || showFavoritesOnly ? "flex" : "none";
+  badge.classList.toggle("active", showFavoritesOnly);
+}
+
+function initFavorites() {
+  favorites.forEach((id) => updateFavoriteUI(id));
+  updateFavoritesBadge();
 }
 
 function applyFilters() {
@@ -249,7 +302,9 @@ function applyFilters() {
       !activeCategory || card.dataset.category === activeCategory;
     const matchesSearch =
       !activeSearch || card.dataset.searchText.includes(activeSearch);
-    const visible = matchesSearch && matchesFilter;
+    const matchesFavorites =
+      !showFavoritesOnly || favorites.has(card.dataset.id);
+    const visible = matchesSearch && matchesFilter && matchesFavorites;
 
     card.style.display = visible ? "" : "none";
     stopEl.style.display = visible ? "" : "none";
@@ -261,6 +316,9 @@ function applyFilters() {
   const noResults = document.getElementById("no-results");
   if (noResults) {
     noResults.style.display = anyVisible ? "none" : "block";
+    noResults.textContent = showFavoritesOnly
+      ? "No favorites yet — tap ☆ on any stop to save it."
+      : "No stops match — try a different search.";
   }
 }
 
@@ -326,6 +384,7 @@ function injectSearchUI() {
     />
     <button id="search-clear" type="button" aria-label="Clear search" style="display:none">×</button>
   </div>
+  <button id="favorites-badge" type="button" aria-label="View favorites" style="display:none">⭐ 0</button>
 </div>`,
   );
 
@@ -363,6 +422,23 @@ function injectSearchUI() {
     document.getElementById("search-clear").style.display = "none";
     applyFilters();
   });
+
+  document.getElementById("favorites-badge").addEventListener("click", () => {
+    showFavoritesOnly = !showFavoritesOnly;
+    updateFavoritesBadge();
+    applyFilters();
+  });
+}
+
+function handleFavoriteClick(event) {
+  const btn = event.target.closest(".btn-favorite");
+  if (!btn) return;
+
+  event.stopPropagation();
+  const card = btn.closest(".stop-card");
+  if (!card) return;
+
+  toggleFavorite(card.dataset.id);
 }
 
 function init() {
@@ -382,6 +458,7 @@ function init() {
   }
 
   app.addEventListener("click", handleToggleClick);
+  app.addEventListener("click", handleFavoriteClick);
   window.addEventListener("progressChanged", () => {
     updateHeader();
     updateNextStopBanner();
