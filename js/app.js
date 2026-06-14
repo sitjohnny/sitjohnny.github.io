@@ -58,11 +58,7 @@ function skippedSrMarkup(status) {
 
 function updateCardStatus(card, name, status) {
   card.dataset.status = status;
-
-  const toggle = card.querySelector(".stop-card__toggle");
-  if (toggle) {
-    toggle.setAttribute("aria-label", getToggleAriaLabel(name, status));
-  }
+  card.setAttribute("aria-label", getToggleAriaLabel(name, status));
 
   const heading = card.querySelector(".crawl-card__name");
   if (!heading) return;
@@ -102,18 +98,11 @@ function renderStop(stop, index) {
         data-status="${status}"
         data-category="${escapeHtml(stop.category)}"
         data-search-text="${searchText}"
+        tabindex="0"
+        aria-label="${escapeHtml(getToggleAriaLabel(stop.name, status))}"
       >
         <header class="crawl-card__header">
-          <div class="crawl-card__title-row">
-            <button
-              type="button"
-              class="stop-card__toggle"
-              aria-label="${escapeHtml(getToggleAriaLabel(stop.name, status))}"
-            >
-              <span class="stop-card__toggle-icon" aria-hidden="true"></span>
-            </button>
-            <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
-          </div>
+          <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
           <span class="category-pill" data-category="${escapeHtml(stop.category)}">${escapeHtml(categoryLabel)}</span>
           <button class="btn-favorite" type="button" aria-label="Add to favorites">☆</button>
         </header>
@@ -352,13 +341,7 @@ function handleFilterClick(event) {
   applyFilters();
 }
 
-function handleToggleClick(event) {
-  const toggle = event.target.closest(".stop-card__toggle");
-  if (!toggle) return;
-
-  const card = toggle.closest(".stop-card");
-  if (!card) return;
-
+function cycleCardStatus(card) {
   const id = Number(card.dataset.id);
   const name = card.dataset.name;
   const current = getState(id);
@@ -366,6 +349,27 @@ function handleToggleClick(event) {
 
   setState(id, next);
   updateCardStatus(card, name, next);
+}
+
+function handleCardClick(event) {
+  const card = event.target.closest(".stop-card");
+  if (!card) return;
+
+  if (event.target.closest(".btn-favorite, .crawl-card__actions, a, button")) {
+    return;
+  }
+
+  cycleCardStatus(card);
+}
+
+function handleCardKeydown(event) {
+  if (event.key !== "Enter" && event.key !== " ") return;
+
+  const card = event.target.closest(".stop-card");
+  if (!card || event.target !== card) return;
+
+  event.preventDefault();
+  cycleCardStatus(card);
 }
 
 function injectSearchUI() {
@@ -459,7 +463,8 @@ function init() {
     filterBar.addEventListener("click", handleFilterClick);
   }
 
-  app.addEventListener("click", handleToggleClick);
+  app.addEventListener("click", handleCardClick);
+  app.addEventListener("keydown", handleCardKeydown);
   app.addEventListener("click", handleFavoriteClick);
   window.addEventListener("progressChanged", () => {
     updateHeader();
