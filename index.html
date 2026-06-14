@@ -12,6 +12,25 @@
     <script src="https://cdn.tailwindcss.com"></script>
   </head>
   <body>
+    <header id="progress-header" class="progress-header">
+      <div class="progress-header__inner">
+        <p
+          id="progress-counts"
+          class="progress-header__counts"
+          aria-live="polite"
+        ></p>
+        <div
+          class="progress-header__track"
+          role="progressbar"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+          aria-label="Crawl completion"
+        >
+          <div id="progress-fill" class="progress-header__fill"></div>
+        </div>
+      </div>
+    </header>
     <div id="app"></div>
     <script type="module" src="js/app.js"></script>
   </body>

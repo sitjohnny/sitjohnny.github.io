@@ -13,6 +13,44 @@ body {
   color: var(--color-charcoal);
 }
 
+.progress-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid rgba(44, 44, 44, 0.12);
+  box-shadow: 0 1px 3px rgba(44, 44, 44, 0.06);
+}
+
+.progress-header__inner {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+.progress-header__counts {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.progress-header__track {
+  height: 0.5rem;
+  background: rgba(44, 44, 44, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-header__fill {
+  height: 100%;
+  width: 0%;
+  background: var(--color-green);
+  border-radius: 9999px;
+  transition: width 0.2s ease;
+}
+
 #app {
   max-width: 42rem;
   margin: 0 auto;

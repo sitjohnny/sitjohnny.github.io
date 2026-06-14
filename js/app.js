@@ -1,5 +1,7 @@
 import { STOPS } from "./data.js";
-import { getState, setState } from "./state.js";
+import { getAllState, getState, setState } from "./state.js";
+
+const TOTAL_STOPS = STOPS.length;
 
 const CATEGORY_LABELS = {
   latino: "Latino",
@@ -109,6 +111,33 @@ function renderStop(stop, index) {
   `;
 }
 
+function updateHeader() {
+  const countsEl = document.getElementById("progress-counts");
+  const fillEl = document.getElementById("progress-fill");
+  const trackEl = document.querySelector(".progress-header__track");
+  if (!countsEl || !fillEl) return;
+
+  const allState = getAllState();
+  let visited = 0;
+  let skipped = 0;
+
+  for (const status of Object.values(allState)) {
+    if (status === "visited") visited += 1;
+    else if (status === "skipped") skipped += 1;
+  }
+
+  const remaining = TOTAL_STOPS - visited - skipped;
+  const percent = Math.round((visited / TOTAL_STOPS) * 100);
+
+  countsEl.textContent = `${visited} visited · ${skipped} skipped · ${remaining} to go`;
+  fillEl.style.width = `${percent}%`;
+
+  if (trackEl) {
+    trackEl.setAttribute("aria-valuenow", String(percent));
+    trackEl.setAttribute("aria-label", `${percent}% crawl complete`);
+  }
+}
+
 function render() {
   const app = document.getElementById("app");
   if (!app) return;
@@ -141,7 +170,9 @@ function init() {
   if (!app) return;
 
   app.addEventListener("click", handleToggleClick);
+  window.addEventListener("progressChanged", updateHeader);
   render();
+  updateHeader();
 }
 
 init();
