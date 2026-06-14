@@ -8,9 +8,24 @@
 }
 
 body {
+  position: relative;
   font-family: "Inter", system-ui, sans-serif;
   background: var(--color-cream);
   color: var(--color-charcoal);
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url("../assets/food-crawl-bg.png");
+  background-size: contain;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
 }
 
 .progress-header {
