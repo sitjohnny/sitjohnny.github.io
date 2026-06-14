@@ -1,0 +1,14 @@
+:root {
+  --color-red: #C0392B;
+  --color-yellow: #F1C40F;
+  --color-cream: #FAF3E0;
+  --color-charcoal: #2C2C2C;
+  --color-green: #27AE60;
+  --color-gray: #95A5A6;
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+}
