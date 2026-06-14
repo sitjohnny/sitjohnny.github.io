@@ -1,0 +1,675 @@
+:root {
+  --color-red: #c0392b;
+  --color-yellow: #f1c40f;
+  --color-cream: #faf3e0;
+  --color-charcoal: #2c2c2c;
+  --color-green: #27ae60;
+  --color-gray: #95a5a6;
+}
+
+body {
+  position: relative;
+  font-family: "Inter", system-ui, sans-serif;
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+  min-height: 100vh;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url("../assets/food-crawl-bg.png");
+  background-size: contain;
+  background-position: center center;
+  background-repeat: no-repeat;
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+.progress-header {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  background: #fff;
+  border-bottom: 1px solid rgba(44, 44, 44, 0.12);
+  box-shadow: 0 1px 3px rgba(44, 44, 44, 0.06);
+}
+
+.progress-header__inner {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 0.75rem 1rem;
+}
+
+.progress-header__counts {
+  margin: 0 0 0.5rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.4;
+}
+
+.progress-header__track {
+  height: 0.5rem;
+  background: rgba(44, 44, 44, 0.1);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-header__fill {
+  height: 100%;
+  width: 0%;
+  background: var(--color-green);
+  border-radius: 9999px;
+  transition: width 0.2s ease;
+}
+
+.next-stop-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  width: calc(100% - 2rem);
+  max-width: 42rem;
+  margin: 1rem auto 0;
+  padding: 0.625rem 0.625rem 0.625rem 1rem;
+  border: 2px solid var(--color-red);
+  border-radius: 0.75rem;
+  background: #fff;
+  box-shadow: 0 2px 6px rgba(192, 57, 43, 0.12);
+  font-family: inherit;
+}
+
+.next-stop-banner__scroll {
+  flex: 1;
+  min-width: 0;
+  padding: 0.25rem 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.next-stop-banner__scroll:active:not(:disabled) {
+  transform: scale(0.99);
+}
+
+.next-stop-banner__scroll:disabled {
+  cursor: default;
+}
+
+.next-stop-banner__directions {
+  flex-shrink: 0;
+  min-height: 36px;
+  padding: 0.375rem 0.625rem;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
+.next-stop-banner--complete {
+  justify-content: center;
+  padding: 0.875rem 1rem;
+  border-color: var(--color-green);
+  background: rgba(39, 174, 96, 0.08);
+  box-shadow: 0 2px 6px rgba(39, 174, 96, 0.12);
+}
+
+.next-stop-banner--complete .next-stop-banner__scroll {
+  text-align: center;
+}
+
+.next-stop-banner__title {
+  display: block;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--color-charcoal);
+}
+
+.next-stop-banner--complete .next-stop-banner__title {
+  font-size: 1rem;
+}
+
+.next-stop-banner__address {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  line-height: 1.4;
+  color: var(--color-gray);
+}
+
+.next-stop-banner--complete .next-stop-banner__address:empty {
+  display: none;
+}
+
+#search-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 42rem;
+  margin: 24px auto 0 auto;
+  padding: 0 12px;
+}
+
+#search-input-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+#search-input-wrapper::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+#search-input {
+  width: 100%;
+  padding: 11px 36px 11px 36px;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  background: white;
+  box-sizing: border-box;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#search-input:focus {
+  outline: none;
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+#search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+}
+
+#search-clear:hover {
+  color: var(--color-charcoal);
+}
+
+#remaining-filter,
+#favorites-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  background: white;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--color-charcoal);
+  min-height: 44px;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  transition:
+    background 0.15s,
+    color 0.15s;
+  font-family: inherit;
+}
+
+#favorites-badge {
+  display: none;
+}
+
+#remaining-filter.active,
+#favorites-badge.active {
+  background: var(--color-red);
+  border-color: var(--color-red);
+  color: white;
+}
+
+.category-filter {
+  max-width: 42rem;
+  margin: 0.875rem auto 0;
+  padding: 0 1rem;
+}
+
+.category-filter__scroll {
+  display: flex;
+  gap: 0.5rem;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  padding-bottom: 0.25rem;
+}
+
+.category-filter__scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.category-filter__btn {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border: 2px solid var(--color-charcoal);
+  border-radius: 9999px;
+  background: #fff;
+  color: var(--color-charcoal);
+  font-family: inherit;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
+}
+
+.category-filter__btn:hover {
+  background: rgba(44, 44, 44, 0.04);
+}
+
+.category-filter__btn--active {
+  background: var(--color-charcoal);
+  border-color: var(--color-charcoal);
+  color: #fff;
+}
+
+.category-filter__btn--active:hover {
+  background: var(--color-charcoal);
+}
+
+.category-filter__btn[data-category="latino"] {
+  border-color: #c0392b;
+  color: #c0392b;
+}
+
+.category-filter__btn[data-category="latino"].category-filter__btn--active {
+  background-color: #c0392b;
+  border-color: #c0392b;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="himalayan"] {
+  border-color: #8e44ad;
+  color: #8e44ad;
+}
+
+.category-filter__btn[data-category="himalayan"].category-filter__btn--active {
+  background-color: #8e44ad;
+  border-color: #8e44ad;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="indian-bengali"] {
+  border-color: #e67e22;
+  color: #e67e22;
+}
+
+.category-filter__btn[data-category="indian-bengali"].category-filter__btn--active {
+  background-color: #e67e22;
+  border-color: #e67e22;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="filipino"] {
+  border-color: #2980b9;
+  color: #2980b9;
+}
+
+.category-filter__btn[data-category="filipino"].category-filter__btn--active {
+  background-color: #2980b9;
+  border-color: #2980b9;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="coffee-cafe"] {
+  border-color: #795548;
+  color: #795548;
+}
+
+.category-filter__btn[data-category="coffee-cafe"].category-filter__btn--active {
+  background-color: #795548;
+  border-color: #795548;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="desserts"] {
+  border-color: #e91e63;
+  color: #e91e63;
+}
+
+.category-filter__btn[data-category="desserts"].category-filter__btn--active {
+  background-color: #e91e63;
+  border-color: #e91e63;
+  color: #fff;
+}
+
+.category-filter__btn[data-category="chinese-peruvian"] {
+  border-color: #27ae60;
+  color: #27ae60;
+}
+
+.category-filter__btn[data-category="chinese-peruvian"].category-filter__btn--active {
+  background-color: #27ae60;
+  border-color: #27ae60;
+  color: #fff;
+}
+
+#app {
+  max-width: 42rem;
+  margin: 0 auto;
+  padding: 1.5rem 1rem 3rem;
+}
+
+.crawl-timeline {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.crawl-stop {
+  display: flex;
+  gap: 1rem;
+  position: relative;
+}
+
+.crawl-stop:not(:last-child) {
+  padding-bottom: 1.5rem;
+}
+
+.crawl-stop__rail {
+  position: relative;
+  flex-shrink: 0;
+  width: 2.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.crawl-stop__rail::before {
+  content: "";
+  position: absolute;
+  top: 2.5rem;
+  bottom: -1.5rem;
+  left: 50%;
+  width: 2px;
+  background: var(--color-charcoal);
+  transform: translateX(-50%);
+}
+
+.crawl-stop:last-child .crawl-stop__rail::before {
+  display: none;
+}
+
+.crawl-stop__node {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  background: var(--color-charcoal);
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.crawl-card {
+  flex: 1;
+  min-width: 0;
+  background: #fff;
+  border: 1px solid rgba(44, 44, 44, 0.12);
+  border-radius: 0.75rem;
+  padding: 1rem 1.125rem;
+  box-shadow: 0 1px 3px rgba(44, 44, 44, 0.06);
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.stop-card:focus-visible {
+  outline: 2px solid var(--color-charcoal);
+  outline-offset: 2px;
+}
+
+.stop-card[data-status="visited"] {
+  border-color: var(--color-green);
+  box-shadow: 0 1px 3px rgba(39, 174, 96, 0.15);
+}
+
+.stop-card[data-status="skipped"] {
+  opacity: 0.72;
+  border-color: rgba(149, 165, 166, 0.5);
+}
+
+.stop-card[data-status="skipped"] .crawl-card__name {
+  text-decoration: line-through;
+  color: var(--color-gray);
+}
+
+.crawl-card__header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0.375rem;
+}
+
+.crawl-card__name {
+  position: relative;
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  line-height: 1.3;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.btn-favorite {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 4px;
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: transform 0.12s;
+}
+
+.btn-favorite:active {
+  transform: scale(1.25);
+}
+
+.stop-card.stop-favorited:not([data-status="visited"]):not(
+    [data-status="skipped"]
+  ) {
+  background: rgba(241, 196, 15, 0.08);
+  border-left: 4px solid var(--color-yellow);
+}
+
+.crawl-card__badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 50%;
+  background: var(--color-charcoal);
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.category-pill {
+  display: inline-block;
+  padding: 0.2rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  line-height: 1.4;
+  color: #fff;
+  white-space: nowrap;
+}
+
+.category-pill[data-category="latino"] {
+  background-color: #c0392b;
+}
+
+.category-pill[data-category="himalayan"] {
+  background-color: #8e44ad;
+}
+
+.category-pill[data-category="indian-bengali"] {
+  background-color: #e67e22;
+}
+
+.category-pill[data-category="filipino"] {
+  background-color: #2980b9;
+}
+
+.category-pill[data-category="coffee-cafe"] {
+  background-color: #795548;
+}
+
+.category-pill[data-category="desserts"] {
+  background-color: #e91e63;
+}
+
+.category-pill[data-category="chinese-peruvian"] {
+  background-color: #27ae60;
+}
+
+.crawl-card__address {
+  margin: 0 0 0.875rem;
+  font-size: 0.8125rem;
+  color: var(--color-gray);
+  line-height: 1.4;
+}
+
+.crawl-move-box {
+  background: rgba(241, 196, 15, 0.15);
+  border-left: 4px solid var(--color-yellow);
+  border-radius: 0 6px 6px 0;
+  padding: 10px 12px;
+  margin: 10px 0;
+}
+
+.crawl-move-label {
+  display: block;
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #92670a;
+  margin-bottom: 4px;
+}
+
+.crawl-move-text {
+  font-size: 15px;
+  line-height: 1.5;
+  color: var(--color-charcoal);
+  margin: 0;
+}
+
+.crawl-card__snapshot {
+  margin: 0 0 1rem;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.crawl-card__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  font-family: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.2;
+  text-decoration: none;
+  color: #fff;
+  cursor: pointer;
+  transition:
+    filter 0.15s ease,
+    transform 0.15s ease;
+}
+
+.btn:hover {
+  filter: brightness(1.08);
+}
+
+.btn:active {
+  transform: scale(0.98);
+}
+
+.btn-menu {
+  background: var(--color-red);
+  border-color: var(--color-red);
+}
+
+.btn-directions {
+  background: var(--color-charcoal);
+  border-color: var(--color-charcoal);
+}
+
+@media (min-width: 480px) {
+  .crawl-card__header {
+    flex-wrap: nowrap;
+  }
+
+  .crawl-card__name {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .category-pill {
+    margin-left: auto;
+  }
+}
