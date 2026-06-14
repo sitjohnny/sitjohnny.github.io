@@ -1,8 +1,15 @@
 import { STOPS } from "./data.js";
+import { getAllRatings, getRating, setRating } from "./ratings.js";
 import { getAllState, getState, setState } from "./state.js";
 
 const TOTAL_STOPS = STOPS.length;
 
+const SORT_MODES = ["crawl", "rating-desc", "rating-asc"];
+const SORT_LABELS = {
+  crawl: "★",
+  "rating-desc": "Top ★",
+  "rating-asc": "Low ★",
+};
 let activeCategory = null;
 let activeSearch = "";
 let searchDebounceTimer = null;
@@ -12,9 +19,17 @@ let favorites = new Set(
 );
 let showFavoritesOnly = false;
 let showRemainingOnly = localStorage.getItem("crawl_remaining_only") === "true";
+let sortMode = localStorage.getItem("crawl_sort_mode") || "crawl";
+if (!SORT_MODES.includes(sortMode)) {
+  sortMode = "crawl";
+}
 
 function saveFavorites() {
   localStorage.setItem("crawl_favorites", JSON.stringify([...favorites]));
+}
+
+function getRatedCount() {
+  return Object.keys(getAllRatings()).length;
 }
 
 const CATEGORY_LABELS = {
@@ -57,6 +72,35 @@ function skippedSrMarkup(status) {
     : "";
 }
 
+function getRatingGroupLabel(rating) {
+  if (rating === null) return "Rate this stop";
+  return `Rated ${rating} out of 5 stars`;
+}
+
+function renderRatingStars(stopNumber) {
+  const rating = getRating(stopNumber);
+  const groupLabel = escapeHtml(getRatingGroupLabel(rating));
+
+  const stars = [1, 2, 3, 4, 5]
+    .map((value) => {
+      const filled = rating !== null && value <= rating;
+      const pressed = rating === value ? "true" : "false";
+      return `<button
+        class="card-rating__star${filled ? " card-rating__star--filled" : ""}"
+        type="button"
+        data-value="${value}"
+        aria-label="Rate ${value} star${value === 1 ? "" : "s"}"
+        aria-pressed="${pressed}"
+      >${filled ? "★" : "☆"}</button>`;
+    })
+    .join("");
+
+  return `
+        <div class="card-rating" role="group" aria-label="${groupLabel}">
+          ${stars}
+        </div>`;
+}
+
 function updateCardStatus(card, name, status) {
   card.dataset.status = status;
   card.setAttribute("aria-label", getToggleAriaLabel(name, status));
@@ -79,6 +123,29 @@ function updateCardStatus(card, name, status) {
 
 function getSearchText(stop) {
   return [stop.name, stop.snapshot, ...stop.tags].join(" ").toLowerCase();
+}
+
+function getSortedStopEntries() {
+  const entries = STOPS.map((stop, index) => ({ stop, index }));
+
+  if (sortMode === "rating-desc") {
+    return entries.sort((a, b) => {
+      const diff =
+        (getRating(b.index + 1) ?? -1) - (getRating(a.index + 1) ?? -1);
+      return diff !== 0 ? diff : a.index - b.index;
+    });
+  }
+
+  if (sortMode === "rating-asc") {
+    return entries.sort((a, b) => {
+      const ra = getRating(a.index + 1) ?? 999;
+      const rb = getRating(b.index + 1) ?? 999;
+      const diff = ra - rb;
+      return diff !== 0 ? diff : a.index - b.index;
+    });
+  }
+
+  return entries;
 }
 
 function renderStop(stop, index) {
@@ -105,8 +172,9 @@ function renderStop(stop, index) {
         <header class="crawl-card__header">
           <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
           <span class="category-pill" data-category="${escapeHtml(stop.category)}">${escapeHtml(categoryLabel)}</span>
-          <button class="btn-favorite" type="button" aria-label="Add to favorites">☆</button>
+          <button class="btn-favorite" type="button" aria-label="Add to favorites">♡</button>
         </header>
+        ${renderRatingStars(stopNumber)}
         <p class="crawl-card__address">${escapeHtml(stop.address)}</p>
         ${
           stop.crawlMove
@@ -249,14 +317,17 @@ function render() {
   const app = document.getElementById("app");
   if (!app) return;
 
+  const entries = getSortedStopEntries();
+
   app.innerHTML = `
     <ol class="crawl-timeline">
-      ${STOPS.map(renderStop).join("")}
+      ${entries.map(({ stop, index }) => renderStop(stop, index)).join("")}
     </ol>
   `;
 
   applyFilters();
   initFavorites();
+  initRatings();
 }
 
 function toggleFavorite(id) {
@@ -279,7 +350,8 @@ function updateFavoriteUI(id) {
   const btn = card.querySelector(".btn-favorite");
   if (!btn) return;
   const isFav = favorites.has(sid);
-  btn.textContent = isFav ? "⭐" : "☆";
+  btn.textContent = isFav ? "♥" : "♡";
+  btn.classList.toggle("is-favorited", isFav);
   btn.setAttribute(
     "aria-label",
     isFav ? "Remove from favorites" : "Add to favorites",
@@ -291,9 +363,37 @@ function updateFavoritesBadge() {
   const badge = document.getElementById("favorites-badge");
   if (!badge) return;
   const count = favorites.size;
-  badge.textContent = `⭐ ${count}`;
+  badge.textContent = `♥ ${count}`;
   badge.style.display = count > 0 || showFavoritesOnly ? "flex" : "none";
   badge.classList.toggle("active", showFavoritesOnly);
+}
+
+function updateRatingUI(id) {
+  const sid = String(id);
+  const card = document.querySelector(`.stop-card[data-id="${sid}"]`);
+  if (!card) return;
+
+  const rating = getRating(sid);
+  const group = card.querySelector(".card-rating");
+  if (!group) return;
+
+  group.setAttribute("aria-label", getRatingGroupLabel(rating));
+
+  group.querySelectorAll(".card-rating__star").forEach((star) => {
+    const value = Number(star.dataset.value);
+    const filled = rating !== null && value <= rating;
+    star.textContent = filled ? "★" : "☆";
+    star.classList.toggle("card-rating__star--filled", filled);
+    star.setAttribute("aria-pressed", rating === value ? "true" : "false");
+  });
+}
+
+function initRatings() {
+  for (let id = 1; id <= TOTAL_STOPS; id += 1) {
+    if (getRating(id) !== null) {
+      updateRatingUI(id);
+    }
+  }
 }
 
 function updateRemainingFilter() {
@@ -303,9 +403,37 @@ function updateRemainingFilter() {
   btn.setAttribute("aria-pressed", showRemainingOnly ? "true" : "false");
 }
 
+function updateSortControl() {
+  const btn = document.getElementById("sort-rating");
+  if (!btn) return;
+  const ratedCount = getRatedCount();
+  btn.textContent = SORT_LABELS[sortMode];
+  btn.style.display = ratedCount > 0 || sortMode !== "crawl" ? "flex" : "none";
+  btn.classList.toggle("active", sortMode !== "crawl");
+  btn.setAttribute("aria-pressed", sortMode !== "crawl" ? "true" : "false");
+  btn.setAttribute(
+    "aria-label",
+    sortMode === "crawl"
+      ? "Sort by rating"
+      : sortMode === "rating-desc"
+        ? "Sorted by top rated"
+        : "Sorted by lowest rated",
+  );
+}
+
 function initFavorites() {
   favorites.forEach((id) => updateFavoriteUI(id));
   updateFavoritesBadge();
+}
+
+function getNoResultsMessage() {
+  if (showFavoritesOnly) {
+    return "No favorites yet — tap ♡ on any stop to save it.";
+  }
+  if (showRemainingOnly) {
+    return "All done — every stop is visited or skipped.";
+  }
+  return "No stops match — try a different search.";
 }
 
 function applyFilters() {
@@ -335,11 +463,7 @@ function applyFilters() {
   const noResults = document.getElementById("no-results");
   if (noResults) {
     noResults.style.display = anyVisible ? "none" : "block";
-    noResults.textContent = showFavoritesOnly
-      ? "No favorites yet — tap ☆ on any stop to save it."
-      : showRemainingOnly
-        ? "All done — every stop is visited or skipped."
-        : "No stops match — try a different search.";
+    noResults.textContent = getNoResultsMessage();
   }
 }
 
@@ -385,7 +509,11 @@ function handleCardClick(event) {
   const card = event.target.closest(".stop-card");
   if (!card) return;
 
-  if (event.target.closest(".btn-favorite, .crawl-card__actions, a, button")) {
+  if (
+    event.target.closest(
+      ".btn-favorite, .card-rating, .crawl-card__actions, a, button",
+    )
+  ) {
     return;
   }
 
@@ -420,8 +548,11 @@ function injectSearchUI() {
     />
     <button id="search-clear" type="button" aria-label="Clear search" style="display:none">×</button>
   </div>
-  <button id="remaining-filter" type="button" aria-label="Show remaining stops only" aria-pressed="false">To go</button>
-  <button id="favorites-badge" type="button" aria-label="View favorites" style="display:none">⭐ 0</button>
+  <div id="search-controls">
+    <button id="remaining-filter" type="button" aria-label="Show remaining stops only" aria-pressed="false">To go</button>
+    <button id="sort-rating" type="button" aria-label="Sort by rating" aria-pressed="false" style="display:none">★</button>
+    <button id="favorites-badge" type="button" aria-label="View favorites" style="display:none">♥ 0</button>
+  </div>
 </div>`,
   );
 
@@ -473,7 +604,16 @@ function injectSearchUI() {
     applyFilters();
   });
 
+  document.getElementById("sort-rating").addEventListener("click", () => {
+    const currentIndex = SORT_MODES.indexOf(sortMode);
+    sortMode = SORT_MODES[(currentIndex + 1) % SORT_MODES.length];
+    localStorage.setItem("crawl_sort_mode", sortMode);
+    updateSortControl();
+    render();
+  });
+
   updateRemainingFilter();
+  updateSortControl();
 }
 
 function handleFavoriteClick(event) {
@@ -485,6 +625,28 @@ function handleFavoriteClick(event) {
   if (!card) return;
 
   toggleFavorite(card.dataset.id);
+}
+
+function handleRatingClick(event) {
+  const star = event.target.closest(".card-rating__star");
+  if (!star) return;
+
+  event.stopPropagation();
+  const card = star.closest(".stop-card");
+  if (!card) return;
+
+  const value = Number(star.dataset.value);
+  const current = getRating(card.dataset.id);
+  const next = current === value ? null : value;
+
+  setRating(card.dataset.id, next);
+  updateRatingUI(card.dataset.id);
+  updateSortControl();
+  applyFilters();
+
+  if (sortMode !== "crawl") {
+    render();
+  }
 }
 
 function init() {
@@ -507,6 +669,7 @@ function init() {
   app.addEventListener("click", handleCardClick);
   app.addEventListener("keydown", handleCardKeydown);
   app.addEventListener("click", handleFavoriteClick);
+  app.addEventListener("click", handleRatingClick);
   window.addEventListener("progressChanged", () => {
     updateHeader();
     updateNextStopBanner();
