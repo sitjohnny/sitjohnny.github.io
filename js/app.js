@@ -104,15 +104,17 @@ function renderStop(stop, index) {
         data-search-text="${searchText}"
       >
         <header class="crawl-card__header">
-          <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
+          <div class="crawl-card__title-row">
+            <button
+              type="button"
+              class="stop-card__toggle"
+              aria-label="${escapeHtml(getToggleAriaLabel(stop.name, status))}"
+            >
+              <span class="stop-card__toggle-icon" aria-hidden="true"></span>
+            </button>
+            <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
+          </div>
           <span class="category-pill" data-category="${escapeHtml(stop.category)}">${escapeHtml(categoryLabel)}</span>
-          <button
-            type="button"
-            class="stop-card__toggle"
-            aria-label="${escapeHtml(getToggleAriaLabel(stop.name, status))}"
-          >
-            <span class="stop-card__toggle-icon" aria-hidden="true"></span>
-          </button>
           <button class="btn-favorite" type="button" aria-label="Add to favorites">☆</button>
         </header>
         <p class="crawl-card__address">${escapeHtml(stop.address)}</p>
