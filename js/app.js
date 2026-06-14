@@ -1,4 +1,5 @@
 import { STOPS } from "./data.js";
+import { getState, setState } from "./state.js";
 
 const CATEGORY_LABELS = {
   latino: "Latino",
@@ -10,6 +11,18 @@ const CATEGORY_LABELS = {
   "chinese-peruvian": "Chinese Peruvian",
 };
 
+const STATUS_CYCLE = {
+  pending: "visited",
+  visited: "skipped",
+  skipped: "pending",
+};
+
+const ACTION_LABELS = {
+  pending: "Visited",
+  visited: "Skipped",
+  skipped: "Pending",
+};
+
 function escapeHtml(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -18,20 +31,68 @@ function escapeHtml(value) {
     .replace(/"/g, "&quot;");
 }
 
+function getToggleAriaLabel(name, currentStatus) {
+  return `Mark ${name} as ${ACTION_LABELS[currentStatus]}`;
+}
+
+function skippedSrMarkup(status) {
+  return status === "skipped"
+    ? '<span class="visually-hidden">(Skipped)</span>'
+    : "";
+}
+
+function updateCardStatus(card, name, status) {
+  card.dataset.status = status;
+
+  const toggle = card.querySelector(".stop-card__toggle");
+  if (toggle) {
+    toggle.setAttribute("aria-label", getToggleAriaLabel(name, status));
+  }
+
+  const heading = card.querySelector(".crawl-card__name");
+  if (!heading) return;
+
+  const existing = heading.querySelector(".visually-hidden");
+  if (status === "skipped") {
+    if (!existing) {
+      const span = document.createElement("span");
+      span.className = "visually-hidden";
+      span.textContent = "(Skipped)";
+      heading.appendChild(span);
+    }
+  } else if (existing) {
+    existing.remove();
+  }
+}
+
 function renderStop(stop, index) {
   const stopNumber = index + 1;
   const categoryLabel = CATEGORY_LABELS[stop.category] ?? stop.category;
+  const status = getState(stopNumber);
 
   return `
     <li class="crawl-stop">
       <div class="crawl-stop__rail" aria-hidden="true">
         <span class="crawl-stop__node">${stopNumber}</span>
       </div>
-      <article class="crawl-card" data-id="${stopNumber}" data-category="${escapeHtml(stop.category)}">
+      <article
+        class="crawl-card stop-card"
+        data-id="${stopNumber}"
+        data-name="${escapeHtml(stop.name)}"
+        data-status="${status}"
+        data-category="${escapeHtml(stop.category)}"
+      >
         <header class="crawl-card__header">
           <span class="crawl-card__badge">${stopNumber}</span>
-          <h2 class="crawl-card__name">${escapeHtml(stop.name)}</h2>
+          <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
           <span class="category-pill" data-category="${escapeHtml(stop.category)}">${escapeHtml(categoryLabel)}</span>
+          <button
+            type="button"
+            class="stop-card__toggle"
+            aria-label="${escapeHtml(getToggleAriaLabel(stop.name, status))}"
+          >
+            <span class="stop-card__toggle-icon" aria-hidden="true"></span>
+          </button>
         </header>
         <p class="crawl-card__address">${escapeHtml(stop.address)}</p>
         <div class="crawl-move">
@@ -59,4 +120,28 @@ function render() {
   `;
 }
 
-render();
+function handleToggleClick(event) {
+  const toggle = event.target.closest(".stop-card__toggle");
+  if (!toggle) return;
+
+  const card = toggle.closest(".stop-card");
+  if (!card) return;
+
+  const id = Number(card.dataset.id);
+  const name = card.dataset.name;
+  const current = getState(id);
+  const next = STATUS_CYCLE[current];
+
+  setState(id, next);
+  updateCardStatus(card, name, next);
+}
+
+function init() {
+  const app = document.getElementById("app");
+  if (!app) return;
+
+  app.addEventListener("click", handleToggleClick);
+  render();
+}
+
+init();

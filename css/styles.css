@@ -74,6 +74,18 @@ body {
   flex-shrink: 0;
 }
 
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 .crawl-card {
   flex: 1;
   min-width: 0;
@@ -82,6 +94,24 @@ body {
   border-radius: 0.75rem;
   padding: 1rem 1.125rem;
   box-shadow: 0 1px 3px rgba(44, 44, 44, 0.06);
+  transition:
+    border-color 0.15s ease,
+    opacity 0.15s ease;
+}
+
+.stop-card[data-status="visited"] {
+  border-color: var(--color-green);
+  box-shadow: 0 1px 3px rgba(39, 174, 96, 0.15);
+}
+
+.stop-card[data-status="skipped"] {
+  opacity: 0.72;
+  border-color: rgba(149, 165, 166, 0.5);
+}
+
+.stop-card[data-status="skipped"] .crawl-card__name {
+  text-decoration: line-through;
+  color: var(--color-gray);
 }
 
 .crawl-card__header {
@@ -107,10 +137,66 @@ body {
 }
 
 .crawl-card__name {
+  position: relative;
   margin: 0;
   font-size: 1.125rem;
   font-weight: 700;
   line-height: 1.3;
+}
+
+.stop-card__toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  min-width: 48px;
+  min-height: 48px;
+  margin: 0;
+  padding: 0;
+  border: 2px solid rgba(44, 44, 44, 0.2);
+  border-radius: 50%;
+  background: #fff;
+  cursor: pointer;
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.stop-card__toggle:hover {
+  border-color: var(--color-charcoal);
+}
+
+.stop-card__toggle:active {
+  transform: scale(0.96);
+}
+
+.stop-card__toggle-icon {
+  display: block;
+  width: 1.125rem;
+  height: 1.125rem;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.15s ease;
+}
+
+.stop-card[data-status="visited"] .stop-card__toggle {
+  border-color: var(--color-green);
+  background: rgba(39, 174, 96, 0.1);
+}
+
+.stop-card[data-status="visited"] .stop-card__toggle-icon {
+  background: var(--color-green);
+  box-shadow: inset 0 0 0 3px #fff;
+}
+
+.stop-card[data-status="skipped"] .stop-card__toggle {
+  border-color: var(--color-gray);
+  background: rgba(149, 165, 166, 0.12);
+}
+
+.stop-card[data-status="skipped"] .stop-card__toggle-icon {
+  background: var(--color-gray);
 }
 
 .category-pill {
