@@ -121,6 +121,66 @@ body {
   display: none;
 }
 
+#search-container {
+  max-width: 42rem;
+  margin: 24px auto 0 auto;
+  padding: 0 1rem;
+  position: relative;
+}
+
+#search-input-wrapper {
+  position: relative;
+}
+
+#search-input-wrapper::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 14px;
+  pointer-events: none;
+  opacity: 0.45;
+}
+
+#search-input {
+  width: 100%;
+  padding: 11px 36px 11px 36px;
+  border: 1.5px solid #ddd;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  background: white;
+  box-sizing: border-box;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+#search-input:focus {
+  outline: none;
+  border-color: var(--color-red);
+  box-shadow: 0 0 0 3px rgba(192, 57, 43, 0.12);
+}
+
+#search-clear {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #aaa;
+  font-size: 18px;
+  cursor: pointer;
+  padding: 4px 6px;
+  line-height: 1;
+}
+
+#search-clear:hover {
+  color: var(--color-charcoal);
+}
+
 .category-filter {
   max-width: 42rem;
   margin: 0.875rem auto 0;

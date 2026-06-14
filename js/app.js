@@ -4,7 +4,8 @@ import { getAllState, getState, setState } from "./state.js";
 const TOTAL_STOPS = STOPS.length;
 
 let activeCategory = null;
-let searchQuery = "";
+let activeSearch = "";
+let searchDebounceTimer = null;
 
 const CATEGORY_LABELS = {
   latino: "Latino",
@@ -70,10 +71,15 @@ function updateCardStatus(card, name, status) {
   }
 }
 
+function getSearchText(stop) {
+  return [stop.name, stop.snapshot, ...stop.tags].join(" ").toLowerCase();
+}
+
 function renderStop(stop, index) {
   const stopNumber = index + 1;
   const categoryLabel = CATEGORY_LABELS[stop.category] ?? stop.category;
   const status = getState(stopNumber);
+  const searchText = escapeHtml(getSearchText(stop));
 
   return `
     <li class="crawl-stop">
@@ -86,6 +92,7 @@ function renderStop(stop, index) {
         data-name="${escapeHtml(stop.name)}"
         data-status="${status}"
         data-category="${escapeHtml(stop.category)}"
+        data-search-text="${searchText}"
       >
         <header class="crawl-card__header">
           <span class="crawl-card__badge">${stopNumber}</span>
@@ -227,34 +234,29 @@ function render() {
   applyFilters();
 }
 
-function matchesCategory(category) {
-  return !activeCategory || category === activeCategory;
-}
-
-function matchesSearch(name, address) {
-  if (!searchQuery) return true;
-  const query = searchQuery.toLowerCase();
-  return (
-    name.toLowerCase().includes(query) ||
-    address.toLowerCase().includes(query)
-  );
-}
-
 function applyFilters() {
   const stops = document.querySelectorAll(".crawl-stop");
   stops.forEach((stopEl) => {
     const card = stopEl.querySelector(".stop-card");
     if (!card) return;
 
-    const category = card.dataset.category;
-    const name = card.dataset.name;
-    const address =
-      card.querySelector(".crawl-card__address")?.textContent ?? "";
+    const matchesFilter =
+      !activeCategory || card.dataset.category === activeCategory;
+    const matchesSearch =
+      !activeSearch || card.dataset.searchText.includes(activeSearch);
+    const visible = matchesSearch && matchesFilter;
 
-    const visible =
-      matchesCategory(category) && matchesSearch(name, address);
-    stopEl.hidden = !visible;
+    card.style.display = visible ? "" : "none";
+    stopEl.style.display = visible ? "" : "none";
   });
+
+  const anyVisible = [...document.querySelectorAll(".stop-card")].some(
+    (c) => c.style.display !== "none",
+  );
+  const noResults = document.getElementById("no-results");
+  if (noResults) {
+    noResults.style.display = anyVisible ? "none" : "block";
+  }
 }
 
 function updateFilterButtons() {
@@ -301,9 +303,68 @@ function handleToggleClick(event) {
   updateCardStatus(card, name, next);
 }
 
+function injectSearchUI() {
+  const filterBar = document.getElementById("category-filter");
+  if (!filterBar || document.getElementById("search-container")) return;
+
+  filterBar.insertAdjacentHTML(
+    "beforebegin",
+    `<div id="search-container">
+  <div id="search-input-wrapper">
+    <input
+      id="search-input"
+      type="search"
+      placeholder="Search stops, food, dishes..."
+      autocomplete="off"
+      autocorrect="off"
+      autocapitalize="none"
+    />
+    <button id="search-clear" type="button" aria-label="Clear search" style="display:none">×</button>
+  </div>
+</div>`,
+  );
+
+  const app = document.getElementById("app");
+  if (app && !document.getElementById("no-results")) {
+    app.insertAdjacentHTML(
+      "afterend",
+      `<div id="no-results" style="display:none; text-align:center; padding:40px 16px; color:#666; font-size:15px;">
+  No stops match — try a different search.
+</div>`,
+    );
+  }
+
+  const searchInput = document.getElementById("search-input");
+  const searchClear = document.getElementById("search-clear");
+
+  searchInput.addEventListener("input", () => {
+    clearTimeout(searchDebounceTimer);
+    searchDebounceTimer = setTimeout(() => {
+      activeSearch = document
+        .getElementById("search-input")
+        .value.trim()
+        .toLowerCase();
+      document.getElementById("search-clear").style.display = activeSearch
+        ? "inline-block"
+        : "none";
+      applyFilters();
+    }, 150);
+  });
+
+  searchClear.addEventListener("click", () => {
+    clearTimeout(searchDebounceTimer);
+    document.getElementById("search-input").value = "";
+    activeSearch = "";
+    document.getElementById("search-clear").style.display = "none";
+    applyFilters();
+  });
+}
+
 function init() {
   const app = document.getElementById("app");
   if (!app) return;
+
+  injectSearchUI();
 
   const banner = document.getElementById("next-stop-banner");
   if (banner) {
