@@ -42,17 +42,15 @@ const CATEGORY_LABELS = {
   "chinese-peruvian": "Chinese Peruvian",
 };
 
-const STATUS_CYCLE = {
-  pending: "visited",
-  visited: "skipped",
-  skipped: "pending",
-};
+function getSkipAriaLabel(name, status) {
+  return status === "skipped" ? `Unskip ${name}` : `Skip ${name}`;
+}
 
-const ACTION_LABELS = {
-  pending: "Visited",
-  visited: "Skipped",
-  skipped: "Pending",
-};
+function getVisitedAriaLabel(name, status) {
+  return status === "visited"
+    ? `Mark ${name} as not visited`
+    : `Mark ${name} as visited`;
+}
 
 function escapeHtml(value) {
   return String(value)
@@ -60,10 +58,6 @@ function escapeHtml(value) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
-}
-
-function getToggleAriaLabel(name, currentStatus) {
-  return `Mark ${name} as ${ACTION_LABELS[currentStatus]}`;
 }
 
 function skippedSrMarkup(status) {
@@ -103,7 +97,20 @@ function renderRatingStars(stopNumber) {
 
 function updateCardStatus(card, name, status) {
   card.dataset.status = status;
-  card.setAttribute("aria-label", getToggleAriaLabel(name, status));
+  card.setAttribute("aria-label", getSkipAriaLabel(name, status));
+
+  const visitedBtn = card.querySelector(".btn-visited");
+  if (visitedBtn) {
+    const isVisited = status === "visited";
+    visitedBtn.classList.toggle("is-visited", isVisited);
+    visitedBtn.setAttribute("aria-pressed", isVisited ? "true" : "false");
+    visitedBtn.setAttribute("aria-label", getVisitedAriaLabel(name, status));
+
+    const icon = visitedBtn.querySelector(".btn-action__icon");
+    const label = visitedBtn.querySelector(".btn-action__label");
+    if (icon) icon.textContent = isVisited ? "✓" : "";
+    if (label) label.textContent = isVisited ? "Visited" : "Mark Visited";
+  }
 
   const heading = card.querySelector(".crawl-card__name");
   if (!heading) return;
@@ -122,7 +129,11 @@ function updateCardStatus(card, name, status) {
 }
 
 function getSearchText(stop) {
-  return [stop.name, stop.snapshot, ...stop.tags].join(" ").toLowerCase();
+  const parts = [stop.name, stop.snapshot, ...stop.tags];
+  if (stop.walkFromPrev) {
+    parts.push(stop.walkFromPrev);
+  }
+  return parts.join(" ").toLowerCase();
 }
 
 function getSortedStopEntries() {
@@ -167,7 +178,7 @@ function renderStop(stop, index) {
         data-category="${escapeHtml(stop.category)}"
         data-search-text="${searchText}"
         tabindex="0"
-        aria-label="${escapeHtml(getToggleAriaLabel(stop.name, status))}"
+        aria-label="${escapeHtml(getSkipAriaLabel(stop.name, status))}"
       >
         <header class="crawl-card__header">
           <h2 class="crawl-card__name">${escapeHtml(stop.name)}${skippedSrMarkup(status)}</h2>
@@ -188,8 +199,23 @@ function renderStop(stop, index) {
         }
         <p class="crawl-card__snapshot">${escapeHtml(stop.snapshot)}</p>
         <div class="crawl-card__actions">
-          <a class="btn btn-menu" href="${escapeHtml(stop.menuUrl)}" target="_blank" rel="noopener">📋 Menu</a>
-          <a class="btn btn-directions" href="${escapeHtml(stop.mapsUrl)}" target="_blank" rel="noopener">📍 Directions</a>
+          <a class="btn btn-menu" href="${escapeHtml(stop.menuUrl)}" target="_blank" rel="noopener">
+            <span class="btn-action__icon" aria-hidden="true">📋</span>
+            <span class="btn-action__label">Menu</span>
+          </a>
+          <a class="btn btn-directions" href="${escapeHtml(stop.mapsUrl)}" target="_blank" rel="noopener">
+            <span class="btn-action__icon" aria-hidden="true">📍</span>
+            <span class="btn-action__label">Directions</span>
+          </a>
+          <button
+            class="btn btn-visited${status === "visited" ? " is-visited" : ""}"
+            type="button"
+            aria-pressed="${status === "visited" ? "true" : "false"}"
+            aria-label="${escapeHtml(getVisitedAriaLabel(stop.name, status))}"
+          >
+            <span class="btn-action__icon" aria-hidden="true">${status === "visited" ? "✓" : ""}</span>
+            <span class="btn-action__label">${status === "visited" ? "Visited" : "Mark Visited"}</span>
+          </button>
         </div>
       </article>
     </li>
@@ -227,6 +253,7 @@ function updateNextStopBanner() {
   const scrollBtn = banner.querySelector(".next-stop-banner__scroll");
   const directionsEl = banner.querySelector(".next-stop-banner__directions");
   const titleEl = banner.querySelector(".next-stop-banner__title");
+  const walkEl = banner.querySelector(".next-stop-banner__walk");
   const addressEl = banner.querySelector(".next-stop-banner__address");
   const next = findNextStop();
 
@@ -243,6 +270,10 @@ function updateNextStopBanner() {
     }
     if (titleEl) {
       titleEl.textContent = "🎉 Crawl complete! Great eating.";
+    }
+    if (walkEl) {
+      walkEl.textContent = "";
+      walkEl.hidden = true;
     }
     if (addressEl) {
       addressEl.textContent = "";
@@ -267,6 +298,15 @@ function updateNextStopBanner() {
   }
   if (titleEl) {
     titleEl.textContent = `Next Stop → #${next.stopNumber} ${next.stop.name}`;
+  }
+  if (walkEl) {
+    if (next.stop.walkFromPrev) {
+      walkEl.textContent = `🚶 ${next.stop.walkFromPrev}`;
+      walkEl.hidden = false;
+    } else {
+      walkEl.textContent = "";
+      walkEl.hidden = true;
+    }
   }
   if (addressEl) {
     addressEl.textContent = next.stop.address;
@@ -495,11 +535,21 @@ function handleFilterClick(event) {
   applyFilters();
 }
 
-function cycleCardStatus(card) {
+function toggleCardVisited(card) {
   const id = Number(card.dataset.id);
   const name = card.dataset.name;
   const current = getState(id);
-  const next = STATUS_CYCLE[current];
+  const next = current === "visited" ? "pending" : "visited";
+
+  setState(id, next);
+  updateCardStatus(card, name, next);
+}
+
+function toggleCardSkipped(card) {
+  const id = Number(card.dataset.id);
+  const name = card.dataset.name;
+  const current = getState(id);
+  const next = current === "skipped" ? "pending" : "skipped";
 
   setState(id, next);
   updateCardStatus(card, name, next);
@@ -511,13 +561,13 @@ function handleCardClick(event) {
 
   if (
     event.target.closest(
-      ".btn-favorite, .card-rating, .crawl-card__actions, a, button",
+      ".btn-favorite, .btn-visited, .card-rating, .crawl-card__actions, a, button",
     )
   ) {
     return;
   }
 
-  cycleCardStatus(card);
+  toggleCardSkipped(card);
 }
 
 function handleCardKeydown(event) {
@@ -527,7 +577,18 @@ function handleCardKeydown(event) {
   if (!card || event.target !== card) return;
 
   event.preventDefault();
-  cycleCardStatus(card);
+  toggleCardSkipped(card);
+}
+
+function handleVisitedClick(event) {
+  const btn = event.target.closest(".btn-visited");
+  if (!btn) return;
+
+  event.stopPropagation();
+  const card = btn.closest(".stop-card");
+  if (!card) return;
+
+  toggleCardVisited(card);
 }
 
 function injectSearchUI() {
@@ -670,6 +731,7 @@ function init() {
   app.addEventListener("keydown", handleCardKeydown);
   app.addEventListener("click", handleFavoriteClick);
   app.addEventListener("click", handleRatingClick);
+  app.addEventListener("click", handleVisitedClick);
   window.addEventListener("progressChanged", () => {
     updateHeader();
     updateNextStopBanner();

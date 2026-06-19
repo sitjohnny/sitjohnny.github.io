@@ -7,6 +7,7 @@ export const STOPS = [
     menuUrl: "https://order.online/en/store/pecoshitas-roosevelt-ave-26177361",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Pecoshitas+80-03+Roosevelt+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "Start here — meet at the Roosevelt Ave entrance.",
     snapshot:
       "Colombian bakery/cafe: pan con queso, Milo, tres leches, chicharron, arepa chocolo con queso, flan, pastries.",
     crawlMove:
@@ -31,6 +32,7 @@ export const STOPS = [
     menuUrl: "https://places.singleplatform.com/969-nyc-coffee/menu",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=969+NYC+Coffee+37-61+80th+St%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~3 min walk north on 80th St from Pecoshitas.",
     snapshot:
       "Japanese cafe: onigiri, onigirazu, rice sandwiches, chicken cutlet, soft shell crab, spicy shrimp, iced coffee, matcha, Japanese tea.",
     crawlMove:
@@ -54,6 +56,7 @@ export const STOPS = [
     menuUrl: "https://birrialandia.com/menu/",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Birria-Landia+77-05+Roosevelt+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~4 min walk west on Roosevelt Ave from 969 NYC Coffee.",
     snapshot:
       "Birria tacos, consome, tostadas, mulitas. One of the easiest stops to order quickly and share.",
     crawlMove:
@@ -76,6 +79,7 @@ export const STOPS = [
     menuUrl: "https://www.thearepalady.com/menus/",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Arepa+Lady+77-17+37th+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~3 min walk south on 77th St, then west on 37th Ave.",
     snapshot:
       "Colombian/Venezuelan arepas, picada, mini empanadas, street corn, chorizo, chuzos, bandeja plates.",
     crawlMove:
@@ -99,6 +103,7 @@ export const STOPS = [
       "https://www.seamless.com/menu/lhasa-fast-food-76-03-37th-ave-queens/3136302",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Lhasa+Fast+Food+76-03+37th+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~2 min walk west on 37th Ave from Arepa Lady.",
     snapshot:
       "Tibetan fast-casual: momos, chowmein, thukpa, noodle soups, vegetarian options, breads.",
     crawlMove:
@@ -123,6 +128,7 @@ export const STOPS = [
       "https://www.grubhub.com/restaurant/laliguras-restaurant-37-63-76th-st-queens/4499208",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Laliguras+Restaurant+37-63+76th+St%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~3 min walk north on 76th St from Lhasa Fast Food.",
     snapshot:
       "Nepalese: thali, momos, chowmein, fried rice, thukpa, thenthuk, khaja sets, appetizers.",
     crawlMove:
@@ -146,6 +152,7 @@ export const STOPS = [
     menuUrl: "https://www.bhanchhagharny.com/",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Nepali+Bhanchha+Ghar+74-15+Roosevelt+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~4 min walk east on Roosevelt Ave from Laliguras.",
     snapshot:
       "Authentic Nepali: steamed/fried/jhol momos, sekuwa, sukuti, choila, sel roti, pakora, thali.",
     crawlMove:
@@ -170,6 +177,7 @@ export const STOPS = [
     menuUrl: "https://www.ngatso.com/phayul",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Phayul+37-65+74th+St%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~3 min walk south on 74th St from Nepali Bhanchha Ghar.",
     snapshot:
       "Tibetan: momos, fried rice, thukpa, spicy meats, fried momos, Lhasa-style dishes.",
     crawlMove:
@@ -194,6 +202,7 @@ export const STOPS = [
       "https://places.singleplatform.com/maharaja-sweets-and-snacks/menu",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Maharaja+Sweets+73-10+37th+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~3 min walk west on 37th Ave from Phayul.",
     snapshot:
       "Vegetarian Indian sweets and snacks: samosas, pakoras, aloo tikki, bhajia, kachori chaat, laddoo, peda, sandesh, balushahi, kalakand.",
     crawlMove:
@@ -218,6 +227,7 @@ export const STOPS = [
     menuUrl: "https://places.singleplatform.com/fuskahouse/menu",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Fuskahouse+NYC+73-01+37th+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~1 min walk west on 37th Ave from Maharaja Sweets.",
     snapshot:
       "Bengali street food: fuska, pani puri, chotpoti, jhalmuri, vorta snacks, curries, tehari, roast.",
     crawlMove:
@@ -241,6 +251,7 @@ export const STOPS = [
       "https://www.grubhub.com/restaurant/aamas-kitchen-7219-roosevelt-ave-jackson-heights/9499520",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Aama%27s+Kitchen+72-19+Roosevelt+Ave%2C+Jackson+Heights%2C+Queens%2C+NY",
+    walkFromPrev: "~4 min walk south on 73rd St, then east on Roosevelt Ave.",
     snapshot:
       "Nepalese comfort food: thali, momos, fried rice, chowmein, thukpa, sukuti dishes.",
     crawlMove:
@@ -264,6 +275,8 @@ export const STOPS = [
     menuUrl: "https://www.ihawan-ny.com/menu/",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Ihawan+40-06+70th+St%2C+Woodside%2C+Queens%2C+NY",
+    walkFromPrev:
+      "~8 min walk south on 70th St into Woodside from Aama's Kitchen.",
     snapshot:
       "Filipino BBQ: pork BBQ, chicken BBQ, pork chop, pork belly, tocino, longanisa, lechon kawali, dinuguan.",
     crawlMove:
@@ -288,6 +301,7 @@ export const STOPS = [
     menuUrl: "https://www.ngatso.com/ngatso-cafe",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Ngatso+Cafe+39-08+63rd+St%2C+Woodside%2C+Queens%2C+NY",
+    walkFromPrev: "~5 min walk west on 63rd St from Ihawan.",
     snapshot:
       "Tibetan cafe: coffee, matcha drinks, butter tea, chai, smoothies, pastries, toast, momos, matcha bread, sweet momos.",
     crawlMove:
@@ -312,6 +326,7 @@ export const STOPS = [
     menuUrl: "https://pekingbbq.gotoeat.net/menu",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Peking+BBQ+58-11+Woodside+Ave%2C+Woodside%2C+Queens%2C+NY",
+    walkFromPrev: "~6 min walk north on 58th St, then east on Woodside Ave.",
     snapshot:
       "Chinese-Peruvian chifa BBQ: rotisserie chicken, fried rice, rice and beans, lomo saltado.",
     crawlMove:
@@ -334,6 +349,7 @@ export const STOPS = [
     menuUrl: "https://www.theweekender.store/menu",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=The+Weekender+41-46+54th+St%2C+Woodside%2C+Queens%2C+NY",
+    walkFromPrev: "~7 min walk south on 54th St from Peking BBQ.",
     snapshot:
       "Bhutanese/Himalayan: ezay, aloo dum, tripe, steamed momos, chilli dishes, mains, drinks.",
     crawlMove:
@@ -357,6 +373,7 @@ export const STOPS = [
       "https://locations.redribbonbakeshop.com/ny/woodside/65-02-roosevelt-ave",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Red+Ribbon+Bakeshop+65-02+Roosevelt+Ave%2C+Woodside%2C+Queens%2C+NY",
+    walkFromPrev: "~8 min walk north on Roosevelt Ave from The Weekender.",
     snapshot:
       "Filipino bakery: ube cake, mango cake, mamon, ensaimada pastries, empanadas, cake slices.",
     crawlMove:
@@ -381,6 +398,7 @@ export const STOPS = [
     menuUrl: "https://purpledough.com/pages/purpledoughmenu",
     mapsUrl:
       "https://www.google.com/maps/search/?api=1&query=Purple+Dough+63-04+39th+Ave%2C+Woodside%2C+Queens%2C+NY",
+    walkFromPrev: "~4 min walk south on 65th St, then west on 39th Ave.",
     snapshot:
       "Filipino-American desserts: cake donuts (vegan/GF options), bubble tea, cake slices, cannoli, con yelo, crinkle cookies, cupcakes, halo-halo, ube leche flan.",
     crawlMove:
