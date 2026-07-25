@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Phase 2 UI-SPEC approved
-last_updated: "2026-07-25T21:17:56.510Z"
-last_activity: 2026-07-25 -- Completed 01-02-PLAN.md
+status: planning
+stopped_at: Phase 2 plans created (02-01..02-04)
+last_updated: "2026-07-25T21:20:00.000Z"
+last_activity: 2026-07-25 -- Planned Phase 02 Pokémon Data Layer (4 plans)
 progress:
   total_phases: 8
   completed_phases: 1
-  total_plans: 7
+  total_plans: 11
   completed_plans: 3
   percent: 13
 ---
@@ -21,34 +21,34 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** A forgiving, rewarding explore → encounter → capture loop that a ~7-year-old can succeed at on phone or desktop, with progress that persists across sessions.
-**Current focus:** Phase 01 — app-shell-subpath-site-integration
+**Current focus:** Phase 02 — pok-mon-data-layer
 
 ## Current Position
 
-Phase: 01 (app-shell-subpath-site-integration) — EXECUTING
-Plan: 3 of 3
-Status: Ready to execute
-Last activity: 2026-07-25 -- Completed 01-02-PLAN.md
+Phase: 02 (pok-mon-data-layer) — PLANNED
+Plan: 0 of 4
+Status: Plans ready — execute next
+Last activity: 2026-07-25 -- Planned Phase 02 (02-01..02-04)
 
-Progress: [███████░░░] 67%
+Progress: [░░░░░░░░░░] 0% (phase 2 plans)
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 2
-- Average duration: 3min
-- Total execution time: 0.10 hours
+- Total plans completed: 3
+- Average duration: ~2.7min
+- Total execution time: 0.13 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| 01 | 2 | 6min | 3min |
+| 01 | 3 | 8min | ~2.7min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (3min), 01-02 (3min)
+- Last 5 plans: 01-01 (3min), 01-02 (3min), 01-03 (2min)
 - Trend: steady
 
 *Updated after each plan completion*
@@ -72,6 +72,8 @@ Recent decisions affecting current work:
 - Phase 1: `createHashRouter` + Vite `base: '/pokemon-safari/'` (no origin-root SPA 404) — protects food-crawl
 - Phase 1: Source in `pokemon-safari-app/`; publish build to `pokemon-safari/`
 - Phase 1 CONTEXT decisions numbered D-01…D-15 for plan coverage
+- Phase 2 CONTEXT decisions D-01…D-11 locked (Boot route, Game-only gate, skip warm Boot, progress+retry, quota soft-fail, sprites+shiny, versioned namespaced keys)
+- Phase 2 plans: Wave 0 tests → cache+Boot happy path → retry/gate/skip → sprite+quota
 - [Phase 01]: Pinned typescript@5.9.3 for typescript-eslint peer range (A5)
 - [Phase 01]: Excluded Wave 0 *.test.tsx from tsc -b so missing BottomNav does not block build
 - [Phase 01]: Zustand ui stub uses lastRoute + settings.mute with no persist middleware
@@ -102,6 +104,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T21:11:56.710Z
-Stopped at: Phase 2 UI-SPEC approved
-Resume file: .planning/phases/02-pok-mon-data-layer/02-UI-SPEC.md
+Last session: 2026-07-25T21:20:00.000Z
+Stopped at: Phase 2 plans created (02-01..02-04)
+Resume file: .planning/phases/02-pok-mon-data-layer/02-01-PLAN.md
