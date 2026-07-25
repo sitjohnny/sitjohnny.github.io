@@ -1,5 +1,5 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
-import { fetchGen1All } from './client'
+import { fetchPokemon, mapPool } from './client'
 import { CACHE_KEY, CACHE_VERSION } from './keys'
 
 const GEN1_COUNT = 151
@@ -140,21 +140,20 @@ export async function ensureCache(
     : Array.from({ length: GEN1_COUNT }, (_, i) => i + 1)
 
   if (ids.length > 0) {
-    const fetched = await fetchGen1All({
-      concurrency,
+    // Commit each DTO into memory as soon as its fetch succeeds (D-05).
+    // mapPool rejects on first failure, but prior successes remain in memory for resume.
+    await mapPool(
       ids,
-      onProgress: (done, total) => {
-        // Report absolute Gen 1 progress when resuming
-        if (resume) {
-          onProgress?.(GEN1_COUNT - ids.length + done, GEN1_COUNT)
-        } else {
-          onProgress?.(done, total)
-        }
+      concurrency,
+      async (id) => {
+        const dto = await fetchPokemon(id)
+        memory.set(dto.id, dto)
+        return dto
       },
-    })
-    for (const dto of fetched) {
-      memory.set(dto.id, dto)
-    }
+      () => {
+        onProgress?.(memory.size, GEN1_COUNT)
+      },
+    )
   } else {
     onProgress?.(GEN1_COUNT, GEN1_COUNT)
   }
