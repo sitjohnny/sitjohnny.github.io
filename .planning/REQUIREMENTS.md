@@ -102,44 +102,44 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| BOOT-01 | TBD | Pending |
-| BOOT-02 | TBD | Pending |
-| BOOT-03 | TBD | Pending |
-| BOOT-04 | TBD | Pending |
-| DATA-01 | TBD | Pending |
-| DATA-02 | TBD | Pending |
-| DATA-03 | TBD | Pending |
-| DATA-04 | TBD | Pending |
-| MAP-01 | TBD | Pending |
-| MAP-02 | TBD | Pending |
-| MAP-03 | TBD | Pending |
-| MAP-04 | TBD | Pending |
-| CATCH-01 | TBD | Pending |
-| CATCH-02 | TBD | Pending |
-| CATCH-03 | TBD | Pending |
-| CATCH-04 | TBD | Pending |
-| CATCH-05 | TBD | Pending |
-| DEX-01 | TBD | Pending |
-| DEX-02 | TBD | Pending |
-| DEX-03 | TBD | Pending |
-| PROG-01 | TBD | Pending |
-| PROG-02 | TBD | Pending |
-| PROG-03 | TBD | Pending |
-| PROG-04 | TBD | Pending |
-| SAVE-01 | TBD | Pending |
-| SAVE-02 | TBD | Pending |
-| SAVE-03 | TBD | Pending |
-| DAILY-01 | TBD | Pending |
-| AUDIO-01 | TBD | Pending |
-| AUDIO-02 | TBD | Pending |
-| UX-01 | TBD | Pending |
-| UX-02 | TBD | Pending |
+| BOOT-01 | Phase 1 | Pending |
+| BOOT-02 | Phase 1 | Pending |
+| BOOT-03 | Phase 1 | Pending |
+| BOOT-04 | Phase 2 | Pending |
+| DATA-01 | Phase 2 | Pending |
+| DATA-02 | Phase 2 | Pending |
+| DATA-03 | Phase 4 | Pending |
+| DATA-04 | Phase 2 | Pending |
+| MAP-01 | Phase 3 | Pending |
+| MAP-02 | Phase 3 | Pending |
+| MAP-03 | Phase 4 | Pending |
+| MAP-04 | Phase 3 | Pending |
+| CATCH-01 | Phase 5 | Pending |
+| CATCH-02 | Phase 5 | Pending |
+| CATCH-03 | Phase 5 | Pending |
+| CATCH-04 | Phase 5 | Pending |
+| CATCH-05 | Phase 5 | Pending |
+| DEX-01 | Phase 6 | Pending |
+| DEX-02 | Phase 6 | Pending |
+| DEX-03 | Phase 6 | Pending |
+| PROG-01 | Phase 7 | Pending |
+| PROG-02 | Phase 7 | Pending |
+| PROG-03 | Phase 7 | Pending |
+| PROG-04 | Phase 7 | Pending |
+| SAVE-01 | Phase 7 | Pending |
+| SAVE-02 | Phase 7 | Pending |
+| SAVE-03 | Phase 7 | Pending |
+| DAILY-01 | Phase 7 | Pending |
+| AUDIO-01 | Phase 8 | Pending |
+| AUDIO-02 | Phase 8 | Pending |
+| UX-01 | Phase 1 | Pending |
+| UX-02 | Phase 8 | Pending |
 
 **Coverage:**
 - v1 requirements: 32 total
-- Mapped to phases: 0
-- Unmapped: 32 (filled by roadmapper)
+- Mapped to phases: 32
+- Unmapped: 0
 
 ---
 *Requirements defined: 2026-07-25*
-*Last updated: 2026-07-25 after initialization*
+*Last updated: 2026-07-25 after roadmap creation (traceability mapped)*
