@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import type { PokemonDto } from '@/types/pokemon'
 
 type PokemonSpriteProps = {
@@ -19,6 +19,10 @@ export function PokemonSprite({
 }: PokemonSpriteProps) {
   const src = shiny ? pokemon.sprites.front_shiny : pokemon.sprites.front_default
   const [broken, setBroken] = useState(!src)
+
+  useEffect(() => {
+    setBroken(!src)
+  }, [src])
 
   if (broken) {
     return (
