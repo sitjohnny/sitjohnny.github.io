@@ -1,13 +1,20 @@
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
+import { clearPokeCacheKey, seedPokeCache } from '@/test/pokeapi-test-helpers'
 import App, { APP_BASENAME, syncHashBasename } from './App'
 
 afterEach(() => {
   cleanup()
+  clearPokeCacheKey()
+  resetCacheMemoryForTests()
 })
 
 beforeEach(() => {
+  // Warm cache so smoke tests land on Home (skip Boot — D-03); cold-open covered elsewhere.
+  seedPokeCache()
+  hydrateFromStorage()
   window.history.replaceState(null, '', '/')
   window.location.hash = ''
   syncHashBasename(APP_BASENAME)

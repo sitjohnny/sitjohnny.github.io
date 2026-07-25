@@ -5,6 +5,8 @@ import {
   type RouterProviderProps,
 } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
+import { hasValidCache, hydrateFromStorage } from '@/services/pokeapi/cache'
+import { BootScreen } from '@/screens/BootScreen'
 import { DexScreen } from '@/screens/DexScreen'
 import { GameScreen } from '@/screens/GameScreen'
 import { HomeScreen } from '@/screens/HomeScreen'
@@ -31,8 +33,32 @@ export function syncHashBasename(
   loc.hash = next
 }
 
+/**
+ * Cold open without valid cache → first paint is Boot (D-01).
+ * Warm cache skips Boot flash (D-03). Deep links to other routes stay put (D-02).
+ */
+function steerColdOpenToBoot(
+  basename: string = APP_BASENAME,
+  loc: Location = window.location,
+): void {
+  hydrateFromStorage()
+  if (hasValidCache()) return
+
+  const raw = loc.hash.replace(/^#/, '')
+  const path = raw === '' ? '/' : raw.startsWith('/') ? raw : `/${raw}`
+  const atIndex =
+    path === '/' ||
+    path === basename ||
+    path === `${basename}/` ||
+    path === `${basename}`
+  if (atIndex) {
+    loc.hash = `${basename}/boot`
+  }
+}
+
 export function createAppRouter() {
   syncHashBasename()
+  steerColdOpenToBoot()
   return createHashRouter(
     [
       {
@@ -40,6 +66,7 @@ export function createAppRouter() {
         element: <AppShell />,
         children: [
           { index: true, element: <HomeScreen /> },
+          { path: 'boot', element: <BootScreen /> },
           { path: 'game', element: <GameScreen /> },
           { path: 'dex', element: <DexScreen /> },
           { path: 'pack', element: <PackScreen /> },
