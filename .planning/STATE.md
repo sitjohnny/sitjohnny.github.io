@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: executing
-stopped_at: Completed 01-02-PLAN.md
-last_updated: "2026-07-25T19:41:44.773Z"
+status: verifying
+stopped_at: Completed 01-03-PLAN.md
+last_updated: "2026-07-25T19:45:03.941Z"
 last_activity: 2026-07-25 -- Completed 01-02-PLAN.md
 progress:
   total_phases: 8
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 3
-  completed_plans: 2
-  percent: 67
+  completed_plans: 3
+  percent: 13
 ---
 
 # Project State
@@ -27,7 +27,7 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 
 Phase: 01 (app-shell-subpath-site-integration) — EXECUTING
 Plan: 3 of 3
-Status: Ready to execute
+Status: Phase complete — ready for verification
 Last activity: 2026-07-25 -- Completed 01-02-PLAN.md
 
 Progress: [███████░░░] 67%
@@ -57,6 +57,7 @@ Progress: [███████░░░] 67%
 |------|----------|-------|-------|
 | Phase 01 P01 | 3min | 2 tasks | 30 files |
 | Phase 01 P02 | 3min | 2 tasks | 16 files |
+| Phase 01 P03 | 2min | 2 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -77,6 +78,9 @@ Recent decisions affecting current work:
 - [Phase 01]: HashRouter basename /pokemon-safari requires syncHashBasename so empty # matches routes
 - [Phase 01]: createAppRouter per App mount keeps Vitest isolation with fresh router state
 - [Phase 01]: Settings Reset Save is confirm-dialog UI only — no localStorage writes (T-01-06)
+- [Phase 01]: Root listing uses hardcoded /food-crawl/ and /pokemon-safari/ hrefs only (T-01-07) — Mitigate open-redirect spoofing on site root
+- [Phase 01]: deploy:copy targets ../pokemon-safari only — food-crawl untouched (T-01-09) — Prevent accidental overwrite of sibling Pages project
+- [Phase 01]: No origin-root 404.html; HashRouter keeps SPA refresh safe (T-01-08 / D-14) — Origin-wide SPA fallback would break food-crawl
 
 ### Pending Todos
 
@@ -98,6 +102,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T19:41:44.768Z
-Stopped at: Completed 01-02-PLAN.md
+Last session: 2026-07-25T19:45:03.936Z
+Stopped at: Completed 01-03-PLAN.md
 Resume file: None

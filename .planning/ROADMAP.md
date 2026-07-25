@@ -13,7 +13,7 @@ Pokémon Safari ships as eight vertical phases that follow the forced dependency
 
 Decimal phases appear between their surrounding integers in numeric order.
 
-- [ ] **Phase 1: App Shell, Subpath & Site Integration** - Vite/React/TS scaffold deployed correctly at `/pokemon-safari/` with root site listing both projects
+- [x] **Phase 1: App Shell, Subpath & Site Integration** - Vite/React/TS scaffold deployed correctly at `/pokemon-safari/` with root site listing both projects (completed 2026-07-25)
 - [ ] **Phase 2: Pokémon Data Layer** - Gen 1 prefetch, versioned localStorage cache, boot progress screen, crisp sprite rendering
 - [ ] **Phase 3: Exploration** - Walkable Forest tile map with D-pad + keyboard input and camera follow
 - [ ] **Phase 4: Encounters** - Config-driven grass rolls (45/25/20/8/2) with per-biome encounter tables
@@ -37,12 +37,12 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Player can navigate between Home, Game, Dex, Pack, and Settings through icon-first chrome that is usable on a phone and responsive on desktop
   4. Project compiles under strict TypeScript with the preferred `src/{assets,components,screens,hooks,services,game,data,store,types,utils}/` layout, versioned save envelope types in place, and Vitest wired
 
-**Plans:** 2/3 plans executed
+**Plans:** 3/3 plans complete
 Plans:
 
 - [x] 01-01-PLAN.md — Scaffold Vite/React/TS app, tooling, folders, Zustand stub, SaveEnvelope types, Wave 0 Vitest
 - [x] 01-02-PLAN.md — Emerald theme, HashRouter AppShell, five placeholders, icon-first BottomNav (UX-01)
-- [ ] 01-03-PLAN.md — Root listing + README + deploy:copy published `pokemon-safari/`
+- [x] 01-03-PLAN.md — Root listing + README + deploy:copy published `pokemon-safari/`
 
 **UI hint**: yes
 
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. App Shell, Subpath & Site Integration | 2/3 | In Progress|  |
+| 1. App Shell, Subpath & Site Integration | 3/3 | Complete   | 2026-07-25 |
 | 2. Pokémon Data Layer | 0/TBD | Not started | - |
 | 3. Exploration | 0/TBD | Not started | - |
 | 4. Encounters | 0/TBD | Not started | - |

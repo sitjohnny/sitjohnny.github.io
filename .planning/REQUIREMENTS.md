@@ -10,7 +10,7 @@ Requirements for initial release (full game shell). Each maps to roadmap phases.
 ### Boot & Hosting
 
 - [x] **BOOT-01**: Player can open the game at `/pokemon-safari/` on GitHub Pages with assets and routes resolving correctly (Vite `base` + router `basename`)
-- [ ] **BOOT-02**: Root site lists both Food Crawl and Pokémon Safari (no sole auto-redirect that hides Safari)
+- [x] **BOOT-02**: Root site lists both Food Crawl and Pokémon Safari (no sole auto-redirect that hides Safari)
 - [x] **BOOT-03**: App scaffold uses React + TypeScript (strict) + Vite + Tailwind + Zustand + React Router with the preferred `src/` folder layout
 - [ ] **BOOT-04**: Boot screen shows Gen 1 data load progress and allows retry on failure before explore unlocks
 
@@ -103,7 +103,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | BOOT-01 | Phase 1 | Complete |
-| BOOT-02 | Phase 1 | Pending |
+| BOOT-02 | Phase 1 | Complete |
 | BOOT-03 | Phase 1 | Complete |
 | BOOT-04 | Phase 2 | Pending |
 | DATA-01 | Phase 2 | Pending |
