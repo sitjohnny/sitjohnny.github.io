@@ -31,7 +31,8 @@ describe('App route smoke', () => {
     render(<App />)
 
     await user.click(screen.getByRole('link', { name: /start safari/i }))
-    expect(screen.getByRole('heading', { name: /^game$/i })).toBeInTheDocument()
+    expect(screen.getByText('Forest')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
   })
 
   it('reaches Dex, Pack, and Settings via BottomNav', async () => {
