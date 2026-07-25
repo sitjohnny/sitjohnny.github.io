@@ -60,7 +60,7 @@ Requirements for initial release (full game shell). Each maps to roadmap phases.
 
 - [ ] **AUDIO-01**: Lightweight sound effects play for key actions (move/encounter/capture success-fail); no background music
 - [ ] **AUDIO-02**: Audio unlocks on first user gesture; mute toggle available in settings
-- [ ] **UX-01**: UI is icon-first, mobile-first, responsive on desktop; touch targets are large enough for a child
+- [x] **UX-01**: UI is icon-first, mobile-first, responsive on desktop; touch targets are large enough for a child
 - [ ] **UX-02**: Feedback on capture/unlock/new dex entry is clear and rewarding without harsh failure framing
 
 ## v2 Requirements
@@ -132,7 +132,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | DAILY-01 | Phase 7 | Pending |
 | AUDIO-01 | Phase 8 | Pending |
 | AUDIO-02 | Phase 8 | Pending |
-| UX-01 | Phase 1 | Pending |
+| UX-01 | Phase 1 | Complete |
 | UX-02 | Phase 8 | Pending |
 
 **Coverage:**

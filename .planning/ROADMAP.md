@@ -37,11 +37,11 @@ Decimal phases appear between their surrounding integers in numeric order.
   3. Player can navigate between Home, Game, Dex, Pack, and Settings through icon-first chrome that is usable on a phone and responsive on desktop
   4. Project compiles under strict TypeScript with the preferred `src/{assets,components,screens,hooks,services,game,data,store,types,utils}/` layout, versioned save envelope types in place, and Vitest wired
 
-**Plans:** 1/3 plans executed
+**Plans:** 2/3 plans executed
 Plans:
 
 - [x] 01-01-PLAN.md — Scaffold Vite/React/TS app, tooling, folders, Zustand stub, SaveEnvelope types, Wave 0 Vitest
-- [ ] 01-02-PLAN.md — Emerald theme, HashRouter AppShell, five placeholders, icon-first BottomNav (UX-01)
+- [x] 01-02-PLAN.md — Emerald theme, HashRouter AppShell, five placeholders, icon-first BottomNav (UX-01)
 - [ ] 01-03-PLAN.md — Root listing + README + deploy:copy published `pokemon-safari/`
 
 **UI hint**: yes
@@ -164,7 +164,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. App Shell, Subpath & Site Integration | 1/3 | In Progress|  |
+| 1. App Shell, Subpath & Site Integration | 2/3 | In Progress|  |
 | 2. Pokémon Data Layer | 0/TBD | Not started | - |
 | 3. Exploration | 0/TBD | Not started | - |
 | 4. Encounters | 0/TBD | Not started | - |
