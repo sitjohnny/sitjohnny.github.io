@@ -107,9 +107,10 @@ export function getPokemon(id: number): PokemonDto {
 /** Quota-safe write — never throws on QuotaExceededError (D-06). Touches CACHE_KEY only. */
 export function persistCache(envelope: CacheEnvelope): 'ok' | 'quota' {
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(envelope))
+    const serialized = JSON.stringify(envelope)
+    localStorage.setItem(CACHE_KEY, serialized)
     if (import.meta.env?.DEV) {
-      console.debug('[pokeapi] cache bytes', new Blob([JSON.stringify(envelope)]).size)
+      console.debug('[pokeapi] cache bytes', new Blob([serialized]).size)
     }
     return 'ok'
   } catch (e) {
