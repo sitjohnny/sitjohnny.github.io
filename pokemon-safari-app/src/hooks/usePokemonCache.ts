@@ -71,7 +71,8 @@ export function usePokemonCache(): PokemonCacheState {
       setProgress({ done: GEN1_TOTAL, total: GEN1_TOTAL })
       return
     }
-    if (!hasValidCache()) {
+    // Cold miss, or storage looked valid but hydrate left memory incomplete — refetch.
+    if (!isCacheReady()) {
       void runEnsure(false)
     }
   }, [runEnsure, setCacheReady])

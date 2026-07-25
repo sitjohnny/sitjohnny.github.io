@@ -74,9 +74,18 @@ export function hydrateFromStorage(): void {
   }
 }
 
+/** True when map holds every Gen 1 id 1..GEN1_COUNT (no gaps/duplicates). */
+function isCompleteGen1(map: Map<number, PokemonDto>): boolean {
+  if (map.size !== GEN1_COUNT) return false
+  for (let id = 1; id <= GEN1_COUNT; id++) {
+    if (!map.has(id)) return false
+  }
+  return true
+}
+
 /** True when storage (or already-hydrated memory) holds a full v1 Gen 1 set. */
 export function hasValidCache(): boolean {
-  if (memory.size === GEN1_COUNT) {
+  if (isCompleteGen1(memory)) {
     return true
   }
   return isValidEnvelope(parseEnvelope(localStorage.getItem(CACHE_KEY)))
@@ -84,7 +93,7 @@ export function hasValidCache(): boolean {
 
 /** True when in-memory Map is fully populated for Gen 1. */
 export function isCacheReady(): boolean {
-  return memory.size === GEN1_COUNT
+  return isCompleteGen1(memory)
 }
 
 /** Synchronous lookup — throws if missing (DATA-02). */
