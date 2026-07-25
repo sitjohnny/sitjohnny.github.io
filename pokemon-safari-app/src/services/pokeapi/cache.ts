@@ -1,5 +1,5 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
-import { fetchPokemon, mapPool } from './client'
+import { fetchPokemon, mapPool, toPokemonDto, type PokeApiPokemon } from './client'
 import { CACHE_KEY, CACHE_VERSION } from './keys'
 
 const GEN1_COUNT = 151
@@ -41,8 +41,24 @@ function isValidEnvelope(envelope: CacheEnvelope | null): envelope is CacheEnvel
   )
 }
 
-function loadMemoryFromPokemon(pokemon: PokemonDto[]): void {
-  memory = new Map(pokemon.map((p) => [p.id, p]))
+/** Validate and load DTOs into memory. Returns false if any entry is invalid/incomplete. */
+function loadMemoryFromPokemon(pokemon: unknown[]): boolean {
+  const next = new Map<number, PokemonDto>()
+  for (const raw of pokemon) {
+    try {
+      const dto = toPokemonDto(raw as PokeApiPokemon)
+      if (next.has(dto.id)) return false
+      next.set(dto.id, dto)
+    } catch {
+      return false
+    }
+  }
+  if (next.size !== GEN1_COUNT) return false
+  for (let id = 1; id <= GEN1_COUNT; id++) {
+    if (!next.has(id)) return false
+  }
+  memory = next
+  return true
 }
 
 /** Sync hydrate from localStorage into memory (D-03). Invalid/missing → empty memory. */
@@ -52,7 +68,10 @@ export function hydrateFromStorage(): void {
     memory = new Map()
     return
   }
-  loadMemoryFromPokemon(envelope.pokemon)
+  if (!loadMemoryFromPokemon(envelope.pokemon)) {
+    memory = new Map()
+    localStorage.removeItem(CACHE_KEY)
+  }
 }
 
 /** True when storage (or already-hydrated memory) holds a full v1 Gen 1 set. */
@@ -130,8 +149,10 @@ export async function ensureCache(
     }
     const existing = parseEnvelope(localStorage.getItem(CACHE_KEY))
     if (isValidEnvelope(existing)) {
-      loadMemoryFromPokemon(existing.pokemon)
-      return 'ok'
+      if (loadMemoryFromPokemon(existing.pokemon)) {
+        return 'ok'
+      }
+      localStorage.removeItem(CACHE_KEY)
     }
   }
 
