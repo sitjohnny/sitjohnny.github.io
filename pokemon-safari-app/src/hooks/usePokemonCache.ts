@@ -28,32 +28,44 @@ export function usePokemonCache(): PokemonCacheState {
   const [progress, setProgress] = useState({ done: 0, total: GEN1_TOTAL })
   const [error, setError] = useState<Error | null>(null)
   const running = useRef(false)
+  const cancelled = useRef(false)
 
   const runEnsure = useCallback(
     async (resume: boolean) => {
       if (running.current) return
       running.current = true
-      setStatus('loading')
-      setError(null)
+      if (!cancelled.current) {
+        setStatus('loading')
+        setError(null)
+      }
       try {
         const result = await ensureCache({
           concurrency: 8,
           resume,
           onProgress: (done, total) => {
-            setProgress({ done, total })
+            if (!cancelled.current) {
+              setProgress({ done, total })
+            }
           },
         })
-        if (result === 'quota') {
-          setStatus('quota')
-          setQuotaSoftFail(true)
-        } else {
-          setStatus('ready')
-        }
+        // Unlock Explore even if Boot unmounted mid-prefetch.
         setCacheReady(true)
-        setProgress({ done: GEN1_TOTAL, total: GEN1_TOTAL })
+        if (result === 'quota') {
+          setQuotaSoftFail(true)
+        }
+        if (!cancelled.current) {
+          if (result === 'quota') {
+            setStatus('quota')
+          } else {
+            setStatus('ready')
+          }
+          setProgress({ done: GEN1_TOTAL, total: GEN1_TOTAL })
+        }
       } catch (e) {
-        setStatus('error')
-        setError(e instanceof Error ? e : new Error(String(e)))
+        if (!cancelled.current) {
+          setStatus('error')
+          setError(e instanceof Error ? e : new Error(String(e)))
+        }
       } finally {
         running.current = false
       }
@@ -62,6 +74,8 @@ export function usePokemonCache(): PokemonCacheState {
   )
 
   useEffect(() => {
+    cancelled.current = false
+
     if (!isCacheReady() && hasValidCache()) {
       hydrateFromStorage()
     }
@@ -69,11 +83,17 @@ export function usePokemonCache(): PokemonCacheState {
       setStatus('ready')
       setCacheReady(true)
       setProgress({ done: GEN1_TOTAL, total: GEN1_TOTAL })
-      return
+      return () => {
+        cancelled.current = true
+      }
     }
     // Cold miss, or storage looked valid but hydrate left memory incomplete — refetch.
     if (!isCacheReady()) {
       void runEnsure(false)
+    }
+
+    return () => {
+      cancelled.current = true
     }
   }, [runEnsure, setCacheReady])
 
