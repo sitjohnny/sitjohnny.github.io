@@ -85,7 +85,7 @@ Each task was committed atomically:
 1. **Task 1: Emerald theme and pixel-art CSS utilities** - `b57d368` (feat)
 2. **Task 2: HashRouter AppShell, BottomNav, and five placeholder screens** - `e2f0739` (feat)
 
-**Plan metadata:** _(pending docs commit)_
+**Plan metadata:** `ef4fbc6` / `9596953` (docs: complete plan + metrics)
 
 _Note: Wave 0 RED tests were authored in plan 01-01; this plan greened them (TDD GREEN)._
 
