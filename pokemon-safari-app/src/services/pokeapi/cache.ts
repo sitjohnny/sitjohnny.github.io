@@ -1,5 +1,5 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
-import { fetchPokemon, mapPool, toPokemonDto, type PokeApiPokemon } from './client'
+import { fetchPokemon, mapPool, sanitizeSpriteUrl } from './client'
 import { CACHE_KEY, CACHE_VERSION, GEN1_COUNT } from './keys'
 
 const DEFAULT_CONCURRENCY = 8
@@ -40,12 +40,50 @@ function isValidEnvelope(envelope: CacheEnvelope | null): envelope is CacheEnvel
   )
 }
 
+/**
+ * Validate a stored slim DTO (not raw PokéAPI JSON) and re-sanitize sprite URLs (T-02-02, T-02-04).
+ */
+function fromStoredDto(raw: unknown): PokemonDto {
+  if (typeof raw !== 'object' || raw === null) {
+    throw new Error('Invalid stored Pokémon')
+  }
+  const obj = raw as Record<string, unknown>
+  const id = obj.id
+  if (typeof id !== 'number' || !Number.isInteger(id) || id < 1 || id > GEN1_COUNT) {
+    throw new Error(`Invalid Pokémon id: ${String(id)}`)
+  }
+  if (typeof obj.name !== 'string' || !obj.name) {
+    throw new Error('Invalid Pokémon name')
+  }
+  if (
+    !Array.isArray(obj.types) ||
+    obj.types.length === 0 ||
+    !obj.types.every((t) => typeof t === 'string' && t.length > 0)
+  ) {
+    throw new Error('Invalid Pokémon types')
+  }
+  const spritesRaw = obj.sprites
+  if (typeof spritesRaw !== 'object' || spritesRaw === null) {
+    throw new Error('Invalid Pokémon sprites')
+  }
+  const sprites = spritesRaw as Record<string, unknown>
+  return {
+    id,
+    name: obj.name,
+    types: obj.types as string[],
+    sprites: {
+      front_default: sanitizeSpriteUrl(sprites.front_default),
+      front_shiny: sanitizeSpriteUrl(sprites.front_shiny),
+    },
+  }
+}
+
 /** Validate and load DTOs into memory. Returns false if any entry is invalid/incomplete. */
 function loadMemoryFromPokemon(pokemon: unknown[]): boolean {
   const next = new Map<number, PokemonDto>()
   for (const raw of pokemon) {
     try {
-      const dto = toPokemonDto(raw as PokeApiPokemon)
+      const dto = fromStoredDto(raw)
       if (next.has(dto.id)) return false
       next.set(dto.id, dto)
     } catch {
