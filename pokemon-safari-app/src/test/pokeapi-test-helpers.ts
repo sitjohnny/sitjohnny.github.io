@@ -48,7 +48,7 @@ export function seedPokeCache(
   return envelope
 }
 
-/** Remove only the poke-cache key — never localStorage.clear() (D-11). */
+/** Remove only the poke-cache key — never call Storage clear (D-11). */
 export function clearPokeCacheKey(): void {
   localStorage.removeItem(TEST_CACHE_KEY)
 }
