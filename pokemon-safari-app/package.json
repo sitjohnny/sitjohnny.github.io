@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
+    "test:root": "node scripts/assert-root-listing.mjs",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
