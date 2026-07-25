@@ -1,10 +1,15 @@
 import { useEffect } from 'react'
 import type { RefObject } from 'react'
-import { STEP_DURATION_MS, TILE_PX } from '@/data/exploreConfig'
+import { STEP_DURATION_MS, TILE_PX, WALK_FRAME_MS } from '@/data/exploreConfig'
+import { clamp } from '@/game/camera'
 import { completeStep, tileToPx, tryStep } from '@/game/movement'
+import { prefersReducedMotion, useMapCamera } from '@/hooks/useMapCamera'
 import { primaryDirection } from '@/hooks/usePlayerInput'
 import { useExploreStore } from '@/store/exploreStore'
 import type { Direction, MapDef, PlayerState, Vec2 } from '@/types/map'
+
+/** Frame indices the CSS walk cycle understands — length kept in sync with PlayerSprite. */
+const WALK_FRAME_COUNT = 2
 
 export type ExploreLoopOptions = {
   map: MapDef
@@ -14,17 +19,27 @@ export type ExploreLoopOptions = {
   viewportRef: RefObject<HTMLDivElement | null>
 }
 
+type ActiveTween = {
+  from: Vec2
+  to: Vec2
+  startedAt: number
+  durationMs: number
+}
+
 function samePlayer(a: PlayerState, b: PlayerState): boolean {
   return a.x === b.x && a.y === b.y && a.facing === b.facing && a.moving === b.moving
+}
+
+function lerp(from: number, to: number, t: number): number {
+  return from + (to - from) * t
 }
 
 /**
  * The only per-frame code in the app (MAP-04).
  *
- * Frame state lives in effect-local variables, never React state, and the
- * store is written at most once per frame — and in practice once per committed
- * tile. Both the world layer and the player are painted by direct DOM
- * transform writes.
+ * Frame state lives in effect-local variables, never React state. The store is
+ * written at tile commit / step completion only; pixels, camera, and walk
+ * frames are painted through refs.
  */
 export function useExploreLoop({
   map,
@@ -33,11 +48,16 @@ export function useExploreLoop({
   playerRef,
   viewportRef,
 }: ExploreLoopOptions): void {
+  const camera = useMapCamera(map, worldRef)
+
   useEffect(() => {
     let frame = 0
-    let stepStartedAt = 0
     let viewportWidth = 0
     let viewportHeight = 0
+    let tween: ActiveTween | null = null
+    let frameStartedAt = 0
+    let lastTime = 0
+    let playerPx: Vec2 = tileToPx(useExploreStore.getState().tile)
 
     function measure() {
       const node = viewportRef.current
@@ -49,58 +69,131 @@ export function useExploreLoop({
       viewportHeight = rect.height
     }
 
-    function paint(tile: Vec2) {
-      const px = tileToPx(tile)
+    function writePlayer(px: Vec2) {
+      playerPx = px
       if (playerRef.current) {
-        playerRef.current.style.transform = `translate3d(${px.x}px, ${px.y}px, 0)`
+        playerRef.current.style.transform = `translate3d(${Math.round(px.x)}px, ${Math.round(px.y)}px, 0)`
       }
-      if (worldRef.current) {
-        const worldX = viewportWidth / 2 - (px.x + TILE_PX / 2)
-        const worldY = viewportHeight / 2 - (px.y + TILE_PX / 2)
-        worldRef.current.style.transform = `translate3d(${worldX}px, ${worldY}px, 0)`
+    }
+
+    function setWalkFrame(index: number) {
+      if (playerRef.current) {
+        playerRef.current.dataset.frame = String(index % WALK_FRAME_COUNT)
       }
     }
 
     function tick(now: number) {
-      const store = useExploreStore.getState()
-      const committed: PlayerState = {
+      const rawDt = lastTime === 0 ? 16 : now - lastTime
+      const dtMs = Math.min(Math.max(rawDt, 0), 50)
+      lastTime = now
+
+      const reduced = prefersReducedMotion()
+      let store = useExploreStore.getState()
+      let state: PlayerState = {
         x: store.tile.x,
         y: store.tile.y,
         facing: store.facing,
         moving: store.moving,
       }
 
-      // 03-03 replaces instant arrival with the STEP_DURATION_MS tween and the
-      // eased camera. Until then the move lock is released on the same clock so
-      // one press still walks exactly one tile.
-      const arrived =
-        committed.moving && now - stepStartedAt >= STEP_DURATION_MS
-          ? completeStep(committed)
-          : committed
+      if (tween) {
+        const t =
+          tween.durationMs <= 0
+            ? 1
+            : clamp((now - tween.startedAt) / tween.durationMs, 0, 1)
+        writePlayer({
+          x: lerp(tween.from.x, tween.to.x, t),
+          y: lerp(tween.from.y, tween.to.y, t),
+        })
 
-      const { next, events } = tryStep(arrived, primaryDirection(heldRef.current), map, now)
+        if (reduced) {
+          setWalkFrame(0)
+        } else {
+          if (frameStartedAt === 0) {
+            frameStartedAt = now
+          }
+          setWalkFrame(Math.floor((now - frameStartedAt) / WALK_FRAME_MS))
+        }
 
-      if (next.moving && !arrived.moving) {
-        stepStartedAt = now
-      }
-      if (!samePlayer(committed, next)) {
-        store.setPlayer(next)
-      }
-      if (events.length > 0) {
-        store.pushEncounters(events)
+        if (t >= 1) {
+          tween = null
+          frameStartedAt = 0
+          setWalkFrame(0)
+          const idle = completeStep(state)
+          if (!samePlayer(state, idle)) {
+            store.setPlayer(idle)
+          }
+        }
       }
 
-      paint(next)
+      // Only start a new step when no tween is in flight (Pitfall 6 one-step lock).
+      if (!tween) {
+        store = useExploreStore.getState()
+        state = {
+          x: store.tile.x,
+          y: store.tile.y,
+          facing: store.facing,
+          moving: store.moving,
+        }
+
+        const result = tryStep(state, primaryDirection(heldRef.current), map, now)
+
+        if (!samePlayer(state, result.next)) {
+          store.setPlayer(result.next)
+        }
+        if (result.events.length > 0) {
+          store.pushEncounters(result.events)
+        }
+
+        if (result.tween) {
+          // Prefer the tween's duration (STEP_DURATION_MS from tryStep); reduced motion snaps.
+          const durationMs = reduced ? 0 : result.tween.durationMs || STEP_DURATION_MS
+          if (durationMs <= 0) {
+            writePlayer(result.tween.to)
+            setWalkFrame(0)
+            const idle = completeStep(result.next)
+            if (!samePlayer(result.next, idle)) {
+              store.setPlayer(idle)
+            }
+          } else {
+            tween = {
+              from: result.tween.from,
+              to: result.tween.to,
+              startedAt: now,
+              durationMs,
+            }
+            frameStartedAt = now
+            writePlayer(result.tween.from)
+            setWalkFrame(0)
+          }
+        } else if (!tween) {
+          writePlayer(tileToPx(result.next))
+          setWalkFrame(0)
+        }
+      }
+
+      const view = { w: viewportWidth, h: viewportHeight }
+      camera.follow(
+        { x: playerPx.x + TILE_PX / 2, y: playerPx.y + TILE_PX / 2 },
+        view,
+        dtMs,
+      )
+
       frame = requestAnimationFrame(tick)
     }
 
     measure()
     window.addEventListener('resize', measure)
+    writePlayer(playerPx)
+    camera.snapTo(
+      { x: playerPx.x + TILE_PX / 2, y: playerPx.y + TILE_PX / 2 },
+      { w: viewportWidth, h: viewportHeight },
+    )
     frame = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', measure)
     }
-  }, [map, heldRef, worldRef, playerRef, viewportRef])
+  }, [map, heldRef, worldRef, playerRef, viewportRef, camera])
 }
