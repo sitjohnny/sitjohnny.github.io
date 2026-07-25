@@ -1,7 +1,7 @@
 import type { PokemonDto } from '@/types/pokemon'
+import { GEN1_COUNT } from './keys'
 
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2/pokemon'
-const GEN1_COUNT = 151
 const DEFAULT_CONCURRENCY = 8
 
 export type PokeApiPokemon = {

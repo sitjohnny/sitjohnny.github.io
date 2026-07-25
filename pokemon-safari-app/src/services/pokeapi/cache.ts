@@ -1,8 +1,7 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
 import { fetchPokemon, mapPool, toPokemonDto, type PokeApiPokemon } from './client'
-import { CACHE_KEY, CACHE_VERSION } from './keys'
+import { CACHE_KEY, CACHE_VERSION, GEN1_COUNT } from './keys'
 
-const GEN1_COUNT = 151
 const DEFAULT_CONCURRENCY = 8
 
 /** Session memory — source of truth after hydrate / ensureCache. */

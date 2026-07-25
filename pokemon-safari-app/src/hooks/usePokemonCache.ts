@@ -5,6 +5,7 @@ import {
   hydrateFromStorage,
   isCacheReady,
 } from '@/services/pokeapi/cache'
+import { GEN1_COUNT } from '@/services/pokeapi/keys'
 import { useUiStore } from '@/store'
 
 export type PokemonCacheStatus = 'idle' | 'loading' | 'ready' | 'error' | 'quota'
@@ -16,8 +17,6 @@ export type PokemonCacheState = {
   retry: () => void
 }
 
-const GEN1_TOTAL = 151
-
 /**
  * Boot prefetch hook — ensureCache when cache missing; exposes progress + retry (D-04, D-05).
  */
@@ -25,7 +24,7 @@ export function usePokemonCache(): PokemonCacheState {
   const setCacheReady = useUiStore((s) => s.setCacheReady)
   const setQuotaSoftFail = useUiStore((s) => s.setQuotaSoftFail)
   const [status, setStatus] = useState<PokemonCacheStatus>('idle')
-  const [progress, setProgress] = useState({ done: 0, total: GEN1_TOTAL })
+  const [progress, setProgress] = useState({ done: 0, total: GEN1_COUNT })
   const [error, setError] = useState<Error | null>(null)
   const running = useRef(false)
   const cancelled = useRef(false)
@@ -59,7 +58,7 @@ export function usePokemonCache(): PokemonCacheState {
           } else {
             setStatus('ready')
           }
-          setProgress({ done: GEN1_TOTAL, total: GEN1_TOTAL })
+          setProgress({ done: GEN1_COUNT, total: GEN1_COUNT })
         }
       } catch (e) {
         if (!cancelled.current) {
@@ -82,7 +81,7 @@ export function usePokemonCache(): PokemonCacheState {
     if (hasValidCache() && isCacheReady()) {
       setStatus('ready')
       setCacheReady(true)
-      setProgress({ done: GEN1_TOTAL, total: GEN1_TOTAL })
+      setProgress({ done: GEN1_COUNT, total: GEN1_COUNT })
       return () => {
         cancelled.current = true
       }

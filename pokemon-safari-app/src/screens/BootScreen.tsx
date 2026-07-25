@@ -5,6 +5,7 @@ import { PixelButton } from '@/components/PixelButton'
 import { QuotaNote } from '@/components/QuotaNote'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import { usePokemonCache } from '@/hooks/usePokemonCache'
+import { GEN1_COUNT } from '@/services/pokeapi/keys'
 import { useUiStore } from '@/store'
 
 /**
@@ -17,7 +18,7 @@ export function BootScreen() {
   const { status, progress, retry } = usePokemonCache()
   const setQuotaSoftFail = useUiStore((s) => s.setQuotaSoftFail)
   const done = progress.done
-  const total = progress.total || 151
+  const total = progress.total || GEN1_COUNT
   const pct = total > 0 ? Math.min(100, (done / total) * 100) : 0
 
   useEffect(() => {
