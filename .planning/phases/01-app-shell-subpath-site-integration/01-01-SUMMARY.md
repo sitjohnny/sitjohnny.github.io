@@ -92,7 +92,7 @@ Each task was committed atomically:
 2. **Task 1 (GREEN): Vite scaffold with pokemon-safari base** - `a1e8b53` (feat)
 3. **Task 2: Folders, lint/format, Zustand stub, save types** - `083feef` (feat)
 
-**Plan metadata:** (pending docs commit)
+**Plan metadata:** `8b1ed34` (docs: complete plan); `3d00861` / `3790a9b` (state/roadmap)
 
 _Note: TDD Task 1 used test → feat commits; UX tests remain red by design until 01-02._
 

@@ -11,7 +11,7 @@ progress:
   completed_phases: 0
   total_plans: 3
   completed_plans: 1
-  percent: 0
+  percent: 33
 ---
 
 # Project State
@@ -28,30 +28,33 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 Phase: 01 (app-shell-subpath-site-integration) — EXECUTING
 Plan: 2 of 3
 Status: Ready to execute
-Last activity: 2026-07-25 -- Phase 01 execution started
+Last activity: 2026-07-25 -- Completed 01-01-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [███░░░░░░░] 33%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 0
-- Average duration: -
-- Total execution time: 0 hours
+- Total plans completed: 1
+- Average duration: 3min
+- Total execution time: 0.05 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
-| - | - | - | - |
+| 01 | 1 | 3min | 3min |
 
 **Recent Trend:**
 
-- Last 5 plans: none yet
+- Last 5 plans: 01-01 (3min)
 - Trend: -
 
 *Updated after each plan completion*
+
+| Plan | Duration | Tasks | Files |
+|------|----------|-------|-------|
 | Phase 01 P01 | 3min | 2 tasks | 30 files |
 
 ## Accumulated Context
