@@ -48,7 +48,7 @@ Plans:
 
 ### Phase 2: Pokémon Data Layer
 
-**Goal**: Gen 1 Pokémon data is prefetched once into a versioned cache so gameplay never touches the network
+**Goal:** As a player, I want to prefetch Gen 1 Pokémon data once into a versioned local cache behind a Boot screen, so that gameplay never touches the network.
 **Mode:** mvp
 **Depends on**: Phase 1
 **Requirements**: BOOT-04, DATA-01, DATA-02, DATA-04
@@ -60,7 +60,14 @@ Plans:
   4. Pokémon sprites (including shiny variants) render crisp with nearest-neighbor scaling
   5. The PokéAPI cache and the player save live under separate namespaced localStorage keys, so clearing one never corrupts the other
 
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+
+- [ ] 02-01-PLAN.md — Wave 0 failing tests for cache, Boot, Game gate, and PokemonSprite
+- [ ] 02-02-PLAN.md — Cache + Boot progress happy path (DATA-01/02/04 + D-01/D-04)
+- [ ] 02-03-PLAN.md — Retry, Game gate, skip-Boot on warm cache (BOOT-04 + D-02/D-03/D-05/D-10)
+- [ ] 02-04-PLAN.md — PokemonSprite, QuotaNote, Game sync sample (D-06..D-09)
+
 **UI hint**: yes
 
 ### Phase 3: Exploration
@@ -75,7 +82,23 @@ Plans:
   2. Camera follows the player smoothly and tiles render pixelated in the Emerald-inspired style
   3. Player cannot walk through obstacles, and movement stays smooth on a mid-tier phone (no per-frame React re-renders; collision resolved in pure `game/` logic)
 
-**Plans**: TBD
+**Plans:** 4 plansPlans:
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — Map contracts, Forest map data, and pure `game/` movement + collision + grass event emission
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — Playable walking on `/game`: shared keyboard + D-pad input path, explore store, rAF loop, pixelated tile render
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-03-PLAN.md — Motion feel: 200ms step tween, eased map-clamped camera, walk animation, reduced-motion snap
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 03-04-PLAN.md — Bounded `encounter_candidate` seam for Phase 4, map-load error recovery, Phase 4/5 boundary gates
+
 **UI hint**: yes
 
 ### Phase 4: Encounters
@@ -165,8 +188,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. App Shell, Subpath & Site Integration | 3/3 | Complete   | 2026-07-25 |
-| 2. Pokémon Data Layer | 0/TBD | Not started | - |
-| 3. Exploration | 0/TBD | Not started | - |
+| 2. Pokémon Data Layer | 0/4 | Planned | - |
+| 3. Exploration | 0/4 | Planned | - |
 | 4. Encounters | 0/TBD | Not started | - |
 | 5. Capture Flow | 0/TBD | Not started | - |
 | 6. Pokédex | 0/TBD | Not started | - |
