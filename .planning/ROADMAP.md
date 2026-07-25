@@ -24,16 +24,20 @@ Decimal phases appear between their surrounding integers in numeric order.
 ## Phase Details
 
 ### Phase 1: App Shell, Subpath & Site Integration
-**Goal**: The game loads correctly at `/pokemon-safari/` on GitHub Pages with a mobile-first shell, and the root site presents both projects
+**Goal:** As a visitor (child or parent), I want to open Pokémon Safari at `/pokemon-safari/` with a working mobile-first shell and find it listed on the site root, so that I can reach the game without broken assets or a food-crawl-only redirect.
 **Mode:** mvp
 **Depends on**: Nothing (first phase)
 **Requirements**: BOOT-01, BOOT-02, BOOT-03, UX-01
 **Success Criteria** (what must be TRUE):
   1. Player can open `https://sitjohnny.github.io/pokemon-safari/` and the app loads with no 404'd assets, and refreshing on a nested route still works
   2. Visiting the root `sitjohnny.github.io` shows a project listing with links to both Food Crawl and Pokémon Safari (no sole auto-redirect)
-  3. Player can navigate between boot, explore, dex, and settings screens through icon-first chrome that is usable on a phone and responsive on desktop
+  3. Player can navigate between Home, Game, Dex, Pack, and Settings through icon-first chrome that is usable on a phone and responsive on desktop
   4. Project compiles under strict TypeScript with the preferred `src/{assets,components,screens,hooks,services,game,data,store,types,utils}/` layout, versioned save envelope types in place, and Vitest wired
-**Plans**: TBD
+**Plans:** 3 plans
+Plans:
+- [ ] 01-01-PLAN.md — Scaffold Vite/React/TS app, tooling, folders, Zustand stub, SaveEnvelope types, Wave 0 Vitest
+- [ ] 01-02-PLAN.md — Emerald theme, HashRouter AppShell, five placeholders, icon-first BottomNav (UX-01)
+- [ ] 01-03-PLAN.md — Root listing + README + deploy:copy published `pokemon-safari/`
 **UI hint**: yes
 
 ### Phase 2: Pokémon Data Layer
@@ -133,7 +137,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. App Shell, Subpath & Site Integration | 0/TBD | Not started | - |
+| 1. App Shell, Subpath & Site Integration | 0/3 | Planned | - |
 | 2. Pokémon Data Layer | 0/TBD | Not started | - |
 | 3. Exploration | 0/TBD | Not started | - |
 | 4. Encounters | 0/TBD | Not started | - |

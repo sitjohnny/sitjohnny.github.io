@@ -15,35 +15,29 @@ Create the initial Pokémon Safari project scaffold only. Configure tooling, fol
 ## Implementation Decisions
 
 ### Scaffold & Tooling
-- Configure React + TypeScript + Vite for the app under a `/pokemon-safari/` deploy path
-- Install and configure Tailwind CSS (prefer Tailwind v4 via `@tailwindcss/vite` per project research)
-- Configure Zustand (store skeleton / empty slices OK — no gameplay state required yet)
-- Configure React Router with `basename` matching Vite `base: '/pokemon-safari/'`
-- Configure GitHub Pages deployment so built output lands at `/pokemon-safari/`
-- Configure ESLint + Prettier
-- Configure path aliases (e.g. `@/` → `src/`)
-- Preferred folder layout: `src/{assets,components,screens,hooks,services,game,data,store,types,utils}/`
+- **D-01**: Configure React + TypeScript + Vite for the app under a `/pokemon-safari/` deploy path
+- **D-02**: Install and configure Tailwind CSS (prefer Tailwind v4 via `@tailwindcss/vite` per project research)
+- **D-03**: Configure Zustand (store skeleton / empty slices OK — no gameplay state required yet)
+- **D-04**: Configure React Router with `basename` matching Vite `base: '/pokemon-safari/'`
+- **D-05**: Configure GitHub Pages deployment so built output lands at `/pokemon-safari/`
+- **D-06**: Configure ESLint + Prettier
+- **D-07**: Configure path aliases (e.g. `@/` → `src/`)
+- **D-08**: Preferred folder layout: `src/{assets,components,screens,hooks,services,game,data,store,types,utils}/`
 
 ### Theme & Visual Foundations
-- Create a global theme (CSS variables / Tailwind theme tokens) — Emerald-inspired, kid-friendly, mobile-first
-- Create pixel-art CSS utilities
-- Configure nearest-neighbor image rendering (`image-rendering: pixelated` / crisp edges)
+- **D-09**: Create a global theme (CSS variables / Tailwind theme tokens) — Emerald-inspired, kid-friendly, mobile-first
+- **D-10**: Create pixel-art CSS utilities
+- **D-11**: Configure nearest-neighbor image rendering (`image-rendering: pixelated` / crisp edges)
 
 ### Placeholder Screens (routing only — no gameplay)
-- Home
-- Game
-- Pokédex
-- Inventory
-- Settings
+- **D-12**: Placeholder screens — Home, Game, Pokédex, Inventory, Settings
 
 ### Site Integration
-- Root `index.html` / README should list both Food Crawl and Pokémon Safari (no sole redirect that hides Safari)
-- Deep-link / SPA fallback strategy must not break existing `/food-crawl/`
+- **D-13**: Root `index.html` / README should list both Food Crawl and Pokémon Safari (no sole redirect that hides Safari)
+- **D-14**: Deep-link / SPA fallback strategy must not break existing `/food-crawl/` (Phase 1: `createHashRouter`)
 
 ### Hard Stops
-- Application must compile successfully (`tsc` / Vite build)
-- No gameplay implementation in this phase
-- Stop after project setup
+- **D-15**: Application must compile successfully (`tsc` / Vite build); no gameplay; stop after project setup
 
 ### Claude's Discretion
 - Exact package versions within the locked stack

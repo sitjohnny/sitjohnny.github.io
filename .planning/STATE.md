@@ -1,10 +1,10 @@
 ---
 gsd_state_version: '1.0'
-status: planning
+status: ready_to_execute
 progress:
   total_phases: 8
   completed_phases: 0
-  total_plans: 0
+  total_plans: 3
   completed_plans: 0
   percent: 0
 ---
@@ -21,9 +21,9 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 ## Current Position
 
 Phase: 1 of 8 (App Shell, Subpath & Site Integration)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-07-25 — Roadmap created (8 phases, 32/32 requirements mapped)
+Plan: 0 of 3 in current phase
+Status: Ready to execute
+Last activity: 2026-07-25 — Phase 1 planned (3 plans, Walking Skeleton, VALIDATION)
 
 Progress: [░░░░░░░░░░] 0%
 
@@ -56,6 +56,9 @@ Recent decisions affecting current work:
 - Roadmap: 8 vertical phases following the research dependency chain (shell → cache → map → encounters → capture → dex → persistence → polish); each phase from 3 onward ends playable
 - Roadmap: Save envelope *types* designed in Phase 1 even though persist wiring lands in Phase 7 (retrofitting a versioned save is the costliest mistake)
 - Roadmap: All rates/windows/thresholds live in `data/` config (DATA-03 anchored to Phase 4, applied in every later phase)
+- Phase 1: `createHashRouter` + Vite `base: '/pokemon-safari/'` (no origin-root SPA 404) — protects food-crawl
+- Phase 1: Source in `pokemon-safari-app/`; publish build to `pokemon-safari/`
+- Phase 1 CONTEXT decisions numbered D-01…D-15 for plan coverage
 
 ### Pending Todos
 
@@ -63,9 +66,9 @@ None yet.
 
 ### Blockers/Concerns
 
-- Phase 1: GitHub Pages deep-link 404 strategy unresolved (allowlisted root `404.html` vs `createHashRouter`) — must not break food-crawl; decide during Phase 1 planning
 - Phase 3: Map render layer unresolved (CSS transforms vs Canvas 2D) — start CSS transforms behind `components/map` boundary; graduate only if mobile profiling demands
 - Phase 5: Timing-bar windows for a 7-year-old are unmeasured — keep all windows in `data/`, plan real-device playtest with target player
+- Phase 1 deep-link strategy resolved: HashRouter (was open in STATE; closed in RESEARCH + plans)
 
 ## Deferred Items
 
@@ -78,5 +81,5 @@ Items acknowledged and carried forward from previous milestone close:
 ## Session Continuity
 
 Last session: 2026-07-25
-Stopped at: Roadmap and state initialized; ready for `/gsd-plan-phase 1`
+Stopped at: Phase 1 plans written (01-01…01-03 + SKELETON + VALIDATION); ready for `/gsd-execute-phase 1`
 Resume file: None
