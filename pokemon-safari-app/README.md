@@ -1,32 +1,26 @@
-# React + TypeScript + Vite
+# Pokémon Safari (app source)
 
-This template provides a minimal setup to get React working in Vite with HMR and some Oxlint rules.
+Vite + React source for the game published at `/pokemon-safari/` on sitjohnny.github.io.
 
-Currently, two official plugins are available:
+## Scripts
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+| Script | Purpose |
+|--------|---------|
+| `npm run dev` | Local HashRouter app at Vite base `/pokemon-safari/` |
+| `npm run build` | Typecheck + production bundle into `dist/` |
+| `npm run deploy:copy` | Replace repo-root `../pokemon-safari/` with `dist/` (Pages publish folder) |
+| `npm run preview` | Preview the production build with Vite (`base` preserved) |
+| `npm run test` | Vitest |
+| `npm run test:root` | Assert site-root dual-project listing (BOOT-02) |
 
-## React Compiler
+## Local full-site check
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+After a publishable build:
 
-## Expanding the Oxlint configuration
-
-If you are developing a production application, we recommend enabling type-aware lint rules by installing `oxlint-tsgolint` and editing `.oxlintrc.json`:
-
-```json
-{
-  "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "plugins": ["react", "typescript", "oxc"],
-  "options": {
-    "typeAware": true
-  },
-  "rules": {
-    "react/rules-of-hooks": "error",
-    "react/only-export-components": ["warn", { "allowConstantExport": true }]
-  }
-}
+```bash
+npm run build && npm run deploy:copy && npx --yes serve .. -p 4173
 ```
 
-See the [Oxlint rules documentation](https://oxc.rs/docs/guide/usage/linter/rules) for the full list of rules and categories.
+Or from this directory: `npm run build && npm run preview`.
+
+Do **not** add an origin-root `404.html` SPA fallback — that would break `/food-crawl/`. HashRouter keeps deep links inside `/pokemon-safari/`.

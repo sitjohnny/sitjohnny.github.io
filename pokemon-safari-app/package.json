@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "deploy:copy": "rm -rf ../pokemon-safari && mkdir -p ../pokemon-safari && cp -R dist/. ../pokemon-safari/",
     "preview": "vite preview",
     "test": "vitest run",
     "test:root": "node scripts/assert-root-listing.mjs",
