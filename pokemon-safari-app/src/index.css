@@ -55,6 +55,46 @@
     touch-action: none;
     user-select: none;
   }
+
+  .player-sprite {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    box-shadow: 0 0 0 1px #1a3324;
+    will-change: transform;
+  }
+
+  .player-sprite .player-leg-left,
+  .player-sprite .player-leg-right {
+    position: absolute;
+    bottom: 4px;
+    width: 6px;
+    height: 10px;
+    background: #1a3324;
+  }
+
+  .player-sprite .player-leg-left {
+    left: 10px;
+  }
+
+  .player-sprite .player-leg-right {
+    right: 10px;
+  }
+
+  .player-sprite[data-frame='0'] .player-leg-left {
+    transform: translateY(0);
+  }
+
+  .player-sprite[data-frame='0'] .player-leg-right {
+    transform: translateY(3px);
+  }
+
+  .player-sprite[data-frame='1'] .player-leg-left {
+    transform: translateY(3px);
+  }
+
+  .player-sprite[data-frame='1'] .player-leg-right {
+    transform: translateY(0);
+  }
 }
 
 .home-meadow {
@@ -86,5 +126,14 @@
 
   .home-brand-fade {
     animation: none;
+  }
+
+  .player-sprite[data-frame='0'] .player-leg-left,
+  .player-sprite[data-frame='0'] .player-leg-right,
+  .player-sprite[data-frame='1'] .player-leg-left,
+  .player-sprite[data-frame='1'] .player-leg-right,
+  .player-sprite .player-leg-left,
+  .player-sprite .player-leg-right {
+    transform: translateY(0) !important;
   }
 }

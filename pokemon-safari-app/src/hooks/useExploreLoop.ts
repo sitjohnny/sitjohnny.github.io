@@ -3,13 +3,11 @@ import type { RefObject } from 'react'
 import { STEP_DURATION_MS, TILE_PX, WALK_FRAME_MS } from '@/data/exploreConfig'
 import { clamp } from '@/game/camera'
 import { completeStep, tileToPx, tryStep } from '@/game/movement'
+import { WALK_FRAME_CLASSES } from '@/components/map/PlayerSprite'
 import { prefersReducedMotion, useMapCamera } from '@/hooks/useMapCamera'
 import { primaryDirection } from '@/hooks/usePlayerInput'
 import { useExploreStore } from '@/store/exploreStore'
 import type { Direction, MapDef, PlayerState, Vec2 } from '@/types/map'
-
-/** Frame indices the CSS walk cycle understands — length kept in sync with PlayerSprite. */
-const WALK_FRAME_COUNT = 2
 
 export type ExploreLoopOptions = {
   map: MapDef
@@ -78,7 +76,7 @@ export function useExploreLoop({
 
     function setWalkFrame(index: number) {
       if (playerRef.current) {
-        playerRef.current.dataset.frame = String(index % WALK_FRAME_COUNT)
+        playerRef.current.dataset.frame = String(index % WALK_FRAME_CLASSES.length)
       }
     }
 
