@@ -74,6 +74,7 @@ export function usePokemonCache(): PokemonCacheState {
     }
   }, [runEnsure, setCacheReady])
 
+  /** In-process resume (D-05) — keeps partial memory IDs; no full page refresh. */
   const retry = useCallback(() => {
     void runEnsure(true)
   }, [runEnsure])

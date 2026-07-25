@@ -53,7 +53,12 @@ describe('BootScreen loading', () => {
 describe('BootScreen failure', () => {
   it('shows Couldn’t catch the Pokédex data and Try again; retry resumes without reload', async () => {
     const user = userEvent.setup()
-    const reloadSpy = vi.spyOn(window.location, 'reload').mockImplementation(() => {})
+    const reloadSpy = vi.fn()
+    const originalLocation = window.location
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: { ...originalLocation, reload: reloadSpy },
+    })
 
     usePokemonCacheMock.mockReturnValue({
       status: 'error',
@@ -70,6 +75,9 @@ describe('BootScreen failure', () => {
 
     expect(retryMock).toHaveBeenCalled()
     expect(reloadSpy).not.toHaveBeenCalled()
-    reloadSpy.mockRestore()
+    Object.defineProperty(window, 'location', {
+      configurable: true,
+      value: originalLocation,
+    })
   })
 })

@@ -5,13 +5,18 @@ import {
   type RouterProviderProps,
 } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
-import { hasValidCache, hydrateFromStorage } from '@/services/pokeapi/cache'
+import {
+  hasValidCache,
+  hydrateFromStorage,
+  isCacheReady,
+} from '@/services/pokeapi/cache'
 import { BootScreen } from '@/screens/BootScreen'
 import { DexScreen } from '@/screens/DexScreen'
 import { GameScreen } from '@/screens/GameScreen'
 import { HomeScreen } from '@/screens/HomeScreen'
 import { PackScreen } from '@/screens/PackScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
+import { useUiStore } from '@/store'
 
 /** Matches Vite `base: '/pokemon-safari/'` (D-04) for createHashRouter (D-14). */
 export const APP_BASENAME = '/pokemon-safari'
@@ -41,8 +46,12 @@ function steerColdOpenToBoot(
   basename: string = APP_BASENAME,
   loc: Location = window.location,
 ): void {
+  // Sync hydrate before first paint — warm cache skips Boot with no flash (D-03).
   hydrateFromStorage()
-  if (hasValidCache()) return
+  if (hasValidCache() && isCacheReady()) {
+    useUiStore.getState().setCacheReady(true)
+    return
+  }
 
   const raw = loc.hash.replace(/^#/, '')
   const path = raw === '' ? '/' : raw.startsWith('/') ? raw : `/${raw}`
