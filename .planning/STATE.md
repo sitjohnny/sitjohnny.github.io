@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 01-01-PLAN.md
-last_updated: "2026-07-25T19:41:32.911Z"
+stopped_at: Completed 01-02-PLAN.md
+last_updated: "2026-07-25T19:41:44.773Z"
 last_activity: 2026-07-25 -- Completed 01-01-PLAN.md
 progress:
   total_phases: 8
@@ -56,6 +56,7 @@ Progress: [███░░░░░░░] 33%
 | Plan | Duration | Tasks | Files |
 |------|----------|-------|-------|
 | Phase 01 P01 | 3min | 2 tasks | 30 files |
+| Phase 01 P02 | 3min | 2 tasks | 16 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,9 @@ Recent decisions affecting current work:
 - [Phase 01]: Pinned typescript@5.9.3 for typescript-eslint peer range (A5)
 - [Phase 01]: Excluded Wave 0 *.test.tsx from tsc -b so missing BottomNav does not block build
 - [Phase 01]: Zustand ui stub uses lastRoute + settings.mute with no persist middleware
+- [Phase 01]: HashRouter basename /pokemon-safari requires syncHashBasename so empty # matches routes
+- [Phase 01]: createAppRouter per App mount keeps Vitest isolation with fresh router state
+- [Phase 01]: Settings Reset Save is confirm-dialog UI only — no localStorage writes (T-01-06)
 
 ### Pending Todos
 
@@ -94,6 +98,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T19:41:32.905Z
-Stopped at: Completed 01-01-PLAN.md
+Last session: 2026-07-25T19:41:44.768Z
+Stopped at: Completed 01-02-PLAN.md
 Resume file: None
