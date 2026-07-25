@@ -473,22 +473,25 @@ function setupCanvas(canvas) {
 | A5 | Placeholder generated tiles sufficient (Kenney CC0 optional) | Assets | Art quality complaint — swap PNGs without logic change |
 | A6 | Phase 3 can ship playable movement before Phase 2 data layer | Open Questions | ROADMAP lists Phase 2 dependency — orchestration order only |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Phase 2 dependency vs movement independence**
+1. **Phase 2 dependency vs movement independence** — RESOLVED
    - What we know: ROADMAP lists Phase 3 depends on Phase 2; CONTEXT allows placeholders and forbids encounter UI; objective says movement must not require Pokémon data.
    - What's unclear: Whether boot gate must block Game screen until Gen 1 cache exists.
    - Recommendation: Implement exploration fully without PokéAPI; if Phase 2 incomplete, keep Game route playable with placeholders. Boot gate is Phase 2's job.
+   - Resolution: Plans 03-01..03-04 implement exploration with no PokéAPI / Phase 2 cache dependency; Game stays playable with placeholder tiles/sprites. Boot gate remains Phase 2's responsibility.
 
-2. **How visible should grass events be in Phase 3?**
+2. **How visible should grass events be in Phase 3?** — RESOLVED
    - What we know: Must emit; must not open encounters.
    - What's unclear: Debug HUD vs silent queue.
    - Recommendation: Silent queue + unit tests asserting emission; optional `import.meta.env.DEV` log only.
+   - Resolution: Plan 03-04 uses a silent `pendingEncounters` queue with unit/integration assertions; DEV-only `console.debug` in `useExploreLoop` (stripped from production). No grass HUD or encounter UI.
 
-3. **Single collision layer vs multi-layer Tiled export**
+3. **Single collision layer vs multi-layer Tiled export** — RESOLVED
    - What we know: Need walkable + grass + visuals.
    - What's unclear: Authoring format long-term.
    - Recommendation: Start with typed TS arrays in `data/maps/forest.ts` (no Tiled dependency for MVP).
+   - Resolution: Plan 03-01 authors `data/maps/forest.ts` as a typed `TileId[]` (`.`, `g`, `#` char map → ground/grass/obstacle). No Tiled dependency in Phase 3.
 
 ## Environment Availability
 
