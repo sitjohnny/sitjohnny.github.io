@@ -6,6 +6,9 @@ type UiState = {
   /** Session flag — Gen 1 poke-cache ready in memory (no persist). */
   cacheReady: boolean
   setCacheReady: (ready: boolean) => void
+  /** Session soft-fail when persist hit QuotaExceeded (D-06) — does not block Explore. */
+  quotaSoftFail: boolean
+  setQuotaSoftFail: (failed: boolean) => void
   settings: {
     mute: boolean
   }
@@ -18,6 +21,8 @@ export const useUiStore = create<UiState>((set) => ({
   setLastRoute: (route) => set({ lastRoute: route }),
   cacheReady: false,
   setCacheReady: (ready) => set({ cacheReady: ready }),
+  quotaSoftFail: false,
+  setQuotaSoftFail: (failed) => set({ quotaSoftFail: failed }),
   settings: {
     mute: false,
   },

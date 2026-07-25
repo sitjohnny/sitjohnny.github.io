@@ -23,6 +23,7 @@ const GEN1_TOTAL = 151
  */
 export function usePokemonCache(): PokemonCacheState {
   const setCacheReady = useUiStore((s) => s.setCacheReady)
+  const setQuotaSoftFail = useUiStore((s) => s.setQuotaSoftFail)
   const [status, setStatus] = useState<PokemonCacheStatus>('idle')
   const [progress, setProgress] = useState({ done: 0, total: GEN1_TOTAL })
   const [error, setError] = useState<Error | null>(null)
@@ -44,6 +45,7 @@ export function usePokemonCache(): PokemonCacheState {
         })
         if (result === 'quota') {
           setStatus('quota')
+          setQuotaSoftFail(true)
         } else {
           setStatus('ready')
         }
@@ -56,7 +58,7 @@ export function usePokemonCache(): PokemonCacheState {
         running.current = false
       }
     },
-    [setCacheReady],
+    [setCacheReady, setQuotaSoftFail],
   )
 
   useEffect(() => {
