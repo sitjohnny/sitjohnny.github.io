@@ -1,14 +1,23 @@
-import { Link } from 'react-router-dom'
-import { EmptyState } from '@/components/EmptyState'
-import { PokemonSprite } from '@/components/PokemonSprite'
+import { useEffect, useRef } from 'react'
+import { CacheGateNotice } from '@/components/CacheGateNotice'
+import { DPad } from '@/components/controls/DPad'
+import { MapViewport } from '@/components/map/MapViewport'
+import { PlayerSprite } from '@/components/map/PlayerSprite'
+import { TileWorld } from '@/components/map/TileWorld'
 import { QuotaNote } from '@/components/QuotaNote'
-import { ScreenTitle } from '@/components/ScreenTitle'
-import { getPokemon, isCacheReady } from '@/services/pokeapi/cache'
+import { TILE_PX } from '@/data/exploreConfig'
+import { forestMap } from '@/data/maps/forest'
+import { useExploreLoop } from '@/hooks/useExploreLoop'
+import { usePlayerInput } from '@/hooks/usePlayerInput'
+import { isCacheReady } from '@/services/pokeapi/cache'
 import { useUiStore } from '@/store'
+import { useExploreStore } from '@/store/exploreStore'
+
+const WORLD_WIDTH_PX = forestMap.width * TILE_PX
+const WORLD_HEIGHT_PX = forestMap.height * TILE_PX
 
 /**
- * Explore/Game — blocked until Gen 1 cache ready (D-02).
- * Ready path uses sync getPokemon only — no PokéAPI client imports (DATA-02).
+ * Explore/Game — the Forest surface, still behind the Gen 1 cache gate (D-02).
  */
 export function GameScreen() {
   const storeReady = useUiStore((s) => s.cacheReady)
@@ -17,47 +26,70 @@ export function GameScreen() {
   const ready = isCacheReady() || storeReady
 
   if (!ready) {
-    return (
-      <section className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8">
-        <EmptyState
-          heading="Safari is still packing…"
-          body="Pokémon data is still loading. Tap below to watch progress, or visit Home and Settings anytime."
-        />
-        <Link
-          to="/boot"
-          className="touch-target pixel-border inline-flex items-center justify-center bg-accent px-4 py-3 font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text touch-manipulation transition-transform duration-[80ms] ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100"
-        >
-          See progress
-        </Link>
-      </section>
-    )
+    return <CacheGateNotice />
   }
 
-  const sample = (() => {
-    try {
-      return getPokemon(25)
-    } catch {
-      try {
-        return getPokemon(1)
-      } catch {
-        return null
-      }
-    }
-  })()
+  return (
+    <ExploreSurface
+      quotaSoftFail={quotaSoftFail}
+      onDismissQuota={() => setQuotaSoftFail(false)}
+    />
+  )
+}
+
+type ExploreSurfaceProps = {
+  quotaSoftFail: boolean
+  onDismissQuota: () => void
+}
+
+function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) {
+  // Facing changes at most once per step — a coarse subscription, not per frame.
+  const facing = useExploreStore((s) => s.facing)
+  const viewportRef = useRef<HTMLDivElement | null>(null)
+  const worldRef = useRef<HTMLDivElement | null>(null)
+  const playerRef = useRef<HTMLDivElement | null>(null)
+  const input = usePlayerInput()
+
+  useExploreLoop({
+    map: forestMap,
+    heldRef: input.heldRef,
+    worldRef,
+    playerRef,
+    viewportRef,
+  })
+
+  // Leaving /game mid-walk must not leave a direction held.
+  const { clear } = input
+  useEffect(() => clear, [clear])
 
   return (
-    <section className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8">
-      <ScreenTitle>Game</ScreenTitle>
-      <p className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
-        Safari pack is ready — adventure starts next.
+    <section className="relative flex flex-1 flex-col">
+      <p className="px-4 py-2 font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-text">
+        Forest
       </p>
-      {sample ? (
-        <PokemonSprite pokemon={sample} alt={sample.name} size={96} />
-      ) : (
-        <EmptyState />
-      )}
+
+      <MapViewport
+        viewportRef={viewportRef}
+        worldRef={worldRef}
+        widthPx={WORLD_WIDTH_PX}
+        heightPx={WORLD_HEIGHT_PX}
+      >
+        <TileWorld map={forestMap} />
+        <PlayerSprite spriteRef={playerRef} facing={facing} />
+      </MapViewport>
+
+      {/* The shell already clears the BottomNav and its safe area, so the
+          overlay only needs its own 16px inset. */}
+      <DPad
+        onPress={input.press}
+        onRelease={input.release}
+        className="absolute bottom-4 left-[max(16px,env(safe-area-inset-left))]"
+      />
+
       {quotaSoftFail ? (
-        <QuotaNote onDismiss={() => setQuotaSoftFail(false)} />
+        <div className="absolute left-1/2 top-10 z-10 -translate-x-1/2">
+          <QuotaNote onDismiss={onDismissQuota} />
+        </div>
       ) : null}
     </section>
   )
