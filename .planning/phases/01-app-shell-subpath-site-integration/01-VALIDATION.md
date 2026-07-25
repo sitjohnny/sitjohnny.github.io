@@ -42,7 +42,7 @@ created: 2026-07-25
 | 01-01-02 | 01 | 1 | BOOT-01 / BOOT-03 | T-01-02 | No localStorage.clear; no persist | build smoke | `npm run build && node scripts/assert-build-base.mjs` | ❌ W0 | ⬜ pending |
 | 01-02-01 | 02 | 2 | UX-01 | — | N/A theme tokens | build | `npm run build` | ❌ W0 | ⬜ pending |
 | 01-02-02 | 02 | 2 | UX-01 / BOOT-01 | T-01-04 / T-01-05 | HashRouter; no raw HTML injection | component | `npm test -- --run` | ❌ W0 | ⬜ pending |
-| 01-03-01 | 03 | 3 | BOOT-02 | T-01-07 | Hardcoded listing hrefs only | file assert | `node scripts/assert-root-listing.mjs` | ❌ W0 | ⬜ pending |
+| 01-03-01 | 03 | 3 | BOOT-02 | T-01-07 | Hardcoded listing hrefs only | file assert | `node pokemon-safari-app/scripts/assert-root-listing.mjs` | ❌ W0 | ⬜ pending |
 | 01-03-02 | 03 | 3 | BOOT-01 | T-01-08 / T-01-09 | No root 404.html; copy only pokemon-safari | build+copy | `npm run build && npm run deploy:copy && node scripts/assert-build-base.mjs` | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*

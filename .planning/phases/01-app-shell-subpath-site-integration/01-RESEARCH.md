@@ -572,22 +572,11 @@ export type SaveEnvelope = SaveEnvelopeV1
 
 **If empty:** N/A — five assumptions listed for planner confirmation.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Source folder name**
-   - What we know: Publish folder must be `pokemon-safari/` for URL path.
-   - What's unclear: Exact source dir name (`pokemon-safari-app` vs `apps/safari`).
-   - Recommendation: Use `pokemon-safari-app/` at repo root; keep publish dir `pokemon-safari/`.
-
-2. **BrowserRouter upgrade timing**
-   - What we know: HashRouter is safe for multi-app; URLs include `#`.
-   - What's unclear: Whether product owner wants pretty URLs in v1.
-   - Recommendation: Ship HashRouter in Phase 1; optional later allowlisted root `404.html` with explicit food-crawl regression test.
-
-3. **Commit built `pokemon-safari/` artifacts to git**
-   - What we know: food-crawl static files are committed; no Actions workflow today.
-   - What's unclear: Prefer committed dist vs GitHub Action.
-   - Recommendation: Commit copied `pokemon-safari/` like food-crawl for v1; add Actions later if desired.
+1. **Source folder name** — RESOLVED: Use `pokemon-safari-app/` at repo root; publish dir `pokemon-safari/` (plans 01-01 / 01-03).
+2. **BrowserRouter upgrade timing** — RESOLVED: Ship `createHashRouter` in Phase 1 (D-14); BrowserRouter + allowlisted root `404.html` deferred.
+3. **Commit built `pokemon-safari/` artifacts to git** — RESOLVED: Commit copied `pokemon-safari/` like `food-crawl/` (plan 01-03); Actions later if desired.
 
 ## Environment Availability
 
