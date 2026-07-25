@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Phase 1 plans written (01-01…01-03 + SKELETON + VALIDATION); ready for `/gsd-execute-phase 1`
-last_updated: "2026-07-25T19:35:59.259Z"
+stopped_at: Completed 01-01-PLAN.md
+last_updated: "2026-07-25T19:37:07.585Z"
 last_activity: 2026-07-25 -- Phase 01 execution started
 progress:
   total_phases: 8
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 - Trend: -
 
 *Updated after each plan completion*
+| Phase 01 P01 | 3min | 2 tasks | 30 files |
 
 ## Accumulated Context
 
@@ -66,6 +67,9 @@ Recent decisions affecting current work:
 - Phase 1: `createHashRouter` + Vite `base: '/pokemon-safari/'` (no origin-root SPA 404) — protects food-crawl
 - Phase 1: Source in `pokemon-safari-app/`; publish build to `pokemon-safari/`
 - Phase 1 CONTEXT decisions numbered D-01…D-15 for plan coverage
+- [Phase 01]: Pinned typescript@5.9.3 for typescript-eslint peer range (A5)
+- [Phase 01]: Excluded Wave 0 *.test.tsx from tsc -b so missing BottomNav does not block build
+- [Phase 01]: Zustand ui stub uses lastRoute + settings.mute with no persist middleware
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T19:35:59.252Z
-Stopped at: Phase 1 plans written (01-01…01-03 + SKELETON + VALIDATION); ready for `/gsd-execute-phase 1`
+Last session: 2026-07-25T19:37:07.579Z
+Stopped at: Completed 01-01-PLAN.md
 Resume file: None
