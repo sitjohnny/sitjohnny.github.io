@@ -1,12 +1,24 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { cleanup, render, screen } from '@testing-library/react'
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { GameScreen } from '@/screens/GameScreen'
 import { HomeScreen } from '@/screens/HomeScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
+import { useUiStore } from '@/store'
+import { clearPokeCacheKey } from '@/test/pokeapi-test-helpers'
+
+beforeEach(() => {
+  clearPokeCacheKey()
+  resetCacheMemoryForTests()
+  useUiStore.setState({ cacheReady: false })
+})
 
 afterEach(() => {
   cleanup()
+  clearPokeCacheKey()
+  resetCacheMemoryForTests()
+  useUiStore.setState({ cacheReady: false })
 })
 
 describe('GameScreen cache gate (D-02)', () => {
