@@ -11,6 +11,7 @@ import { clamp } from '@/game/camera'
 import { completeStep, tileToPx, tryStep } from '@/game/movement'
 import { prefersReducedMotion, useMapCamera } from '@/hooks/useMapCamera'
 import { primaryDirection } from '@/hooks/usePlayerInput'
+import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
 import type { Direction, MapDef, PlayerState, Vec2 } from '@/types/map'
 
@@ -137,8 +138,10 @@ export function useExploreLoop({
         }
       }
 
-      // Only start a new step when no tween is in flight (Pitfall 6 one-step lock).
-      if (!tween) {
+      const encounterActive = useEncounterStore.getState().stage !== 'idle'
+
+      // Finish an in-flight tween, but never start another step under the modal.
+      if (!tween && !encounterActive) {
         store = useExploreStore.getState()
         state = {
           x: store.tile.x,

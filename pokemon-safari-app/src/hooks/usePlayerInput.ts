@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import type { RefObject } from 'react'
+import { isEncounterActive } from '@/store/encounterStore'
 import type { Direction } from '@/types/map'
 
 /**
@@ -55,6 +56,10 @@ export function usePlayerInput(): PlayerInput {
       }
       const dir = KEY_DIRECTION[event.code]
       if (!dir) {
+        return
+      }
+      if (isEncounterActive()) {
+        clear()
         return
       }
       press(dir)
