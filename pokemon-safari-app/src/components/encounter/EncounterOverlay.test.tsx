@@ -225,4 +225,31 @@ describe('EncounterOverlay — shiny session threading (DEX-02 / D-09)', () => {
     expect(img).toHaveAttribute('src', 'https://example.test/s1.png')
     expect(screen.getByText(captureCopy.shiny)).toBeInTheDocument()
   })
+
+  it('renders shiny sprite on EducationQuestion when session.shiny is true', () => {
+    render(<EncounterOverlay />)
+    openShinyAppear()
+    act(() => {
+      useEncounterStore.getState().askQuestion({
+        category: 'multiplication',
+        prompt: 'What is 2 × 3?',
+        factKey: '2x3',
+        a: 2,
+        b: 3,
+        expected: 6,
+      })
+    })
+    const img = screen.getByRole('img', { name: /p1/i })
+    expect(img).toHaveAttribute('src', 'https://example.test/s1.png')
+  })
+
+  it('renders shiny sprite on FleeCard when session.shiny is true', () => {
+    render(<EncounterOverlay />)
+    openShinyAppear()
+    act(() => {
+      useEncounterStore.getState().toFlee()
+    })
+    const img = screen.getByRole('img', { name: /p1/i })
+    expect(img).toHaveAttribute('src', 'https://example.test/s1.png')
+  })
 })

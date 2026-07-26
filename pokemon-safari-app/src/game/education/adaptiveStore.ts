@@ -105,7 +105,12 @@ export function persistAdaptiveStats(stats: AdaptiveStats): 'ok' | 'quota' {
   }
 }
 
+/** Removes only EDU_STATS_KEY (adaptive progress). Never touches poke-cache or save. */
+export function clearAdaptiveStats(): void {
+  localStorage.removeItem(EDU_STATS_KEY)
+}
+
 /** Test-only: removes only EDU_STATS_KEY. */
 export function resetAdaptiveStatsForTests(): void {
-  localStorage.removeItem(EDU_STATS_KEY)
+  clearAdaptiveStats()
 }

@@ -71,10 +71,6 @@ function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) 
 
   return (
     <section className="relative flex min-h-0 flex-1 flex-col">
-      <p className="px-4 py-2 font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-text">
-        Forest
-      </p>
-
       <MapViewport
         viewportRef={viewportRef}
         worldRef={worldLayerRef}

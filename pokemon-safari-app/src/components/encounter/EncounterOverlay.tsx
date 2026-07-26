@@ -133,6 +133,7 @@ export function EncounterOverlay() {
             question={question}
             feedback={feedback}
             onSubmit={submitAnswer}
+            shiny={session.shiny}
           />
         ) : stage === 'timing' ? (
           <TimingBar
@@ -159,7 +160,11 @@ export function EncounterOverlay() {
             onContinue={continueFromResult}
           />
         ) : stage === 'flee' ? (
-          <FleeCard pokemon={pokemon} onContinue={continueFromFlee} />
+          <FleeCard
+            pokemon={pokemon}
+            shiny={session.shiny}
+            onContinue={continueFromFlee}
+          />
         ) : showRecap && education ? (
           <RecapCard {...operandsFromEducation(education)} onContinue={dismissRecap} />
         ) : null}

@@ -1,7 +1,23 @@
 import { useState } from 'react'
-import { EmptyState } from '@/components/EmptyState'
+import { clearAdaptiveStats } from '@/game/education/adaptiveStore'
 import { PixelButton } from '@/components/PixelButton'
 import { ScreenTitle } from '@/components/ScreenTitle'
+import { clearSave } from '@/services/save'
+import { cancelPendingSaveFlush } from '@/services/saveFlush'
+import { useEncounterStore } from '@/store/encounterStore'
+import { useDexStore } from '@/store/dexStore'
+import { useExploreStore } from '@/store/exploreStore'
+
+/** Wipe player progress keys and session stores, then reload. Keeps poke-cache. */
+export function eraseProgress(): void {
+  cancelPendingSaveFlush()
+  useDexStore.setState({ dex: {}, saveSoftFail: false })
+  useExploreStore.getState().reset()
+  useEncounterStore.getState().reset()
+  clearSave()
+  clearAdaptiveStats()
+  window.location.reload()
+}
 
 export function SettingsScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false)
@@ -9,7 +25,6 @@ export function SettingsScreen() {
   return (
     <section className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8">
       <ScreenTitle>Settings</ScreenTitle>
-      <EmptyState />
       <PixelButton variant="destructive" onClick={() => setConfirmOpen(true)}>
         Reset Save
       </PixelButton>
@@ -31,19 +46,10 @@ export function SettingsScreen() {
             Erase your Safari progress on this device? This cannot be undone.
           </p>
           <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:justify-end">
-            <PixelButton
-              variant="secondary"
-              onClick={() => setConfirmOpen(false)}
-            >
+            <PixelButton variant="secondary" onClick={() => setConfirmOpen(false)}>
               Keep Progress
             </PixelButton>
-            <PixelButton
-              variant="destructive"
-              onClick={() => {
-                // Stub only — no localStorage writes in Phase 1 (T-01-06).
-                setConfirmOpen(false)
-              }}
-            >
+            <PixelButton variant="destructive" onClick={eraseProgress}>
               Erase Progress
             </PixelButton>
           </div>

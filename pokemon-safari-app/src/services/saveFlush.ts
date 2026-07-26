@@ -14,6 +14,11 @@ function clearFlushTimer() {
   }
 }
 
+/** Cancel a pending debounced flush without writing (e.g. before erase + reload). */
+export function cancelPendingSaveFlush(): void {
+  clearFlushTimer()
+}
+
 export function flushSaveNow(): void {
   clearFlushTimer()
   const dex = useDexStore.getState().dex

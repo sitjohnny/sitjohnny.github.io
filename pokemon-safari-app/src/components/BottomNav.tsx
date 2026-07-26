@@ -1,10 +1,12 @@
 import { NavLink, useLocation } from 'react-router-dom'
+import pokeballIcon from '@/assets/nav/pokeball.png'
+import dexIcon from '@/assets/nav/dex.png'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useUiStore } from '@/store'
 
 const NAV_ITEMS = [
   { to: '/game', label: 'Game', end: false, icon: GameIcon },
-  { to: '/dex', label: 'Dex', end: false, icon: DexIcon },
+  { to: '/dex', label: 'Pokédex', end: false, icon: DexIcon },
   { to: '/settings', label: 'Settings', end: false, icon: SettingsIcon },
 ] as const
 
@@ -15,8 +17,7 @@ export function BottomNav() {
   const { pathname } = useLocation()
   const isGameRoute = pathname === '/game'
   const isDexRoute = pathname === '/dex'
-  const navInert =
-    (isGameRoute && encounterActive) || (isDexRoute && dexSheetOpen)
+  const navInert = (isGameRoute && encounterActive) || (isDexRoute && dexSheetOpen)
 
   return (
     <nav
@@ -44,7 +45,8 @@ export function BottomNav() {
                   <span className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4]">
                     {label}
                   </span>
-                  <span aria-hidden="true"
+                  <span
+                    aria-hidden="true"
                     className={[
                       'absolute bottom-0 left-1/2 h-1 w-6 -translate-x-1/2 rounded-sm bg-accent transition-transform duration-150 ease-out motion-reduce:transition-none',
                       isActive ? 'scale-x-100' : 'scale-x-0',
@@ -62,52 +64,47 @@ export function BottomNav() {
 
 function GameIcon() {
   return (
-    <svg aria-hidden="true"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="square"
-    >
-      <path d="M4 18c2-4 4-8 8-8s6 4 8 8" />
-      <path d="M8 10c1-2 2-4 4-4s3 2 4 4" />
-      <path d="M7 18h2M15 18h2" />
-    </svg>
+    <img
+      src={pokeballIcon}
+      alt=""
+      aria-hidden="true"
+      width={24}
+      height={24}
+      className="size-6 object-contain"
+      draggable={false}
+    />
   )
 }
 
 function DexIcon() {
   return (
-    <svg aria-hidden="true"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="square"
-    >
-      <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3V4z" />
-      <path d="M8 4v16" />
-    </svg>
+    <img
+      src={dexIcon}
+      alt=""
+      aria-hidden="true"
+      width={24}
+      height={24}
+      className="size-6 object-contain"
+      draggable={false}
+    />
   )
 }
 
 function SettingsIcon() {
   return (
-    <svg aria-hidden="true"
+    <svg
+      aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
-      strokeLinecap="square"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
       <circle cx="12" cy="12" r="3" />
-      <path d="M12 3v2M12 19v2M3 12h2M19 12h2M5.6 5.6l1.4 1.4M17 17l1.4 1.4M5.6 18.4 7 17M17 7l1.4-1.4" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
     </svg>
   )
 }

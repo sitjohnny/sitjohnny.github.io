@@ -45,6 +45,23 @@ describe('EducationQuestion', () => {
     expect(screen.queryByRole('progressbar')).toBeNull()
   })
 
+  it('shiny=true uses front_shiny sprite URL', () => {
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={question}
+        feedback={null}
+        onSubmit={vi.fn()}
+        shiny
+      />,
+    )
+
+    expect(screen.getByRole('img', { name: 'pikachu' })).toHaveAttribute(
+      'src',
+      'https://example.test/s25.png',
+    )
+  })
+
   it('renders the prompt in the numeral font, not the display font', () => {
     render(
       <EducationQuestion

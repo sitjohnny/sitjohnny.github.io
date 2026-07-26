@@ -14,6 +14,7 @@ type EducationQuestionProps = {
   question: EducationQuestionData
   feedback: EducationFeedback | null
   onSubmit: (raw: string) => void
+  shiny?: boolean
 }
 
 const MAX_DIGITS = 4
@@ -23,6 +24,7 @@ export function EducationQuestion({
   question,
   feedback,
   onSubmit,
+  shiny = false,
 }: EducationQuestionProps) {
   const [answer, setAnswer] = useState('')
   const locked = feedback !== null
@@ -47,7 +49,7 @@ export function EducationQuestion({
   return (
     <div className="gba-dialog flex w-full flex-col items-center gap-6 px-6 py-6 text-center">
       <div className="flex flex-col items-center gap-2">
-        <PokemonSprite pokemon={pokemon} size={96} alt={pokemon.name} />
+        <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
         <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
           {pokemon.name}
         </h2>

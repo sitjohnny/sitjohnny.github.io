@@ -54,7 +54,6 @@ describe('GameScreen cache gate (D-02)', () => {
     const cta = screen.getByRole('link', { name: 'See progress' })
     expect(cta).toHaveAttribute('href', expect.stringContaining('/boot'))
   })
-
 })
 
 function renderExplore() {
@@ -137,10 +136,10 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     setDefaultRngForTests(null)
   })
 
-  it('renders the Forest label and the Walk controls D-pad instead of the Phase 1 placeholder', () => {
+  it('renders the Walk controls D-pad instead of the Phase 1 placeholder', () => {
     renderExplore()
 
-    expect(screen.getByText('Forest')).toBeInTheDocument()
+    expect(screen.queryByText('Forest')).not.toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
 
     for (const name of ['Move up', 'Move down', 'Move left', 'Move right']) {
@@ -155,7 +154,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   it('renders terrain canvas and pixelated player sprites on the explore surface', () => {
     renderExplore()
 
-    expect(screen.getByText('Forest')).toBeInTheDocument()
+    expect(screen.queryByText('Forest')).not.toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
     expect(screen.getByTestId('terrain-canvas')).toBeInTheDocument()
     expect(document.querySelectorAll('img.pixelated').length).toBeGreaterThan(0)

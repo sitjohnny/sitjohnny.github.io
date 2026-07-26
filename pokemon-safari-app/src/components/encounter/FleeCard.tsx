@@ -5,6 +5,7 @@ import type { PokemonDto } from '@/types/pokemon'
 
 type FleeCardProps = {
   pokemon: PokemonDto
+  shiny?: boolean
   onContinue: () => void
 }
 
@@ -12,10 +13,10 @@ type FleeCardProps = {
  * Kind flee card after three failed throws (D-04 / D-28) — gba-dialog shell, never destructive chrome.
  * Heading/body come from captureCopy (DATA-03).
  */
-export function FleeCard({ pokemon, onContinue }: FleeCardProps) {
+export function FleeCard({ pokemon, shiny = false, onContinue }: FleeCardProps) {
   return (
     <div className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center">
-      <PokemonSprite pokemon={pokemon} size={96} alt={pokemon.name} />
+      <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
       <h2
         id="encounter-flee-heading"
         className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text"

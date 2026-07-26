@@ -21,10 +21,12 @@ beforeEach(() => {
 })
 
 describe('App route smoke', () => {
-  it('lands on Game with Forest and walk controls', async () => {
+  it('lands on Game with walk controls', async () => {
     render(<App />)
-    expect(await screen.findByText('Forest')).toBeInTheDocument()
-    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('group', { name: 'Walk controls' }),
+    ).toBeInTheDocument()
+    expect(screen.queryByText('Forest')).not.toBeInTheDocument()
   })
 
   it('reaches Dex and Settings via BottomNav', async () => {
