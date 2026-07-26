@@ -1,14 +1,21 @@
-import { useEffect, useRef } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { AppearFlash } from '@/components/encounter/AppearFlash'
+import { BallShake } from '@/components/encounter/BallShake'
+import { CaughtCard } from '@/components/encounter/CaughtCard'
 import { EducationQuestion } from '@/components/encounter/EducationQuestion'
-import { HandoffStub } from '@/components/encounter/HandoffStub'
+import { GradeFlash } from '@/components/encounter/GradeFlash'
 import { RecapCard } from '@/components/encounter/RecapCard'
+import { TimingBar } from '@/components/encounter/TimingBar'
 import { EmptyState } from '@/components/EmptyState'
 import { PixelButton } from '@/components/PixelButton'
+import { PokemonSprite } from '@/components/PokemonSprite'
+import { captureCopy } from '@/data/educationConfig'
 import {
   advanceFromAppear,
-  dismissHandoff,
+  continueFromFlee,
+  continueFromResult,
   dismissRecap,
+  resolveAfterShake,
   submitAnswer,
 } from '@/hooks/useEncounterFlow'
 import { getPokemon } from '@/services/pokeapi/cache'
@@ -38,6 +45,32 @@ function operandsFromEducation(education: EncounterEducationOutcome): {
   return { a, b, product: education.expected }
 }
 
+/**
+ * Minimal flee shell so failed third throws do not hang GameScreen (05-04 owns polish).
+ */
+function FleePlaceholder({
+  pokemon,
+  onContinue,
+}: {
+  pokemon: PokemonDto
+  onContinue: () => void
+}) {
+  return (
+    <div className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center">
+      <PokemonSprite pokemon={pokemon} size={96} alt={pokemon.name} />
+      <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
+        {captureCopy.fleeHeading}
+      </h2>
+      <p className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
+        {captureCopy.fleeBody}
+      </p>
+      <PixelButton variant="primary" className="w-full" onClick={onContinue}>
+        {captureCopy.continueCta}
+      </PixelButton>
+    </div>
+  )
+}
+
 export function EncounterOverlay() {
   const stage = useEncounterStore((state) => state.stage)
   const session = useEncounterStore((state) => state.session)
@@ -45,9 +78,29 @@ export function EncounterOverlay() {
   const feedback = useEncounterStore((state) => state.feedback)
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
+  const [gradeFlashDone, setGradeFlashDone] = useState(false)
   const pokemon = session ? resolveSessionPokemon(session.speciesId) : null
   const labelledBy =
-    stage === 'recap' ? 'encounter-recap-heading' : 'encounter-stage-content'
+    stage === 'recap'
+      ? 'encounter-recap-heading'
+      : stage === 'result'
+        ? 'encounter-caught-heading'
+        : 'encounter-stage-content'
+
+  // Reset GradeFlash → BallShake handoff whenever we enter shake.
+  useEffect(() => {
+    if (stage === 'shake') {
+      setGradeFlashDone(false)
+    }
+  }, [stage])
+
+  const onGradeFlashComplete = useCallback(() => {
+    setGradeFlashDone(true)
+  }, [])
+
+  const onBallShakeComplete = useCallback(() => {
+    resolveAfterShake()
+  }, [])
 
   useEffect(() => {
     if (stage === 'idle') {
@@ -83,6 +136,7 @@ export function EncounterOverlay() {
     (stage === 'question' || stage === 'feedback') && question && pokemon
   const education = session?.education
   const showRecap = stage === 'recap' && education && pokemon
+  const grade = session?.lastGrade
 
   return (
     <div
@@ -118,12 +172,25 @@ export function EncounterOverlay() {
             feedback={feedback}
             onSubmit={submitAnswer}
           />
-        ) : stage === 'handoff' ? (
-          <HandoffStub
+        ) : stage === 'timing' ? (
+          <TimingBar
             pokemon={pokemon}
             captureBonus={session.captureBonus}
-            onDismiss={dismissHandoff}
+            attemptsUsed={session.attemptsUsed}
+            position={session.sweetSpot}
           />
+        ) : stage === 'shake' && grade && !gradeFlashDone ? (
+          <GradeFlash grade={grade} onComplete={onGradeFlashComplete} />
+        ) : stage === 'shake' && gradeFlashDone ? (
+          <BallShake
+            caught={session.lastCaught === true}
+            chance={session.lastChance ?? 0}
+            onComplete={onBallShakeComplete}
+          />
+        ) : stage === 'result' ? (
+          <CaughtCard pokemon={pokemon} onContinue={continueFromResult} />
+        ) : stage === 'flee' ? (
+          <FleePlaceholder pokemon={pokemon} onContinue={continueFromFlee} />
         ) : showRecap && education ? (
           <RecapCard
             {...operandsFromEducation(education)}

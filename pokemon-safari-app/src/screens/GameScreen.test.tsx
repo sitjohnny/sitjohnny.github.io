@@ -378,10 +378,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Capture' }))
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Gotcha!',
-        timeout: 5000,
-      }),
+      await screen.findByRole('heading', { name: 'Gotcha!' }, { timeout: 8000 }),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
@@ -525,7 +522,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Capture' }))
 
     expect(
-      await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+      await screen.findByRole('heading', { name: 'Gotcha!' }, { timeout: 8000 }),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
@@ -563,7 +560,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Capture' }))
 
     expect(
-      await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+      await screen.findByRole('heading', { name: 'Gotcha!' }, { timeout: 8000 }),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
@@ -592,10 +589,9 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Capture' }))
     expect(
-      await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+      await screen.findByRole('heading', { name: 'Gotcha!' }, { timeout: 8000 }),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continue' }))
-
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull()
     })
@@ -655,7 +651,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       await user.click(screen.getByRole('button', { name: 'Capture' }))
 
       expect(
-        await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+        await screen.findByRole('heading', { name: 'Gotcha!' }, { timeout: 8000 }),
       ).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Continue' }))
 

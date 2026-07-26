@@ -1,6 +1,7 @@
 import { useEffect, useRef } from 'react'
 import { feedbackCopy } from '@/data/educationConfig'
 import { educationCaptureBonus, encounterTimingMs } from '@/data/rates'
+import { computeCatchChance, rollCapture } from '@/game/capture'
 import {
   loadAdaptiveStats,
   persistAdaptiveStats,
@@ -12,6 +13,7 @@ import {
 } from '@/game/education/answerValidator'
 import { multiplicationProvider } from '@/game/education/questionGenerator'
 import { resolveCandidate } from '@/game/encounter'
+import { gradeAt } from '@/game/timing'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
 import { getPokemon } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
@@ -26,7 +28,9 @@ type EncounterFlowOptions = {
 type EncounterFlowApi = {
   advanceFromAppear: () => void
   submitAnswer: (raw: string) => void
-  dismissHandoff: () => void
+  capture: (position: number) => void
+  continueFromResult: () => void
+  continueFromFlee: () => void
   dismissRecap: () => void
 }
 
@@ -96,9 +100,32 @@ function doSubmitAnswer(rng: Rng, raw: string): void {
   feedbackTimerRef.current = setTimeout(() => {
     feedbackTimerRef.current = null
     if (useEncounterStore.getState().stage === 'feedback') {
-      useEncounterStore.getState().setStage('handoff')
+      useEncounterStore.getState().startTiming()
     }
   }, hold)
+}
+
+function clampPosition(position: number): number {
+  if (!Number.isFinite(position)) return 0
+  return Math.min(1, Math.max(0, position))
+}
+
+function doCapture(rng: Rng, position: number): void {
+  const state = useEncounterStore.getState()
+  if (state.stage !== 'timing') return
+  const session = state.session
+  if (!session) return
+
+  const grade = gradeAt(clampPosition(position), session.sweetSpot, session.rarity)
+  const chance = computeCatchChance({
+    rarity: session.rarity,
+    educationBonus: session.captureBonus,
+    grade,
+    ball: 'poke',
+    berry: false,
+  })
+  const caught = rollCapture(rng, chance)
+  useEncounterStore.getState().registerThrow({ grade, caught, chance })
 }
 
 /** Overlay / tests: advance appear → adaptive question (D-06 sole trigger). */
@@ -106,20 +133,30 @@ export function advanceFromAppear(): void {
   doAdvanceFromAppear(flowRngRef.current)
 }
 
-/** Overlay / tests: validate, persist, and schedule handoff. */
+/** Overlay / tests: validate, persist, and schedule timing (D-03). */
 export function submitAnswer(raw: string): void {
   doSubmitAnswer(flowRngRef.current, raw)
 }
 
-/** Overlay: after Got it — recap only when the answer was wrong (D-14). */
-export function dismissHandoff(): void {
+/** Overlay / tests: freeze timing, grade, roll before shake (D-21 / D-31). */
+export function capture(position: number): void {
+  doCapture(flowRngRef.current, position)
+}
+
+/** Overlay: after Gotcha Continue — recap only when the answer was wrong (D-29). */
+export function continueFromResult(): void {
   const { stage, session } = useEncounterStore.getState()
-  if (stage !== 'handoff') return
+  if (stage !== 'result' && stage !== 'flee') return
   if (session?.education && session.education.correct === false) {
     useEncounterStore.getState().toRecap()
     return
   }
   useEncounterStore.getState().close()
+}
+
+/** Overlay: flee Continue uses the same recap/close branch as result (D-29). */
+export function continueFromFlee(): void {
+  continueFromResult()
 }
 
 /** Overlay: Continue on the Quick recap always returns to explore. */
@@ -129,7 +166,27 @@ export function dismissRecap(): void {
 }
 
 /**
- * Single Phase 4 queue consumer: drain one candidate, restore the FIFO
+ * After BallShake fail ending: remount timing if attempts remain, else flee.
+ * Minimal shell so GameScreen does not hang when a roll fails (05-04 owns polish).
+ */
+export function resolveAfterShake(): void {
+  const state = useEncounterStore.getState()
+  if (state.stage !== 'shake') return
+  const session = state.session
+  if (!session) return
+  if (session.lastCaught) {
+    useEncounterStore.getState().toResult()
+    return
+  }
+  if (session.attemptsUsed >= 3) {
+    useEncounterStore.getState().toFlee()
+    return
+  }
+  useEncounterStore.getState().startTiming()
+}
+
+/**
+ * Single Phase 4/5 queue consumer: drain one candidate, restore the FIFO
  * remainder, then route the config-driven result into session UI state.
  */
 export function useEncounterFlow(
@@ -142,7 +199,7 @@ export function useEncounterFlow(
 
   useEffect(() => {
     // Zustand subscribe runs synchronously on set — clear the feedback hold
-    // inside close() before a stale timer can advance to handoff (T-04-15).
+    // inside close() before a stale timer can advance to timing (T-04-15).
     const unsub = useEncounterStore.subscribe((state, prev) => {
       if (prev.stage !== 'idle' && state.stage === 'idle') {
         clearFeedbackTimer()
@@ -209,7 +266,9 @@ export function useEncounterFlow(
   return {
     advanceFromAppear: () => doAdvanceFromAppear(rng),
     submitAnswer: (raw: string) => doSubmitAnswer(rng, raw),
-    dismissHandoff,
+    capture: (position: number) => doCapture(rng, position),
+    continueFromResult,
+    continueFromFlee,
     dismissRecap,
   }
 }

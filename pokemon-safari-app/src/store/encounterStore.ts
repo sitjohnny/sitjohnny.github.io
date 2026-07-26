@@ -1,5 +1,7 @@
 import { create } from 'zustand'
 import type { EducationQuestion } from '@/game/education/questionTypes'
+import { sweetSpotFor } from '@/game/timing'
+import type { TimingGrade } from '@/game/timing'
 import type {
   EncounterEducationOutcome,
   EncounterSession,
@@ -17,7 +19,16 @@ type EncounterState = {
   lastFactKey: string | null
   question: EducationQuestion | null
   feedback: { ok: boolean; message: string } | null
-  open: (session: EncounterSession) => void
+  open: (session: Omit<
+    EncounterSession,
+    'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+  > &
+    Partial<
+      Pick<
+        EncounterSession,
+        'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+      >
+    >) => void
   setStage: (stage: EncounterStage) => void
   askQuestion: (question: EducationQuestion) => void
   applyAnswer: (args: {
@@ -25,6 +36,14 @@ type EncounterState = {
     captureBonus: number
     message: string
   }) => void
+  startTiming: () => void
+  registerThrow: (args: {
+    grade: TimingGrade
+    caught: boolean
+    chance: number
+  }) => void
+  toResult: () => void
+  toFlee: () => void
   fail: () => void
   showItemToast: () => void
   hideItemToast: () => void
@@ -44,10 +63,37 @@ function initialState() {
   }
 }
 
+function withCaptureDefaults(
+  session: Omit<
+    EncounterSession,
+    'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+  > &
+    Partial<
+      Pick<
+        EncounterSession,
+        'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+      >
+    >,
+): EncounterSession {
+  return {
+    attemptsUsed: 0,
+    sweetSpot: 0.5,
+    lastGrade: null,
+    lastCaught: null,
+    lastChance: null,
+    ...session,
+  }
+}
+
 export const useEncounterStore = create<EncounterState>((set) => ({
   ...initialState(),
   open: (session) =>
-    set({ stage: 'appear', session, question: null, feedback: null }),
+    set({
+      stage: 'appear',
+      session: withCaptureDefaults(session),
+      question: null,
+      feedback: null,
+    }),
   setStage: (stage) => set({ stage }),
   askQuestion: (question) =>
     set({ question, feedback: null, stage: 'question' }),
@@ -65,6 +111,38 @@ export const useEncounterStore = create<EncounterState>((set) => ({
         stage: 'feedback',
       }
     }),
+  startTiming: () =>
+    set((state) => {
+      if (!state.session) return state
+      const sweetSpot = sweetSpotFor(state.session.attemptsUsed)
+      return {
+        stage: 'timing' as const,
+        session: {
+          ...state.session,
+          sweetSpot,
+          lastGrade: null,
+          lastCaught: null,
+          lastChance: null,
+        },
+        feedback: null,
+      }
+    }),
+  registerThrow: ({ grade, caught, chance }) =>
+    set((state) => {
+      if (!state.session) return state
+      return {
+        stage: 'shake' as const,
+        session: {
+          ...state.session,
+          attemptsUsed: state.session.attemptsUsed + 1,
+          lastGrade: grade,
+          lastCaught: caught,
+          lastChance: chance,
+        },
+      }
+    }),
+  toResult: () => set({ stage: 'result' }),
+  toFlee: () => set({ stage: 'flee' }),
   fail: () => set({ stage: 'error' }),
   showItemToast: () => set({ itemToastVisible: true }),
   hideItemToast: () => set({ itemToastVisible: false }),

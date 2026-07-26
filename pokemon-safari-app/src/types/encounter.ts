@@ -1,5 +1,6 @@
 /** Encounter session contracts — stages and resolutions shared by game, store, and UI. */
 
+import type { TimingGrade } from '@/game/timing'
 import type { BiomeId } from '@/types/map'
 
 export type GrassOutcome = 'pokemon' | 'nothing' | 'item' | 'rare' | 'legendary'
@@ -10,7 +11,10 @@ export type EncounterStage =
   | 'appear'
   | 'question'
   | 'feedback'
-  | 'handoff'
+  | 'timing'
+  | 'shake'
+  | 'result'
+  | 'flee'
   | 'recap'
   | 'error'
 
@@ -29,6 +33,13 @@ export type EncounterSession = {
   education: EncounterEducationOutcome | null
   /** Additive capture chance carried to Phase 5 (D-24). Sourced from educationCaptureBonus. */
   captureBonus: number
+  /** Throws already used this encounter (0–3). */
+  attemptsUsed: number
+  /** Active sweet-spot center for the current timing attempt. */
+  sweetSpot: number
+  lastGrade: TimingGrade | null
+  lastCaught: boolean | null
+  lastChance: number | null
 }
 
 export type EncounterResolution =

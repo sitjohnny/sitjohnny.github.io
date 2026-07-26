@@ -41,7 +41,28 @@ export const recapCopy = {
   closing: 'You’ll see this one again soon.',
 } as const
 
+/** @deprecated Phase 5 retires HandoffStub; kept for any residual imports. */
 export const handoffCopy = {
   heading: 'Ready to throw!',
   body: 'Your catch boost is ready. The timing throw comes next.',
+} as const
+
+/** 05-UI-SPEC Copywriting Contract — capture / flee / grade strings. */
+export const captureCopy = {
+  captureCta: 'Capture',
+  continueCta: 'Continue',
+  mathBoost: 'Math boost: +{n}%',
+  throwOf: 'Throw {n} of 3',
+  grades: {
+    perfect: 'Perfect!',
+    great: 'Great!',
+    good: 'Good!',
+    miss: 'Miss!',
+  },
+  failBeat: 'Oh! It broke free!',
+  gotchaHeading: 'Gotcha!',
+  gotchaBody: '{Name} was caught!',
+  shiny: 'Shiny!',
+  fleeHeading: 'It got away!',
+  fleeBody: 'That’s okay — you’ll find another!',
 } as const
