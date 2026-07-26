@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { PixelButton } from '@/components/PixelButton'
 import { PokemonSprite } from '@/components/PokemonSprite'
+import { TypeBadge } from '@/components/TypeBadge'
+import { formatHeightM, formatWeightKg } from '@/game/formatPokemon'
 import { getPokemon } from '@/services/pokeapi/cache'
 import type { PokemonDto } from '@/types/pokemon'
 import type { DexEntry } from '@/types/save'
@@ -82,12 +84,6 @@ export function DexDetailSheet({ speciesId, entry, onClose }: DexDetailSheetProp
         {isCaught ? (
           pokemon ? (
             <div className="flex flex-col items-center gap-4 text-center">
-              <PokemonSprite
-                pokemon={pokemon}
-                shiny={showShiny}
-                size={96}
-                alt={pokemon.name}
-              />
               <div className="flex w-full flex-col gap-1">
                 <h2
                   id="dex-detail-caught-heading"
@@ -98,7 +94,26 @@ export function DexDetailSheet({ speciesId, entry, onClose }: DexDetailSheetProp
                 <p className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
                   #{num}
                 </p>
+                {pokemon.genus ? (
+                  <p className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
+                    {pokemon.genus}
+                  </p>
+                ) : null}
               </div>
+              {pokemon.types.length > 0 ? (
+                <div className="flex flex-wrap justify-center gap-1">
+                  {pokemon.types.map((type) => (
+                    <TypeBadge key={type} type={type} />
+                  ))}
+                </div>
+              ) : null}
+              <PokemonSprite
+                pokemon={pokemon}
+                shiny={showShiny}
+                variant="artwork"
+                size={128}
+                alt={pokemon.name}
+              />
               {entry.shinyOwned ? (
                 <PixelButton
                   variant="secondary"
@@ -116,6 +131,24 @@ export function DexDetailSheet({ speciesId, entry, onClose }: DexDetailSheetProp
               <p className="w-full font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
                 {pokemon.flavorText ?? 'No Pokédex entry yet.'}
               </p>
+              <dl className="flex w-full flex-col gap-2 text-left">
+                <div>
+                  <dt className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
+                    Height
+                  </dt>
+                  <dd className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
+                    {formatHeightM(pokemon.height)}
+                  </dd>
+                </div>
+                <div>
+                  <dt className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
+                    Weight
+                  </dt>
+                  <dd className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
+                    {formatWeightKg(pokemon.weight)}
+                  </dd>
+                </div>
+              </dl>
               <dl className="flex w-full flex-col gap-2 text-left">
                 <div>
                   <dt className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">

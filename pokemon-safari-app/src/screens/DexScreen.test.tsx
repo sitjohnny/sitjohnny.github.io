@@ -89,6 +89,8 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
       ),
     ).toBeInTheDocument()
     expect(within(dialog).queryByText(/pikachu/i)).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('Electric')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/Mouse Pokémon/)).not.toBeInTheDocument()
 
     await user.click(within(dialog).getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
@@ -148,6 +150,19 @@ describe('DexScreen caught detail + quota (DEX-01/02/03, D-21)', () => {
         makePokemonDto(i + 1, {
           name: i + 1 === 25 ? 'pikachu' : `p${i + 1}`,
           flavorText: i + 1 === 25 ? flavorText : null,
+          ...(i + 1 === 25
+            ? {
+                types: ['electric'],
+                genus: 'Mouse Pokémon',
+                height: 4,
+                weight: 60,
+                sprites: {
+                  front_default: 'https://example.test/25.png',
+                  front_shiny: 'https://example.test/s25.png',
+                  official_artwork: 'https://example.test/art/25.png',
+                },
+              }
+            : {}),
         }),
       ),
     )
@@ -175,6 +190,14 @@ describe('DexScreen caught detail + quota (DEX-01/02/03, D-21)', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByRole('heading', { name: /pikachu/i })).toBeInTheDocument()
     expect(within(dialog).getByText('#025')).toBeInTheDocument()
+    expect(within(dialog).getByText('Mouse Pokémon')).toBeInTheDocument()
+    expect(within(dialog).getByText('Electric')).toBeInTheDocument()
+    expect(within(dialog).getByRole('img', { name: /pikachu/i })).toHaveAttribute(
+      'src',
+      'https://example.test/art/25.png',
+    )
+    expect(within(dialog).getByText('0.4 m')).toBeInTheDocument()
+    expect(within(dialog).getByText('6.0 kg')).toBeInTheDocument()
     expect(within(dialog).getByText(/electricity can cause lightning storms/i)).toBeInTheDocument()
     expect(within(dialog).getByText(/Caught:\s*2/)).toBeInTheDocument()
     expect(within(dialog).getByText(/First seen:/)).toBeInTheDocument()

@@ -23,10 +23,15 @@ beforeEach(() => {
 
 const pikachu = makePokemonDto(25, {
   name: 'pikachu',
+  types: ['electric'],
+  genus: 'Mouse Pokémon',
+  height: 4,
+  weight: 60,
   flavorText: 'When several of these Pokémon gather, their electricity can cause lightning storms.',
   sprites: {
     front_default: 'https://example.test/25.png',
     front_shiny: 'https://example.test/s25.png',
+    official_artwork: 'https://example.test/art/25.png',
   },
 })
 
@@ -123,14 +128,18 @@ describe('DexDetailSheet caught lore (D-03, D-09, D-16, D-20)', () => {
     shinyOwned: false,
   }
 
-  it('caught sheet shows sprite, name, number, flavor, meta, and Close', () => {
+  it('caught sheet shows genus, types, artwork, size, name, flavor, meta, and Close', () => {
     render(
       <DexDetailSheet speciesId={25} entry={caughtEntry} onClose={() => {}} />,
     )
     const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('Mouse Pokémon')).toBeInTheDocument()
+    expect(within(dialog).getByText('Electric')).toBeInTheDocument()
+    expect(within(dialog).getByText('0.4 m')).toBeInTheDocument()
+    expect(within(dialog).getByText('6.0 kg')).toBeInTheDocument()
     expect(within(dialog).getByRole('img', { name: /pikachu/i })).toHaveAttribute(
       'src',
-      'https://example.test/25.png',
+      'https://example.test/art/25.png',
     )
     expect(within(dialog).getByRole('heading', { name: /pikachu/i })).toBeInTheDocument()
     expect(within(dialog).getByText('#025')).toBeInTheDocument()
@@ -173,7 +182,7 @@ describe('DexDetailSheet caught lore (D-03, D-09, D-16, D-20)', () => {
     expect(within(dialog).getByRole('button', { name: 'Show normal' })).toBeInTheDocument()
 
     await user.click(within(dialog).getByRole('button', { name: 'Show normal' }))
-    expect(img).toHaveAttribute('src', 'https://example.test/25.png')
+    expect(img).toHaveAttribute('src', 'https://example.test/art/25.png')
     expect(within(dialog).getByRole('button', { name: 'Show shiny' })).toBeInTheDocument()
 
     await user.click(within(dialog).getByRole('button', { name: 'Show shiny' }))
@@ -187,6 +196,8 @@ describe('DexDetailSheet caught lore (D-03, D-09, D-16, D-20)', () => {
     const dialog = screen.getByRole('dialog')
     expect(within(dialog).getByText('???')).toBeInTheDocument()
     expect(within(dialog).queryByText(/pikachu/i)).not.toBeInTheDocument()
+    expect(within(dialog).queryByText('Electric')).not.toBeInTheDocument()
+    expect(within(dialog).queryByText(/Mouse Pokémon/)).not.toBeInTheDocument()
     expect(within(dialog).queryByRole('img')).not.toBeInTheDocument()
     expect(within(dialog).queryByText(/First seen/)).not.toBeInTheDocument()
     expect(within(dialog).queryByText(/Caught:/)).not.toBeInTheDocument()
