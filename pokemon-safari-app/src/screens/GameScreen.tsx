@@ -1,6 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { CacheGateNotice } from '@/components/CacheGateNotice'
 import { DPad } from '@/components/controls/DPad'
+import { EncounterOverlay } from '@/components/encounter/EncounterOverlay'
+import { ItemToast } from '@/components/encounter/ItemToast'
 import { EmptyState } from '@/components/EmptyState'
 import { MapViewport } from '@/components/map/MapViewport'
 import { PlayerSprite } from '@/components/map/PlayerSprite'
@@ -10,10 +12,12 @@ import { QuotaNote } from '@/components/QuotaNote'
 import { TILE_PX } from '@/data/exploreConfig'
 import { forestMap } from '@/data/maps/forest'
 import { isValidMap } from '@/game/collision'
+import { useEncounterFlow } from '@/hooks/useEncounterFlow'
 import { useExploreLoop } from '@/hooks/useExploreLoop'
 import { usePlayerInput } from '@/hooks/usePlayerInput'
 import { isCacheReady } from '@/services/pokeapi/cache'
 import { useUiStore } from '@/store'
+import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
 
 const WORLD_WIDTH_PX = forestMap.width * TILE_PX
@@ -86,6 +90,10 @@ function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) 
   const worldRef = useRef<HTMLDivElement | null>(null)
   const playerRef = useRef<HTMLDivElement | null>(null)
   const input = usePlayerInput()
+  const stage = useEncounterStore((state) => state.stage)
+  const itemToastVisible = useEncounterStore((state) => state.itemToastVisible)
+
+  useEncounterFlow()
 
   useExploreLoop({
     map: forestMap,
@@ -117,17 +125,27 @@ function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) 
 
       {/* The shell already clears the BottomNav and its safe area, so the
           overlay only needs its own 16px inset. */}
-      <DPad
-        onPress={input.press}
-        onRelease={input.release}
-        className="absolute bottom-4 left-[max(16px,env(safe-area-inset-left))]"
-      />
+      {stage === 'idle' ? (
+        <DPad
+          onPress={input.press}
+          onRelease={input.release}
+          className="absolute bottom-4 left-[max(16px,env(safe-area-inset-left))]"
+        />
+      ) : null}
 
       {quotaSoftFail ? (
         <div className="absolute left-1/2 top-10 z-10 -translate-x-1/2">
           <QuotaNote onDismiss={onDismissQuota} />
         </div>
       ) : null}
+
+      {itemToastVisible ? (
+        <div className="absolute left-1/2 top-10 z-10 -translate-x-1/2">
+          <ItemToast onDismiss={() => useEncounterStore.getState().hideItemToast()} />
+        </div>
+      ) : null}
+
+      <EncounterOverlay />
     </section>
   )
 }
