@@ -125,8 +125,8 @@ async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>
   const step = findStepOnto('grass')
   const key = arrowFor(step.dir)
   useExploreStore.setState({ tile: { ...step.from }, facing: step.dir, moving: false })
-  // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback
-  setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3))
+  // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback, catch roll
+  setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 0))
 
   fireEvent.keyDown(window, { code: key })
   await flushFrames(8)
@@ -336,11 +336,11 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     ).toBe(true)
   })
 
-  it('shows a wild Pokémon, asks a question, then handoff, and returns to the map', async () => {
+  it('shows a wild Pokémon, asks a question, then Capture / Math boost / Gotcha, and returns to the map', async () => {
     const user = userEvent.setup()
     const step = setupGrassApproach()
-    // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback
-    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3))
+    // outcome, species, pool roll, fact pick, feedback, catch roll (0 = always catch)
+    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 0))
     renderExplore()
 
     fireEvent.keyDown(window, { code: arrowFor(step.dir) })
@@ -367,12 +367,23 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     })
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Ready to throw!',
+      await screen.findByRole('button', {
+        name: 'Capture',
         timeout: encounterTimingMs.feedbackHold + 1000,
       }),
     ).toBeInTheDocument()
-    fireEvent.click(screen.getByRole('button', { name: 'Got it' }))
+    expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Ready to throw!' })).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Capture' }))
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Gotcha!',
+        timeout: 5000,
+      }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
@@ -496,7 +507,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
   })
 
-  it('shows Quick recap after a wrong answer and Continue returns to the map', async () => {
+  it('shows Quick recap after a wrong answer catch Continue, then returns to the map', async () => {
     const user = userEvent.setup()
     renderExplore()
     const { a, b } = await walkIntoPokemonEncounter(user)
@@ -505,12 +516,18 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Ready to throw!',
+      await screen.findByRole('button', {
+        name: 'Capture',
         timeout: encounterTimingMs.feedbackHold + 1000,
       }),
     ).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Got it' }))
+    expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Capture' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(
       await screen.findByRole('heading', { name: 'Quick recap' }),
@@ -529,7 +546,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(useExploreStore.getState().tile).not.toEqual(tile)
   })
 
-  it('skips Quick recap after a correct answer and returns straight to the map', async () => {
+  it('skips Quick recap after a correct-answer Gotcha and returns straight to the map', async () => {
     const user = userEvent.setup()
     renderExplore()
     const { a, b } = await walkIntoPokemonEncounter(user)
@@ -538,12 +555,17 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     expect(
-      await screen.findByRole('heading', {
-        name: 'Ready to throw!',
+      await screen.findByRole('button', {
+        name: 'Capture',
         timeout: encounterTimingMs.feedbackHold + 1000,
       }),
     ).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Got it' }))
+    await user.click(screen.getByRole('button', { name: 'Capture' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     expect(screen.queryByRole('heading', { name: 'Quick recap' })).toBeNull()
     expect(screen.queryByText(/Quick recap/)).toBeNull()
@@ -563,12 +585,16 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.type(screen.getByLabelText('Your answer'), String(a * b))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
     expect(
-      await screen.findByRole('heading', {
-        name: 'Ready to throw!',
+      await screen.findByRole('button', {
+        name: 'Capture',
         timeout: encounterTimingMs.feedbackHold + 1000,
       }),
     ).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Got it' }))
+    await user.click(screen.getByRole('button', { name: 'Capture' }))
+    expect(
+      await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).toBeNull()
@@ -620,12 +646,18 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
       expect(
-        await screen.findByRole('heading', {
-          name: 'Ready to throw!',
+        await screen.findByRole('button', {
+          name: 'Capture',
           timeout: encounterTimingMs.feedbackHold + 1000,
         }),
       ).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Got it' }))
+      expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Capture' }))
+
+      expect(
+        await screen.findByRole('heading', { name: 'Gotcha!', timeout: 5000 }),
+      ).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Continue' }))
 
       expect(
         await screen.findByRole('heading', { name: 'Quick recap' }),

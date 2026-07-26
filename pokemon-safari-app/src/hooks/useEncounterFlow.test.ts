@@ -11,6 +11,8 @@ import {
 } from '@/game/education/adaptiveStore'
 import {
   advanceFromAppear,
+  capture,
+  continueFromResult,
   submitAnswer,
   useEncounterFlow,
 } from '@/hooks/useEncounterFlow'
@@ -58,6 +60,25 @@ async function openPokemonAppear(rng: Rng = sequenceRng(0, 0)) {
   await waitFor(() => expect(useEncounterStore.getState().stage).toBe('appear'))
 }
 
+/** Reach timing after a correct answer hold (happy-path capture entry). */
+async function reachTimingAfterCorrect(
+  rng: Rng = sequenceRng(0, 0, 0),
+): Promise<void> {
+  await openPokemonAppear(rng)
+  vi.useFakeTimers()
+  act(() => {
+    advanceFromAppear()
+  })
+  const asked = useEncounterStore.getState().question!
+  act(() => {
+    submitAnswer(String(asked.expected))
+  })
+  act(() => {
+    vi.advanceTimersByTime(encounterTimingMs.feedbackHold)
+  })
+  expect(useEncounterStore.getState().stage).toBe('timing')
+}
+
 describe('useEncounterFlow', () => {
   beforeEach(() => {
     useExploreStore.getState().reset()
@@ -84,7 +105,7 @@ describe('useEncounterFlow', () => {
     render(createElement(QueueLater, { rng: sequenceRng(0, 0), event: candidate() }))
 
     await waitFor(() => expect(useEncounterStore.getState().stage).toBe('appear'))
-    expect(useEncounterStore.getState().session).toEqual({
+    expect(useEncounterStore.getState().session).toMatchObject({
       speciesId: biomeEncounterTables.forest.common[0],
       rarity: 'common',
       biome: 'forest',
@@ -139,14 +160,14 @@ describe('useEncounterFlow', () => {
   it('does not consume another candidate while an encounter is active', async () => {
     render(createElement(Harness, { rng: sequenceRng(0, 0) }))
     act(() => {
-      useEncounterStore.setState({ stage: 'handoff' })
+      useEncounterStore.setState({ stage: 'timing' })
       useExploreStore.getState().pushEncounters([candidate()])
     })
 
     await waitFor(() =>
       expect(useExploreStore.getState().pendingEncounters).toHaveLength(1),
     )
-    expect(useEncounterStore.getState().stage).toBe('handoff')
+    expect(useEncounterStore.getState().stage).toBe('timing')
   })
 
   it('routes a species missing from cache to error instead of throwing', async () => {
@@ -170,7 +191,7 @@ describe('useEncounterFlow', () => {
     expect(state.stage).not.toBe('handoff')
   })
 
-  it('applies a correct answer with capture bonus and advances to handoff after the hold', async () => {
+  it('applies a correct answer with capture bonus and advances to timing after the hold', async () => {
     await openPokemonAppear(sequenceRng(0, 0, 0))
     vi.useFakeTimers()
     act(() => {
@@ -201,7 +222,7 @@ describe('useEncounterFlow', () => {
     })
 
     state = useEncounterStore.getState()
-    expect(state.stage).toBe('handoff')
+    expect(state.stage).toBe('timing')
     expect(state.session?.captureBonus).toBe(educationCaptureBonus.correct)
   })
 
@@ -316,5 +337,89 @@ describe('useEncounterFlow', () => {
 
     expect(useEncounterStore.getState().stage).toBe('idle')
     expect(useEncounterStore.getState().lastFactKey).toBe('7x8')
+  })
+
+  it('capture rolls before shake and stores lastGrade/lastCaught (D-31)', async () => {
+    // Always-catch rng: next() stays at 0 after exhaustion.
+    await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+    const sweetSpot = useEncounterStore.getState().session!.sweetSpot
+
+    act(() => {
+      capture(sweetSpot)
+    })
+
+    const afterThrow = useEncounterStore.getState()
+    expect(afterThrow.stage).toBe('shake')
+    expect(afterThrow.session?.lastCaught).toBe(true)
+    expect(afterThrow.session?.lastGrade).toBe('perfect')
+    expect(afterThrow.session?.lastChance).toBeGreaterThan(0)
+
+    act(() => {
+      useEncounterStore.getState().toResult()
+    })
+    expect(useEncounterStore.getState().stage).toBe('result')
+  })
+
+  it('ignores capture when stage is not timing (D-21)', async () => {
+    await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+    act(() => {
+      capture(useEncounterStore.getState().session!.sweetSpot)
+    })
+    expect(useEncounterStore.getState().stage).toBe('shake')
+    const frozen = useEncounterStore.getState().session
+
+    act(() => {
+      capture(0.5)
+    })
+    expect(useEncounterStore.getState().stage).toBe('shake')
+    expect(useEncounterStore.getState().session).toEqual(frozen)
+  })
+
+  it('continueFromResult closes when education was correct (D-29)', async () => {
+    await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+    act(() => {
+      capture(useEncounterStore.getState().session!.sweetSpot)
+    })
+    act(() => {
+      useEncounterStore.getState().toResult()
+    })
+    act(() => {
+      continueFromResult()
+    })
+    expect(useEncounterStore.getState().stage).toBe('idle')
+  })
+
+  it('continueFromResult goes to recap when education was incorrect (D-29)', async () => {
+    await openPokemonAppear(sequenceRng(0, 0, 0))
+    vi.useFakeTimers()
+    act(() => {
+      advanceFromAppear()
+    })
+    const asked = useEncounterStore.getState().question!
+    act(() => {
+      submitAnswer(String(asked.expected + 1))
+    })
+    act(() => {
+      vi.advanceTimersByTime(encounterTimingMs.feedbackHold)
+    })
+    expect(useEncounterStore.getState().stage).toBe('timing')
+
+    act(() => {
+      capture(useEncounterStore.getState().session!.sweetSpot)
+    })
+    act(() => {
+      useEncounterStore.getState().toResult()
+    })
+    act(() => {
+      continueFromResult()
+    })
+    expect(useEncounterStore.getState().stage).toBe('recap')
+  })
+
+  // 05-04 will unskip — retry/flee vertical slice
+  describe.skip('retry and flee (05-04)', () => {
+    it('three fails advance to flee', () => {
+      expect(true).toBe(false)
+    })
   })
 })
