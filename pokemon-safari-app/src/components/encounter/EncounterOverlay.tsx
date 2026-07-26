@@ -177,7 +177,8 @@ export function EncounterOverlay() {
             pokemon={pokemon}
             captureBonus={session.captureBonus}
             attemptsUsed={session.attemptsUsed}
-            position={session.sweetSpot}
+            sweetSpot={session.sweetSpot}
+            rarity={session.rarity}
           />
         ) : stage === 'shake' && grade && !gradeFlashDone ? (
           <GradeFlash grade={grade} onComplete={onGradeFlashComplete} />

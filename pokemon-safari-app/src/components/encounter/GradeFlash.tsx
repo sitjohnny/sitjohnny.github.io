@@ -10,8 +10,9 @@ type GradeFlashProps = {
 }
 
 /**
- * Brief Perfect/Great/Good/Miss flash then hands off to shake (D-14).
+ * Brief Perfect! / Great! / Good! / Miss! flash then hands off to shake (D-14).
  * AppearFlash-style presentational timer — no capture roll here.
+ * Copy comes from captureCopy.grades.
  */
 export function GradeFlash({ grade, onComplete }: GradeFlashProps) {
   const reducedMotion = prefersReducedMotion()

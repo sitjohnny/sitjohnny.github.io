@@ -70,7 +70,7 @@ describe('TimingBar', () => {
 
   it('fires Capture once from Space and once from Enter on the focused button', async () => {
     const user = userEvent.setup()
-    renderBar()
+    const { unmount } = renderBar()
     const button = screen.getByRole('button', { name: captureCopy.captureCta })
     button.focus()
 
@@ -78,7 +78,10 @@ describe('TimingBar', () => {
     expect(capture).toHaveBeenCalledTimes(1)
 
     capture.mockClear()
-    button.focus()
+    unmount()
+    renderBar()
+    const again = screen.getByRole('button', { name: captureCopy.captureCta })
+    again.focus()
     await user.keyboard(' ')
     expect(capture).toHaveBeenCalledTimes(1)
   })
