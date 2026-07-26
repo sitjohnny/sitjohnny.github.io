@@ -111,7 +111,8 @@ export function selectGenus(
   genera: { genus?: unknown; language?: { name?: string } | null }[],
 ): string | null {
   const hit = genera.find(
-    (g) => g.language?.name === 'en' && typeof g.genus === 'string' && g.genus.length > 0,
+    (g): g is { genus: string; language?: { name?: string } | null } =>
+      g.language?.name === 'en' && typeof g.genus === 'string' && g.genus.length > 0,
   )
   return hit?.genus ?? null
 }
