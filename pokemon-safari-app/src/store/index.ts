@@ -20,7 +20,7 @@ type UiState = {
 
 /** Session UI stub — no persist middleware (Phase 7). */
 export const useUiStore = create<UiState>((set) => ({
-  lastRoute: '/',
+  lastRoute: '/game',
   setLastRoute: (route) => set({ lastRoute: route }),
   cacheReady: false,
   setCacheReady: (ready) => set({ cacheReady: ready }),

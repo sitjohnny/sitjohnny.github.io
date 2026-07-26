@@ -1,4 +1,4 @@
-import { MemoryRouter } from 'react-router-dom'
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
 import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
@@ -47,6 +47,38 @@ describe('BootScreen loading', () => {
     expect(bar).toHaveAttribute('aria-valuemin', '0')
     expect(bar).toHaveAttribute('aria-valuemax', '151')
     expect(bar).toHaveAttribute('aria-valuenow', '42')
+  })
+})
+
+function LocationProbe() {
+  const { pathname } = useLocation()
+  return <div>path:{pathname}</div>
+}
+
+describe('BootScreen ready navigation', () => {
+  it('navigates to /game with replace when cache status becomes ready', () => {
+    usePokemonCacheMock.mockReturnValue({
+      status: 'ready',
+      progress: { done: 151, total: 151 },
+      error: null,
+      retry: retryMock,
+    })
+
+    render(
+      <MemoryRouter
+        basename="/pokemon-safari"
+        initialEntries={['/pokemon-safari/boot']}
+      >
+        <Routes>
+          <Route path="/boot" element={<BootScreen />} />
+          <Route path="/game" element={<div>Game surface</div>} />
+        </Routes>
+        <LocationProbe />
+      </MemoryRouter>,
+    )
+
+    expect(screen.getByText('Game surface')).toBeInTheDocument()
+    expect(screen.getByText('path:/game')).toBeInTheDocument()
   })
 })
 

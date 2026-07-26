@@ -23,7 +23,7 @@ export function BootScreen() {
 
   useEffect(() => {
     if (status === 'ready') {
-      navigate('/', { replace: true })
+      navigate('/game', { replace: true })
     }
   }, [status, navigate])
 
@@ -54,7 +54,7 @@ export function BootScreen() {
           <QuotaNote
             onDismiss={() => {
               setQuotaSoftFail(false)
-              navigate('/', { replace: true })
+              navigate('/game', { replace: true })
             }}
           />
         </div>
