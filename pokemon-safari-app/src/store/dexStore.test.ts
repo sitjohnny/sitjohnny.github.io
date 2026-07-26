@@ -1,0 +1,91 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { CACHE_KEY, EDU_STATS_KEY, SAVE_KEY } from '@/services/pokeapi/keys'
+import { dexSaveDebounceMs } from '@/data/rates'
+import { useDexStore } from '@/store/dexStore'
+
+const SEEDED_CACHE = JSON.stringify({
+  version: 1,
+  fetchedAt: '2026-01-01T00:00:00.000Z',
+  pokemon: [{ id: 1, name: 'bulbasaur' }],
+})
+const SEEDED_EDU = JSON.stringify({
+  version: 1,
+  facts: { '7x8': { correct: 1, incorrect: 0 } },
+})
+
+beforeEach(() => {
+  localStorage.removeItem(SAVE_KEY)
+  localStorage.setItem(CACHE_KEY, SEEDED_CACHE)
+  localStorage.setItem(EDU_STATS_KEY, SEEDED_EDU)
+  vi.useFakeTimers()
+  try {
+    useDexStore.getState().flushNow?.()
+  } catch {
+    // Wave 0
+  }
+})
+
+afterEach(() => {
+  vi.useRealTimers()
+  vi.restoreAllMocks()
+  localStorage.removeItem(SAVE_KEY)
+})
+
+describe('dexStore debounce flush (D-19, D-21)', () => {
+  it('markSeen/recordCatch update in-memory dex immediately', () => {
+    useDexStore.getState().markSeen(25)
+    expect(useDexStore.getState().dex['25']?.seen).toBe(true)
+
+    useDexStore.getState().recordCatch({ speciesId: 25, shiny: true })
+    const entry = useDexStore.getState().dex['25']
+    expect(entry?.catchCount).toBeGreaterThanOrEqual(1)
+    expect(entry?.shinyOwned).toBe(true)
+    expect(entry?.firstCapturedAt).toBeTruthy()
+  })
+
+  it('after advanceTimersByTime(dexSaveDebounceMs) SAVE_KEY receives envelope', () => {
+    useDexStore.getState().markSeen(1)
+    useDexStore.getState().recordCatch({ speciesId: 1, shiny: false })
+    expect(localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    vi.advanceTimersByTime(dexSaveDebounceMs)
+
+    const raw = localStorage.getItem(SAVE_KEY)
+    expect(raw).toBeTruthy()
+    const envelope = JSON.parse(raw!) as { version: number; data: { dex: Record<string, unknown> } }
+    expect(envelope.version).toBe(1)
+    expect(envelope.data.dex['1']).toBeTruthy()
+    expect(localStorage.getItem(CACHE_KEY)).toBe(SEEDED_CACHE)
+    expect(localStorage.getItem(EDU_STATS_KEY)).toBe(SEEDED_EDU)
+  })
+
+  it('quota path sets saveSoftFail true without throwing', () => {
+    const originalSetItem = Storage.prototype.setItem
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(function (
+      this: Storage,
+      key: string,
+      value: string,
+    ) {
+      if (key === SAVE_KEY) {
+        throw new DOMException('Quota exceeded', 'QuotaExceededError')
+      }
+      return originalSetItem.call(this, key, value)
+    })
+
+    expect(() => {
+      useDexStore.getState().markSeen(4)
+      vi.advanceTimersByTime(dexSaveDebounceMs)
+    }).not.toThrow()
+
+    expect(useDexStore.getState().saveSoftFail).toBe(true)
+    expect(useDexStore.getState().dex['4']?.seen).toBe(true)
+    expect(localStorage.getItem(CACHE_KEY)).toBe(SEEDED_CACHE)
+    expect(localStorage.getItem(EDU_STATS_KEY)).toBe(SEEDED_EDU)
+  })
+
+  it('dismissSaveSoftFail clears the soft-fail flag', () => {
+    useDexStore.setState({ saveSoftFail: true })
+    useDexStore.getState().dismissSaveSoftFail()
+    expect(useDexStore.getState().saveSoftFail).toBe(false)
+  })
+})
