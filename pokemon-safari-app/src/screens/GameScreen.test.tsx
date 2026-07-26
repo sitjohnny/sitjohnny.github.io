@@ -130,6 +130,18 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(useExploreStore.getState().tile).toEqual(settled)
   })
 
+  it('walks one tile without leaving geometric leg-stub nodes on the surface', async () => {
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    await flushFrames(4)
+    fireEvent.keyUp(window, { code: 'ArrowDown' })
+    await flushFrames(4)
+
+    expect(document.querySelectorAll('.player-leg-left').length).toBe(0)
+    expect(document.querySelectorAll('.player-leg-right').length).toBe(0)
+  })
+
   it('walks with WASD through the same held-direction path', async () => {
     renderExplore()
     const spawn = forestMap.spawn
