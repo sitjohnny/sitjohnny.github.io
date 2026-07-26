@@ -30,6 +30,17 @@ describe('gradeAt', () => {
     expect(gradeAt(sweetSpot + z.great + 1e-9, sweetSpot, 'legendary')).toBe('good')
     expect(gradeAt(sweetSpot + z.good + 1e-9, sweetSpot, 'legendary')).toBe('miss')
   })
+
+  it('keeps zone widths ordered common > rare > legendary (D-08)', () => {
+    for (const key of ['perfect', 'great', 'good'] as const) {
+      expect(timingBar.zones.common[key]).toBeGreaterThan(
+        timingBar.zones.rare[key],
+      )
+      expect(timingBar.zones.rare[key]).toBeGreaterThan(
+        timingBar.zones.legendary[key],
+      )
+    }
+  })
 })
 
 describe('sweetSpotFor', () => {

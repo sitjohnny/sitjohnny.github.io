@@ -169,6 +169,47 @@ describe('DATA-03 config surface', () => {
     expect(timingBar.sweetSpotOffsets.length).toBeGreaterThanOrEqual(3)
   })
 
+  it('exports steeper capture rarity bases (common easiest, legendary hardest)', () => {
+    expect(captureModifiers.rarity).toEqual({
+      common: 0.75,
+      rare: 0.25,
+      legendary: 0.05,
+    })
+    expect(captureModifiers.rarity.common).toBeGreaterThan(
+      captureModifiers.rarity.rare,
+    )
+    expect(captureModifiers.rarity.rare).toBeGreaterThan(
+      captureModifiers.rarity.legendary,
+    )
+  })
+
+  it('exports steeper timingBar zones with common > rare > legendary widths', () => {
+    expect(timingBar.zones.common).toEqual({
+      perfect: 0.12,
+      great: 0.32,
+      good: 0.5,
+    })
+    expect(timingBar.zones.rare).toEqual({
+      perfect: 0.04,
+      great: 0.15,
+      good: 0.26,
+    })
+    expect(timingBar.zones.legendary).toEqual({
+      perfect: 0.02,
+      great: 0.08,
+      good: 0.14,
+    })
+
+    for (const key of ['perfect', 'great', 'good'] as const) {
+      expect(timingBar.zones.common[key]).toBeGreaterThan(
+        timingBar.zones.rare[key],
+      )
+      expect(timingBar.zones.rare[key]).toBeGreaterThan(
+        timingBar.zones.legendary[key],
+      )
+    }
+  })
+
   it('exports shinyRate and dexSaveDebounceMs for Phase 6 dex (DATA-03)', () => {
     expect(typeof shinyRate).toBe('number')
     expect(shinyRate).toBeGreaterThan(0)
