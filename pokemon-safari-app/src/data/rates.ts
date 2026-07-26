@@ -6,8 +6,7 @@
  */
 export const grassOutcomeWeights = {
   pokemon: 45,
-  nothing: 25,
-  item: 20,
+  nothing: 45,
   rare: 8,
   legendary: 2,
 } as const
@@ -24,7 +23,6 @@ export const encounterTimingMs = {
   spriteReveal: 180,
   feedbackHold: 1000,
   reducedFeedbackHold: 400,
-  itemToast: 1800,
   /** Hold after Capture so the frozen marker is readable before grade flash. */
   timingFreezeHold: 500,
   reducedTimingFreezeHold: 250,

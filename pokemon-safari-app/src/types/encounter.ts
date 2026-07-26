@@ -3,7 +3,7 @@
 import type { TimingGrade } from '@/game/timing'
 import type { BiomeId } from '@/types/map'
 
-export type GrassOutcome = 'pokemon' | 'nothing' | 'item' | 'rare' | 'legendary'
+export type GrassOutcome = 'pokemon' | 'nothing' | 'rare' | 'legendary'
 export type RarityBand = 'common' | 'rare' | 'legendary'
 
 export type EncounterStage =
@@ -47,5 +47,4 @@ export type EncounterSession = {
 
 export type EncounterResolution =
   | { kind: 'nothing' }
-  | { kind: 'item' }
   | { kind: 'pokemon'; speciesId: number; rarity: RarityBand }

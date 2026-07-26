@@ -54,13 +54,13 @@ function stripCommentLines(source: string): string {
 describe('DATA-03 config surface', () => {
   it('exports grassOutcomeWeights with MAP-03 integer weights summing to 100', () => {
     expect(Object.keys(grassOutcomeWeights).sort()).toEqual(
-      ['item', 'legendary', 'nothing', 'pokemon', 'rare'].sort(),
+      ['legendary', 'nothing', 'pokemon', 'rare'].sort(),
     )
     expect(grassOutcomeWeights.pokemon).toBe(45)
-    expect(grassOutcomeWeights.nothing).toBe(25)
-    expect(grassOutcomeWeights.item).toBe(20)
+    expect(grassOutcomeWeights.nothing).toBe(45)
     expect(grassOutcomeWeights.rare).toBe(8)
     expect(grassOutcomeWeights.legendary).toBe(2)
+    expect('item' in grassOutcomeWeights).toBe(false)
     const total = Object.values(grassOutcomeWeights).reduce((a, b) => a + b, 0)
     expect(total).toBe(100)
     for (const w of Object.values(grassOutcomeWeights)) {
@@ -76,7 +76,6 @@ describe('DATA-03 config surface', () => {
       'spriteReveal',
       'feedbackHold',
       'reducedFeedbackHold',
-      'itemToast',
       'timingFreezeHold',
       'reducedTimingFreezeHold',
       'gradeFlash',

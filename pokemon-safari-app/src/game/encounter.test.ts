@@ -14,7 +14,6 @@ import type { GrassOutcome } from '@/types/encounter'
 const OUTCOMES = [
   'pokemon',
   'nothing',
-  'item',
   'rare',
   'legendary',
 ] as const satisfies readonly GrassOutcome[]
@@ -53,7 +52,6 @@ describe('weights', () => {
     const counts: Record<GrassOutcome, number> = {
       pokemon: 0,
       nothing: 0,
-      item: 0,
       rare: 0,
       legendary: 0,
     }
@@ -120,15 +118,14 @@ describe('pool', () => {
 })
 
 describe('resolve', () => {
-  it('rarityForOutcome maps pokemon/rare/legendary and nulls nothing/item', () => {
+  it('rarityForOutcome maps pokemon/rare/legendary and nulls nothing', () => {
     expect(rarityForOutcome('pokemon')).toBe('common')
     expect(rarityForOutcome('rare')).toBe('rare')
     expect(rarityForOutcome('legendary')).toBe('legendary')
     expect(rarityForOutcome('nothing')).toBeNull()
-    expect(rarityForOutcome('item')).toBeNull()
   })
 
-  it('resolveCandidate returns nothing, item, and pool-valid pokemon for forced bands', () => {
+  it('resolveCandidate returns nothing and pool-valid pokemon for forced bands', () => {
     const edges = cumulativeEdges()
     const mid = (lo: number, hi: number) => (lo + hi) / 2
     const starts = [0, ...edges.slice(0, -1).map((e) => e.edge)]
@@ -138,9 +135,6 @@ describe('resolve', () => {
       kind: 'nothing',
     })
 
-    const itemValue = mid(starts[2]!, edges[2]!.edge)
-    expect(resolveCandidate(stubRng([itemValue]), candidate())).toEqual({ kind: 'item' })
-
     const pokemonValue = mid(starts[0]!, edges[0]!.edge)
     const pokemon = resolveCandidate(stubRng([pokemonValue, 0]), candidate())
     expect(pokemon.kind).toBe('pokemon')
@@ -149,7 +143,7 @@ describe('resolve', () => {
       expect(biomeEncounterTables.forest.common).toContain(pokemon.speciesId)
     }
 
-    const rareValue = mid(starts[3]!, edges[3]!.edge)
+    const rareValue = mid(starts[2]!, edges[2]!.edge)
     const rare = resolveCandidate(stubRng([rareValue, 0]), candidate())
     expect(rare.kind).toBe('pokemon')
     if (rare.kind === 'pokemon') {
@@ -157,33 +151,28 @@ describe('resolve', () => {
       expect(biomeEncounterTables.forest.rare).toContain(rare.speciesId)
     }
 
-    const legendaryValue = mid(starts[4]!, edges[4]!.edge)
+    const legendaryValue = mid(starts[3]!, edges[3]!.edge)
     const legendary = resolveCandidate(stubRng([legendaryValue, 0]), candidate())
     expect(legendary.kind).toBe('pokemon')
     if (legendary.kind === 'pokemon') {
       expect(legendary.rarity).toBe('legendary')
-      expect(biomeEncounterTables.forest.legendary).toContain(legendary.speciesId)
+      expect(biomeEncounterTables.forest.legendary).toContain(
+        legendary.speciesId,
+      )
     }
   })
 
-  it('suppressPokemon zeros pokemon bands so rolls become nothing or item only', () => {
-    // Low rolls land in nothing (first non-zero weight under suppressed table).
+  it('suppressPokemon zeros pokemon bands so rolls become nothing only', () => {
     expect(
       resolveCandidate(stubRng([0]), candidate(), { suppressPokemon: true }),
     ).toEqual({ kind: 'nothing' })
     expect(
       resolveCandidate(stubRng([0.2]), candidate(), { suppressPokemon: true }),
     ).toEqual({ kind: 'nothing' })
-
-    // Item share is 20/45 after pokemon/rare/legendary are zeroed.
-    const suppressedItemRoll = 25 / 45 + 1e-9
     expect(
-      resolveCandidate(stubRng([suppressedItemRoll]), candidate(), {
-        suppressPokemon: true,
-      }),
-    ).toEqual({ kind: 'item' })
+      resolveCandidate(stubRng([0.999]), candidate(), { suppressPokemon: true }),
+    ).toEqual({ kind: 'nothing' })
 
-    // Without suppress, a zero roll is still a common pokemon.
     const pokemon = resolveCandidate(stubRng([0, 0]), candidate())
     expect(pokemon.kind).toBe('pokemon')
   })
