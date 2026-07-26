@@ -60,26 +60,32 @@
     will-change: transform;
   }
 
-  /* Stacked Red walk frames: hide all, reveal only the img whose data-dir /
+  /* Stacked Red walk poses: hide all, reveal only the img whose data-dir /
      data-walk matches the root's data-facing / data-frame. The rAF loop is the
-     sole writer of data-frame, so the visible frame changes with no React
-     re-render (MAP-04). Feet fill the tile: 16×16 source scaled to TILE_PX. */
+     sole writer of data-frame, so the visible pose changes with no React
+     re-render (MAP-04). The 16×20 source is scaled 3× and foot-anchored so its
+     head can overhang the tile above. */
   .player-sprite > img {
     position: absolute;
-    inset: 0;
+    left: 0;
+    bottom: 0;
     width: 100%;
-    height: 100%;
+    height: var(--player-sprite-h);
     display: none;
   }
 
   .player-sprite[data-facing='up'][data-frame='0'] > img[data-dir='up'][data-walk='0'],
   .player-sprite[data-facing='up'][data-frame='1'] > img[data-dir='up'][data-walk='1'],
+  .player-sprite[data-facing='up'][data-frame='2'] > img[data-dir='up'][data-walk='2'],
   .player-sprite[data-facing='down'][data-frame='0'] > img[data-dir='down'][data-walk='0'],
   .player-sprite[data-facing='down'][data-frame='1'] > img[data-dir='down'][data-walk='1'],
+  .player-sprite[data-facing='down'][data-frame='2'] > img[data-dir='down'][data-walk='2'],
   .player-sprite[data-facing='left'][data-frame='0'] > img[data-dir='left'][data-walk='0'],
   .player-sprite[data-facing='left'][data-frame='1'] > img[data-dir='left'][data-walk='1'],
+  .player-sprite[data-facing='left'][data-frame='2'] > img[data-dir='left'][data-walk='2'],
   .player-sprite[data-facing='right'][data-frame='0'] > img[data-dir='right'][data-walk='0'],
-  .player-sprite[data-facing='right'][data-frame='1'] > img[data-dir='right'][data-walk='1'] {
+  .player-sprite[data-facing='right'][data-frame='1'] > img[data-dir='right'][data-walk='1'],
+  .player-sprite[data-facing='right'][data-frame='2'] > img[data-dir='right'][data-walk='2'] {
     display: block;
   }
 }

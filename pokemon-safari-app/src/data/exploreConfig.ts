@@ -7,5 +7,9 @@ export const STEP_DURATION_MS = 200
 export const CAMERA_STIFFNESS = 12
 export const WALK_FRAME_MS = 100
 
-/** Frame indices the explore loop cycles through via `data-frame`. */
-export const WALK_FRAME_CLASSES = ['0', '1'] as const
+export const PLAYER_SPRITE_H = 20
+export const PLAYER_SPRITE_H_PX = PLAYER_SPRITE_H * TILE_SCALE
+export const IDLE_POSE = '0'
+
+/** Pose ids the explore loop cycles through: step, stand, other step, stand. */
+export const WALK_CYCLE = ['1', '0', '2', '0'] as const

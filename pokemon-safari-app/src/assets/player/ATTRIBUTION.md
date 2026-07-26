@@ -2,10 +2,11 @@
 
 | Field | Value |
 |-------|-------|
-| Asset class | player overworld walker "Red" (4 facings × 2 walk frames) |
-| Files | `red-{down,up,left,right}-{0,1}.png` (16×16 RGBA) |
-| Source | Original Gen 1–3–inspired fan pixel art for Pokémon Safari |
-| License | MIT (original work created for this repository) |
-| Notes | Hand-authored 16×16 RGBA PNGs with transparent backgrounds so the character reads over the tile terrain. Not ripped from any Nintendo ROM, BIN, or commercial game assets. Inspired by the public look of Gen 1–3 overworld player walkers (red cap, light shirt, blue pants) — no copyrighted sprites copied. |
+| Asset class | FireRed/LeafGreen player overworld walker "Red" (4 facings × 3 poses) |
+| Files | `red-{down,up,left,right}-{0,1,2}.png` (16×20 RGBA) |
+| Source | [Player Sprites — Pokémon FireRed / LeafGreen](https://www.spriters-resource.com/game_boy_advance/pokemonfireredleafgreen/asset/52432/) |
+| Sheet credit | Uploaded to The Spriters Resource by FrenchOrange |
+| Processing | Extracted from the 16×32 walk cells, cropped to 16×20, and keyed from the sheet's orange background to transparency |
+| Usage | Used non-commercially in this Pokémon fan project; not original project artwork |
 
-Required attribution text: © Pokémon Safari project contributors — original fan-inspired pixel player sprites.
+Pokémon and the source sprite artwork are © Nintendo / Creatures Inc. / GAME FREAK inc. The Spriters Resource upload does not grant a redistribution license. This repository records the source and rights holders accurately; inclusion is an explicit project-level exception documented in the Phase 3 UI specification.

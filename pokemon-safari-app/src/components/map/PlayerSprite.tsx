@@ -1,14 +1,18 @@
-import type { RefObject } from 'react'
-import { TILE_PX } from '@/data/exploreConfig'
+import type { CSSProperties, RefObject } from 'react'
+import { PLAYER_SPRITE_H_PX, TILE_PX } from '@/data/exploreConfig'
 import type { Direction } from '@/types/map'
 import redDown0 from '@/assets/player/red-down-0.png'
 import redDown1 from '@/assets/player/red-down-1.png'
+import redDown2 from '@/assets/player/red-down-2.png'
 import redUp0 from '@/assets/player/red-up-0.png'
 import redUp1 from '@/assets/player/red-up-1.png'
+import redUp2 from '@/assets/player/red-up-2.png'
 import redLeft0 from '@/assets/player/red-left-0.png'
 import redLeft1 from '@/assets/player/red-left-1.png'
+import redLeft2 from '@/assets/player/red-left-2.png'
 import redRight0 from '@/assets/player/red-right-0.png'
 import redRight1 from '@/assets/player/red-right-1.png'
+import redRight2 from '@/assets/player/red-right-2.png'
 
 export type PlayerSpriteProps = {
   spriteRef: RefObject<HTMLDivElement | null>
@@ -17,7 +21,7 @@ export type PlayerSpriteProps = {
 
 type Frame = {
   dir: Direction
-  walk: '0' | '1'
+  walk: '0' | '1' | '2'
   src: string
 }
 
@@ -30,12 +34,16 @@ type Frame = {
 const FRAMES: readonly Frame[] = [
   { dir: 'down', walk: '0', src: redDown0 },
   { dir: 'down', walk: '1', src: redDown1 },
+  { dir: 'down', walk: '2', src: redDown2 },
   { dir: 'up', walk: '0', src: redUp0 },
   { dir: 'up', walk: '1', src: redUp1 },
+  { dir: 'up', walk: '2', src: redUp2 },
   { dir: 'left', walk: '0', src: redLeft0 },
   { dir: 'left', walk: '1', src: redLeft1 },
+  { dir: 'left', walk: '2', src: redLeft2 },
   { dir: 'right', walk: '0', src: redRight0 },
   { dir: 'right', walk: '1', src: redRight1 },
+  { dir: 'right', walk: '2', src: redRight2 },
 ]
 
 /**
@@ -52,7 +60,13 @@ export function PlayerSprite({ spriteRef, facing }: PlayerSpriteProps) {
       data-facing={facing}
       data-frame="0"
       aria-hidden="true"
-      style={{ width: TILE_PX, height: TILE_PX }}
+      style={
+        {
+          width: TILE_PX,
+          height: TILE_PX,
+          '--player-sprite-h': `${PLAYER_SPRITE_H_PX}px`,
+        } as CSSProperties
+      }
     >
       {FRAMES.map((frame) => (
         <img

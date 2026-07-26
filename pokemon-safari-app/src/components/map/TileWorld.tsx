@@ -24,7 +24,11 @@ const TILE_SRC: Record<TileId, string> = {
  */
 export const TileWorld = memo(function TileWorld({ map }: TileWorldProps) {
   return (
-    <div aria-hidden="true" className="absolute left-0 top-0">
+    <div
+      aria-hidden="true"
+      className="absolute left-0 top-0"
+      style={{ width: map.width * TILE_PX, height: map.height * TILE_PX }}
+    >
       {map.tiles.map((tile, index) => {
         const x = index % map.width
         const y = Math.floor(index / map.width)

@@ -142,6 +142,25 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(document.querySelectorAll('.player-leg-right').length).toBe(0)
   })
 
+  it('alternates both step poses across consecutive tile steps', async () => {
+    renderExplore()
+    const player = document.querySelector<HTMLElement>('.player-sprite')
+    expect(player).not.toBeNull()
+
+    const observedPoses: string[] = []
+    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    for (let frame = 0; frame < 26; frame += 1) {
+      await flushFrames(1)
+      const pose = player?.dataset.frame
+      if (pose && pose !== observedPoses.at(-1)) {
+        observedPoses.push(pose)
+      }
+    }
+    fireEvent.keyUp(window, { code: 'ArrowDown' })
+
+    expect(observedPoses.slice(0, 4)).toEqual(['1', '0', '2', '0'])
+  })
+
   it('walks with WASD through the same held-direction path', async () => {
     renderExplore()
     const spawn = forestMap.spawn

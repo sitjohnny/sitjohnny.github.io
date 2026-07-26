@@ -1,6 +1,12 @@
 import { useEffect } from 'react'
 import type { RefObject } from 'react'
-import { STEP_DURATION_MS, TILE_PX, WALK_FRAME_CLASSES, WALK_FRAME_MS } from '@/data/exploreConfig'
+import {
+  IDLE_POSE,
+  STEP_DURATION_MS,
+  TILE_PX,
+  WALK_CYCLE,
+  WALK_FRAME_MS,
+} from '@/data/exploreConfig'
 import { clamp } from '@/game/camera'
 import { completeStep, tileToPx, tryStep } from '@/game/movement'
 import { prefersReducedMotion, useMapCamera } from '@/hooks/useMapCamera'
@@ -52,7 +58,7 @@ export function useExploreLoop({
     let viewportWidth = 0
     let viewportHeight = 0
     let tween: ActiveTween | null = null
-    let frameStartedAt = 0
+    let walkPhaseMs = 0
     let lastTime = 0
     let playerPx: Vec2 = tileToPx(useExploreStore.getState().tile)
 
@@ -84,9 +90,9 @@ export function useExploreLoop({
       }
     }
 
-    function setWalkFrame(index: number) {
+    function setPose(pose: string) {
       if (playerRef.current) {
-        playerRef.current.dataset.frame = String(index % WALK_FRAME_CLASSES.length)
+        playerRef.current.dataset.frame = pose
       }
     }
 
@@ -115,18 +121,15 @@ export function useExploreLoop({
         })
 
         if (reduced) {
-          setWalkFrame(0)
+          walkPhaseMs = 0
+          setPose(IDLE_POSE)
         } else {
-          if (frameStartedAt === 0) {
-            frameStartedAt = now
-          }
-          setWalkFrame(Math.floor((now - frameStartedAt) / WALK_FRAME_MS))
+          walkPhaseMs = (walkPhaseMs + dtMs) % (WALK_CYCLE.length * WALK_FRAME_MS)
+          setPose(WALK_CYCLE[Math.floor(walkPhaseMs / WALK_FRAME_MS)])
         }
 
         if (t >= 1) {
           tween = null
-          frameStartedAt = 0
-          setWalkFrame(0)
           const idle = completeStep(state)
           if (!samePlayer(state, idle)) {
             store.setPlayer(idle)
@@ -152,7 +155,8 @@ export function useExploreLoop({
         if (result.events.length > 0) {
           for (const event of result.events) {
             // DEV-only trace (T-03-10) — Vite strips import.meta.env.DEV from production.
-            if (import.meta.env.DEV) console.debug('[explore] encounter_candidate', event.x, event.y)
+            if (import.meta.env.DEV)
+              console.debug('[explore] encounter_candidate', event.x, event.y)
           }
           store.pushEncounters(result.events)
         }
@@ -162,7 +166,8 @@ export function useExploreLoop({
           const durationMs = reduced ? 0 : result.tween.durationMs || STEP_DURATION_MS
           if (durationMs <= 0) {
             writePlayer(result.tween.to)
-            setWalkFrame(0)
+            walkPhaseMs = 0
+            setPose(IDLE_POSE)
             const idle = completeStep(result.next)
             if (!samePlayer(result.next, idle)) {
               store.setPlayer(idle)
@@ -174,13 +179,13 @@ export function useExploreLoop({
               startedAt: now,
               durationMs,
             }
-            frameStartedAt = now
             writePlayer(result.tween.from)
-            setWalkFrame(0)
+            setPose(WALK_CYCLE[Math.floor(walkPhaseMs / WALK_FRAME_MS)])
           }
         } else if (!tween) {
           writePlayer(tileToPx(result.next))
-          setWalkFrame(0)
+          walkPhaseMs = 0
+          setPose(IDLE_POSE)
         }
       }
 
