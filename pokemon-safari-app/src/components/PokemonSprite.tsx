@@ -6,6 +6,10 @@ type PokemonSpriteProps = {
   shiny?: boolean
   size?: 64 | 96
   alt: string
+  /** Uncaught dex tiles pass true → `.sprite-silhouette` on the img (D-02 / D-07). */
+  silhouette?: boolean
+  /** Grid tiles pass 'lazy' — 151 hotlinked images (T-06-11). */
+  loading?: 'lazy' | 'eager'
 }
 
 /**
@@ -16,6 +20,8 @@ export function PokemonSprite({
   shiny = false,
   size = 96,
   alt,
+  silhouette = false,
+  loading,
 }: PokemonSpriteProps) {
   const src = shiny ? pokemon.sprites.front_shiny : pokemon.sprites.front_default
   const [broken, setBroken] = useState(!src)
@@ -37,12 +43,15 @@ export function PokemonSprite({
 
   return (
     <img
-      className="pixelated"
+      className={['pixelated', silhouette ? 'sprite-silhouette' : '']
+        .filter(Boolean)
+        .join(' ')}
       width={size}
       height={size}
       src={src!}
       alt={alt}
       draggable={false}
+      loading={loading}
       onError={() => setBroken(true)}
     />
   )
