@@ -8,11 +8,10 @@ type PixelButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 }
 
 const VARIANT_CLASS: Record<Variant, string> = {
-  primary: 'pixel-border bg-accent text-text',
-  secondary: 'pixel-border bg-secondary text-on-secondary',
-  // Fully red chrome — override the default green pixel-border.
+  primary: 'rounded-[4px] bg-accent text-text shadow-[4px_4px_0_#1a3324]',
+  secondary: 'rounded-[4px] bg-secondary text-on-secondary shadow-[4px_4px_0_#1a3324]',
   destructive:
-    'border-4 border-destructive bg-destructive text-on-secondary rounded-[4px] shadow-[4px_4px_0_#7a2f28]',
+    'rounded-[4px] border-4 border-destructive bg-destructive text-on-secondary shadow-[4px_4px_0_#7a2f28]',
 }
 
 export function PixelButton({
