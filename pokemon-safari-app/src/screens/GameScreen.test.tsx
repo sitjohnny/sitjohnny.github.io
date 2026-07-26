@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BottomNav } from '@/components/BottomNav'
+import { biomeEncounterTables } from '@/data/encounterTables'
 import { encounterTimingMs } from '@/data/rates'
 import { WORLD_SPAWN } from '@/data/worldConfig'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
@@ -354,7 +355,8 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     fireEvent.keyUp(window, { code: arrowFor(step.dir) })
 
     const dialog = await screen.findByRole('dialog')
-    expect(dialog).toHaveTextContent('A wild p10 appeared!')
+    const firstCommon = biomeEncounterTables.forest.common[0]!
+    expect(dialog).toHaveTextContent(`A wild p${firstCommon} appeared!`)
     expect(useExploreStore.getState().pendingEncounters).toEqual([])
 
     const prompt = await screen.findByText(/What is \d+ × \d+\?/)
@@ -394,7 +396,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
   it('keeps a nothing roll silent', async () => {
     const step = setupGrassApproach()
-    setDefaultRngForTests(encounterRng(0.5))
+    setDefaultRngForTests(encounterRng(0.71))
     renderExplore()
 
     fireEvent.keyDown(window, { code: arrowFor(step.dir) })
