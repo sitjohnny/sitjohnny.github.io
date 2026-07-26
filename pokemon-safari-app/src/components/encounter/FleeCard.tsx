@@ -10,7 +10,7 @@ type FleeCardProps = {
 
 /**
  * Kind flee card after three failed throws (D-04 / D-28) — gba-dialog shell, never destructive chrome.
- * Copy contract: "It got away!" / "That’s okay — you’ll find another!" via captureCopy (DATA-03).
+ * Heading/body come from captureCopy (DATA-03).
  */
 export function FleeCard({ pokemon, onContinue }: FleeCardProps) {
   return (
