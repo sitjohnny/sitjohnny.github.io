@@ -14,18 +14,18 @@ const SEEDED_EDU = JSON.stringify({
 })
 
 beforeEach(() => {
-  localStorage.removeItem(SAVE_KEY)
+  vi.useFakeTimers()
   localStorage.setItem(CACHE_KEY, SEEDED_CACHE)
   localStorage.setItem(EDU_STATS_KEY, SEEDED_EDU)
-  vi.useFakeTimers()
-  try {
-    useDexStore.getState().flushNow?.()
-  } catch {
-    // Wave 0
-  }
+  // Reset in-memory dex and cancel any pending debounce before clearing SAVE_KEY
+  // so flushNow cannot re-seed storage from a prior case.
+  useDexStore.setState({ dex: {}, saveSoftFail: false })
+  useDexStore.getState().flushNow()
+  localStorage.removeItem(SAVE_KEY)
 })
 
 afterEach(() => {
+  useDexStore.getState().flushNow()
   vi.useRealTimers()
   vi.restoreAllMocks()
   localStorage.removeItem(SAVE_KEY)
