@@ -136,3 +136,94 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
     expect(img).toHaveAttribute('src', 'https://example.test/25.png')
   })
 })
+
+describe('DexScreen caught detail + quota (DEX-01/02/03, D-21)', () => {
+  function seedCaughtPikachu(overrides: { shinyOwned?: boolean; flavorText?: string | null } = {}) {
+    const flavorText =
+      overrides.flavorText === undefined
+        ? 'When several of these Pokémon gather, their electricity can cause lightning storms.'
+        : overrides.flavorText
+    seedPokeCache(
+      Array.from({ length: 151 }, (_, i) =>
+        makePokemonDto(i + 1, {
+          name: i + 1 === 25 ? 'pikachu' : `p${i + 1}`,
+          flavorText: i + 1 === 25 ? flavorText : null,
+        }),
+      ),
+    )
+    hydrateFromStorage()
+    useDexStore.setState({
+      dex: {
+        '25': {
+          seen: true,
+          catchCount: 2,
+          firstEncounteredAt: '2026-07-26T12:00:00.000Z',
+          firstCapturedAt: '2026-07-25T12:00:00.000Z',
+          shinyOwned: overrides.shinyOwned ?? false,
+        },
+      },
+      saveSoftFail: false,
+    })
+  }
+
+  it('opening a caught tile shows lore fields and Close', async () => {
+    const user = userEvent.setup()
+    seedCaughtPikachu()
+    renderDex()
+
+    await user.click(screen.getByRole('button', { name: /#025 Pikachu/i }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: /pikachu/i })).toBeInTheDocument()
+    expect(within(dialog).getByText('#025')).toBeInTheDocument()
+    expect(within(dialog).getByText(/electricity can cause lightning storms/i)).toBeInTheDocument()
+    expect(within(dialog).getByText(/Caught:\s*2/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/First seen:/)).toBeInTheDocument()
+    expect(within(dialog).getByText(/First caught:/)).toBeInTheDocument()
+    expect(within(dialog).queryByText('???')).not.toBeInTheDocument()
+  })
+
+  it('null flavor shows placeholder; shinyOwned exposes Show normal toggle', async () => {
+    const user = userEvent.setup()
+    seedCaughtPikachu({ shinyOwned: true, flavorText: null })
+    renderDex()
+
+    await user.click(screen.getByRole('button', { name: /#025 Pikachu.*shiny owned/i }))
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByText('No Pokédex entry yet.')).toBeInTheDocument()
+    expect(within(dialog).getByRole('button', { name: 'Show normal' })).toBeInTheDocument()
+  })
+
+  it('saveSoftFail shows Pokédex quota copy and Got it dismisses', async () => {
+    const user = userEvent.setup()
+    useDexStore.setState({ saveSoftFail: true })
+    renderDex()
+
+    const quotaCopy =
+      'Couldn\u2019t save your Pokédex on this device. You can still play this visit.'
+    expect(screen.getByText(quotaCopy)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Got it' }))
+    expect(screen.queryByText(quotaCopy)).not.toBeInTheDocument()
+    expect(useDexStore.getState().saveSoftFail).toBe(false)
+  })
+
+  it('marks Main nav inert while the caught sheet is open and clears it after Close', async () => {
+    const user = userEvent.setup()
+    seedCaughtPikachu()
+    renderDexWithNav()
+
+    await user.click(screen.getByRole('button', { name: /#025 Pikachu/i }))
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    const navOpen = document.querySelector('nav[aria-label="Main"]')
+    expect(navOpen).not.toBeNull()
+    expect(navOpen!.hasAttribute('inert')).toBe(true)
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    const navClosed = document.querySelector('nav[aria-label="Main"]')
+    expect(navClosed).not.toBeNull()
+    expect(navClosed!.hasAttribute('inert')).toBe(false)
+  })
+})
