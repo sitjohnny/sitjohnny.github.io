@@ -47,6 +47,12 @@ function renderDex() {
   )
 }
 
+function dexTileButtons() {
+  return screen.getAllByRole('button').filter((el) =>
+    /Pokémon #\d{3}|#\d{3}/.test(el.getAttribute('aria-label') ?? el.textContent ?? ''),
+  )
+}
+
 function renderDexWithNav() {
   return render(
     <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/dex']}>
@@ -65,9 +71,7 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
 
   it('renders 151 tile buttons and no EmptyState placeholder', () => {
     renderDex()
-    const tiles = screen.getAllByRole('button').filter((el) =>
-      /Pokémon #\d{3}|#\d{3}/.test(el.getAttribute('aria-label') ?? el.textContent ?? ''),
-    )
+    const tiles = dexTileButtons()
     expect(tiles.length).toBe(151)
     expect(screen.queryByText('Safari isn’t ready yet')).not.toBeInTheDocument()
   })
@@ -136,6 +140,37 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
     const img = within(tile).getByRole('img')
     expect(img.className).not.toMatch(/sprite-silhouette/)
     expect(img).toHaveAttribute('src', 'https://example.test/25.png')
+  })
+})
+
+describe('DexScreen filters (DEX filters)', () => {
+  it('Missing filter shows fewer tiles when some species are caught', async () => {
+    const user = userEvent.setup()
+    useDexStore.setState({
+      dex: {
+        '25': {
+          seen: true,
+          catchCount: 1,
+          firstEncounteredAt: '2026-01-01T00:00:00.000Z',
+          firstCapturedAt: '2026-01-01T00:00:00.000Z',
+          shinyOwned: false,
+        },
+      },
+      saveSoftFail: false,
+    })
+    renderDex()
+    expect(dexTileButtons().length).toBe(151)
+
+    await user.click(screen.getByRole('button', { name: 'Missing' }))
+    expect(dexTileButtons().length).toBe(150)
+  })
+
+  it('Shiny filter with no shinies shows empty-state heading', async () => {
+    const user = userEvent.setup()
+    renderDex()
+    await user.click(screen.getByRole('button', { name: 'Shiny' }))
+    expect(screen.getByRole('heading', { name: 'No shiny catches yet.' })).toBeInTheDocument()
+    expect(dexTileButtons().length).toBe(0)
   })
 })
 
