@@ -154,6 +154,11 @@
     animation-timing-function: ease-in-out;
   }
 
+  /* Odd shakes: reverse the rock so direction alternates L→R / R→L. */
+  .ball-rock--rtl {
+    animation-direction: reverse;
+  }
+
   .ball-sparkle {
     position: absolute;
     width: 6px;

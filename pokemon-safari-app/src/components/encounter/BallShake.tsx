@@ -34,9 +34,12 @@ export function BallShake({ caught, onComplete }: BallShakeProps) {
   const [phase, setPhase] = useState<Phase>('shaking')
   /** While shaking (and not reduced), true only during each `shakeOnce` window. */
   const [rocking, setRocking] = useState(() => !reducedMotion)
+  /** Alternate rock direction each shake: ltr = left→right, rtl = right→left. */
+  const [rockDir, setRockDir] = useState<'ltr' | 'rtl'>('ltr')
 
   useEffect(() => {
     setPhase('shaking')
+    setRockDir('ltr')
     let cancelled = false
     const timers: number[] = []
 
@@ -79,7 +82,9 @@ export function BallShake({ caught, onComplete }: BallShakeProps) {
     }
 
     // Distinct rocks with neutral gaps: rock for `once`, idle `gap`, repeat.
+    // Direction flips each cycle so consecutive shakes mirror (L→R, R→L, …).
     let remaining = shakes
+    let nextDir: 'ltr' | 'rtl' = 'ltr'
     const runShakeCycle = () => {
       if (reducedMotion) {
         setRocking(false)
@@ -90,6 +95,7 @@ export function BallShake({ caught, onComplete }: BallShakeProps) {
         })
         return
       }
+      setRockDir(nextDir)
       setRocking(true)
       schedule(once, () => {
         setRocking(false)
@@ -98,6 +104,7 @@ export function BallShake({ caught, onComplete }: BallShakeProps) {
           beginResolve()
           return
         }
+        nextDir = nextDir === 'ltr' ? 'rtl' : 'ltr'
         schedule(gap, runShakeCycle)
       })
     }
@@ -120,6 +127,7 @@ export function BallShake({ caught, onComplete }: BallShakeProps) {
         className={[
           'relative flex h-16 w-16 items-center justify-center',
           rocking ? 'ball-rock' : '',
+          rocking && rockDir === 'rtl' ? 'ball-rock--rtl' : '',
         ]
           .filter(Boolean)
           .join(' ')}
@@ -127,6 +135,7 @@ export function BallShake({ caught, onComplete }: BallShakeProps) {
         data-caught={caught ? 'true' : 'false'}
         data-ending={caught ? 'caught' : 'broke-free'}
         data-phase={phase}
+        data-rock-dir={rocking ? rockDir : undefined}
         style={
           rocking
             ? { animationDuration: `${onceMs}ms`, animationIterationCount: 1 }

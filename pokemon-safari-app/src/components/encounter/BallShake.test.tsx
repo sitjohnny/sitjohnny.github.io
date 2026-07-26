@@ -176,4 +176,22 @@ describe('BallShake sprites + phases', () => {
     render(<BallShake caught onComplete={vi.fn()} />)
     expect(ballRoot().className).not.toMatch(/ball-rock/)
   })
+
+  it('alternates rock direction across consecutive shakes', () => {
+    render(<BallShake caught onComplete={vi.fn()} />)
+    expect(ballRoot().getAttribute('data-rock-dir')).toBe('ltr')
+    expect(ballRoot().className).not.toMatch(/ball-rock--rtl/)
+
+    act(() => {
+      vi.advanceTimersByTime(encounterTimingMs.shakeOnce + encounterTimingMs.shakeGap)
+    })
+    expect(ballRoot().getAttribute('data-rock-dir')).toBe('rtl')
+    expect(ballRoot().className).toMatch(/ball-rock--rtl/)
+
+    act(() => {
+      vi.advanceTimersByTime(encounterTimingMs.shakeOnce + encounterTimingMs.shakeGap)
+    })
+    expect(ballRoot().getAttribute('data-rock-dir')).toBe('ltr')
+    expect(ballRoot().className).not.toMatch(/ball-rock--rtl/)
+  })
 })
