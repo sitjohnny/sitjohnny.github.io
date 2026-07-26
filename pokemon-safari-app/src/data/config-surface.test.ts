@@ -21,6 +21,7 @@ import { biomeUnlockThresholds } from '@/data/unlocks'
 import { dailyRewardAmounts } from '@/data/dailyRewards'
 import { captureModifiers } from '@/data/captureModifiers'
 import { timingBar } from '@/data/timingBar'
+import { primaryTypeColor, typeColors } from '@/data/typeColors'
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -208,6 +209,32 @@ describe('DATA-03 config surface', () => {
         timingBar.zones.legendary[key],
       )
     }
+  })
+
+  it('exports typeColors for Gen 1 types and primaryTypeColor helper', () => {
+    const gen1Types = [
+      'normal',
+      'fire',
+      'water',
+      'electric',
+      'grass',
+      'ice',
+      'fighting',
+      'poison',
+      'ground',
+      'flying',
+      'psychic',
+      'bug',
+      'rock',
+      'ghost',
+      'dragon',
+    ]
+    for (const name of gen1Types) {
+      expect(typeColors[name]).toMatch(/^#[0-9A-Fa-f]{6}$/)
+    }
+    expect(primaryTypeColor(['fire', 'flying'])).toBe(typeColors.fire)
+    expect(primaryTypeColor([])).toBe('#787878')
+    expect(primaryTypeColor(['unknown'])).toBe('#787878')
   })
 
   it('exports shinyRate and dexSaveDebounceMs for Phase 6 dex (DATA-03)', () => {
