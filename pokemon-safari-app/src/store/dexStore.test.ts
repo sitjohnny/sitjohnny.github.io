@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { CACHE_KEY, EDU_STATS_KEY, SAVE_KEY } from '@/services/pokeapi/keys'
 import { dexSaveDebounceMs } from '@/data/rates'
+import { useExploreStore } from '@/store/exploreStore'
 import { useDexStore } from '@/store/dexStore'
 
 const SEEDED_CACHE = JSON.stringify({
@@ -22,6 +23,7 @@ beforeEach(() => {
   useDexStore.setState({ dex: {}, saveSoftFail: false })
   useDexStore.getState().flushNow()
   localStorage.removeItem(SAVE_KEY)
+  useExploreStore.getState().reset()
 })
 
 afterEach(() => {
@@ -52,11 +54,47 @@ describe('dexStore debounce flush (D-19, D-21)', () => {
 
     const raw = localStorage.getItem(SAVE_KEY)
     expect(raw).toBeTruthy()
-    const envelope = JSON.parse(raw!) as { version: number; data: { dex: Record<string, unknown> } }
-    expect(envelope.version).toBe(1)
+    const envelope = JSON.parse(raw!) as {
+      version: number
+      data: {
+        dex: Record<string, unknown>
+        explore: { x: number; y: number; facing: string }
+      }
+    }
+    expect(envelope.version).toBe(2)
     expect(envelope.data.dex['1']).toBeTruthy()
+    expect(envelope.data.explore).toEqual(
+      expect.objectContaining({
+        x: expect.any(Number),
+        y: expect.any(Number),
+        facing: expect.any(String),
+      }),
+    )
     expect(localStorage.getItem(CACHE_KEY)).toBe(SEEDED_CACHE)
     expect(localStorage.getItem(EDU_STATS_KEY)).toBe(SEEDED_EDU)
+  })
+
+  it('dex flush after explore move keeps both slices', () => {
+    useExploreStore.setState({
+      tile: { x: 4, y: 5 },
+      facing: 'up',
+      moving: false,
+      pendingEncounters: [],
+      pokemonImmunitySteps: 0,
+    })
+    useDexStore.getState().markSeen(7)
+    vi.advanceTimersByTime(dexSaveDebounceMs)
+
+    const envelope = JSON.parse(localStorage.getItem(SAVE_KEY)!) as {
+      version: number
+      data: {
+        dex: Record<string, unknown>
+        explore: { x: number; y: number; facing: string }
+      }
+    }
+    expect(envelope.version).toBe(2)
+    expect(envelope.data.dex['7']).toBeTruthy()
+    expect(envelope.data.explore).toEqual({ x: 4, y: 5, facing: 'up' })
   })
 
   it('quota path sets saveSoftFail true without throwing', () => {
