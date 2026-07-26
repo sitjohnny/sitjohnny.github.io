@@ -140,6 +140,10 @@ export function useExploreLoop({
           store.setPlayer(result.next)
         }
         if (result.events.length > 0) {
+          for (const event of result.events) {
+            // DEV-only trace (T-03-10) — Vite strips import.meta.env.DEV from production.
+            if (import.meta.env.DEV) console.debug('[explore] encounter_candidate', event.x, event.y)
+          }
           store.pushEncounters(result.events)
         }
 

@@ -1,5 +1,10 @@
 import { create } from 'zustand'
 import { forestMap } from '@/data/maps/forest'
+import {
+  drainEncounters as drainEncounterQueue,
+  enqueueEncounters,
+  MAX_PENDING_ENCOUNTERS,
+} from '@/game/events'
 import type { Direction, EncounterCandidateEvent, PlayerState, Vec2 } from '@/types/map'
 
 /**
@@ -15,6 +20,12 @@ type ExploreState = {
   tile: Vec2
   facing: Direction
   moving: boolean
+  /**
+   * Phase 4 integration point: pending `encounter_candidate` events from grass
+   * steps. Phase 3 has no consumer by design — Phase 4 reads via
+   * `useExploreStore.getState().drainEncounters()`. Capped at
+   * {@link MAX_PENDING_ENCOUNTERS}.
+   */
   pendingEncounters: EncounterCandidateEvent[]
   setPlayer: (next: PlayerState) => void
   pushEncounters: (events: EncounterCandidateEvent[]) => void
@@ -43,14 +54,20 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
     if (events.length === 0) {
       return
     }
-    set({ pendingEncounters: [...get().pendingEncounters, ...events] })
+    set({
+      pendingEncounters: enqueueEncounters(
+        get().pendingEncounters,
+        events,
+        MAX_PENDING_ENCOUNTERS,
+      ),
+    })
   },
   drainEncounters: () => {
-    const queued = get().pendingEncounters
-    if (queued.length > 0) {
-      set({ pendingEncounters: [] })
+    const { taken, remaining } = drainEncounterQueue(get().pendingEncounters)
+    if (taken.length > 0 || get().pendingEncounters.length > 0) {
+      set({ pendingEncounters: remaining })
     }
-    return queued
+    return taken
   },
   reset: () => set(initialState()),
 }))
