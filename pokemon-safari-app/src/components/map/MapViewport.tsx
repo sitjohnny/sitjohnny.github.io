@@ -4,21 +4,19 @@ import type { ReactNode, RefObject } from 'react'
 export type MapViewportProps = {
   viewportRef: RefObject<HTMLDivElement | null>
   worldRef: RefObject<HTMLDivElement | null>
-  widthPx: number
-  heightPx: number
+  /** Drawn behind the translated player layer (typically TerrainCanvas). */
+  backdrop?: ReactNode
   children: ReactNode
 }
 
 /**
- * Clip rect for the tile world. The world layer beneath is moved by the frame
- * loop through `worldRef` — this component never reads the store and never
- * re-renders while the player walks.
+ * Clip rect for exploration. Backdrop (canvas) stays viewport-fixed; the world
+ * layer under `worldRef` is translated by the frame loop for the player sprite.
  */
 export function MapViewport({
   viewportRef,
   worldRef,
-  widthPx,
-  heightPx,
+  backdrop,
   children,
 }: MapViewportProps) {
   useEffect(() => {
@@ -26,8 +24,6 @@ export function MapViewport({
     if (!node) {
       return
     }
-    // Scoped to the viewport only so the page keeps native gestures elsewhere
-    // (T-03-04).
     const prevent = (event: TouchEvent) => {
       event.preventDefault()
     }
@@ -44,11 +40,8 @@ export function MapViewport({
       ref={viewportRef}
       className="relative flex-1 overflow-hidden bg-dominant touch-none select-none"
     >
-      <div
-        ref={worldRef}
-        className="absolute left-0 top-0 will-change-transform"
-        style={{ width: widthPx, height: heightPx }}
-      >
+      {backdrop}
+      <div ref={worldRef} className="absolute left-0 top-0 will-change-transform">
         {children}
       </div>
     </div>
