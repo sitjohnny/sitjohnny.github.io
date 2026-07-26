@@ -52,17 +52,23 @@ function stripCommentLines(source: string): string {
 }
 
 describe('DATA-03 config surface', () => {
-  it('exports grassOutcomeWeights with MAP-03 integer weights summing to 100', () => {
+  it('exports grassOutcomeWeights with 1% legendary among Pokémon outcomes', () => {
     expect(Object.keys(grassOutcomeWeights).sort()).toEqual(
       ['legendary', 'nothing', 'pokemon', 'rare'].sort(),
     )
-    expect(grassOutcomeWeights.pokemon).toBe(45)
+    expect(grassOutcomeWeights.pokemon).toBe(80)
     expect(grassOutcomeWeights.nothing).toBe(45)
-    expect(grassOutcomeWeights.rare).toBe(8)
-    expect(grassOutcomeWeights.legendary).toBe(2)
+    expect(grassOutcomeWeights.rare).toBe(19)
+    expect(grassOutcomeWeights.legendary).toBe(1)
     expect('item' in grassOutcomeWeights).toBe(false)
-    const total = Object.values(grassOutcomeWeights).reduce((a, b) => a + b, 0)
-    expect(total).toBe(100)
+
+    const pokemonTotal =
+      grassOutcomeWeights.pokemon +
+      grassOutcomeWeights.rare +
+      grassOutcomeWeights.legendary
+    expect(pokemonTotal).toBe(100)
+    expect(grassOutcomeWeights.legendary / pokemonTotal).toBe(0.01)
+
     for (const w of Object.values(grassOutcomeWeights)) {
       expect(Number.isInteger(w)).toBe(true)
     }

@@ -134,7 +134,7 @@ describe('useEncounterFlow', () => {
 
   it.each([
     ['rare', 0.91, biomeEncounterTables.forest.rare],
-    ['legendary', 0.99, biomeEncounterTables.forest.legendary],
+    ['legendary', 0.995, biomeEncounterTables.forest.legendary],
   ] as const)('routes the %s band to its matching pool', async (rarity, roll, pool) => {
     render(createElement(QueueLater, { rng: sequenceRng(roll, 0), event: candidate() }))
 
@@ -146,7 +146,10 @@ describe('useEncounterFlow', () => {
   })
 
   it('keeps nothing silent and idle', async () => {
-    render(createElement(QueueLater, { rng: sequenceRng(0.5), event: candidate() }))
+    // Mid of nothing band under weights pokemon80+nothing45+rare19+legendary1 (total 145)
+    render(
+      createElement(QueueLater, { rng: sequenceRng(0.71), event: candidate() }),
+    )
 
     await waitFor(() =>
       expect(useExploreStore.getState().pendingEncounters).toHaveLength(0),
@@ -345,7 +348,7 @@ describe('useEncounterFlow', () => {
   })
 
   it('never reaches question for nothing outcomes', async () => {
-    render(createElement(QueueLater, { rng: sequenceRng(0.5), event: candidate(1) }))
+    render(createElement(QueueLater, { rng: sequenceRng(0.71), event: candidate(1) }))
     await waitFor(() =>
       expect(useExploreStore.getState().pendingEncounters).toHaveLength(0),
     )
@@ -356,7 +359,7 @@ describe('useEncounterFlow', () => {
     useExploreStore.getState().reset()
     useEncounterStore.getState().reset()
 
-    // 0.75 is still inside the nothing band (0.45–0.90) after item removal
+    // 0.75 is still inside the nothing band (~0.55–0.86) under retuned weights
     render(createElement(QueueLater, { rng: sequenceRng(0.75), event: candidate(2) }))
     await waitFor(() =>
       expect(useExploreStore.getState().pendingEncounters).toHaveLength(0),
