@@ -1,5 +1,8 @@
-import { describe, expect, it, beforeEach } from 'vitest'
-import { postEncounterPokemonImmunitySteps } from '@/data/rates'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { dexSaveDebounceMs, postEncounterPokemonImmunitySteps } from '@/data/rates'
+import { SAVE_KEY } from '@/services/pokeapi/keys'
+import { loadSave, persistSave, resetSaveForTests } from '@/services/save'
+import { useDexStore } from '@/store/dexStore'
 import { useExploreStore } from '@/store/exploreStore'
 
 describe('useExploreStore pokemon immunity', () => {
@@ -49,5 +52,81 @@ describe('useExploreStore pokemon immunity', () => {
     expect(useExploreStore.getState().pokemonImmunitySteps).toBe(
       postEncounterPokemonImmunitySteps,
     )
+  })
+})
+
+describe('useExploreStore persistence', () => {
+  beforeEach(() => {
+    vi.useFakeTimers()
+    resetSaveForTests()
+    useDexStore.setState({ dex: {}, saveSoftFail: false })
+    useExploreStore.getState().reset()
+    useDexStore.getState().flushNow()
+    resetSaveForTests()
+  })
+
+  afterEach(() => {
+    useDexStore.getState().flushNow()
+    vi.useRealTimers()
+    resetSaveForTests()
+  })
+
+  it('setPlayer tile/facing change writes explore into SAVE_KEY after debounce', () => {
+    useExploreStore.getState().setPlayer({
+      x: 2,
+      y: -1,
+      facing: 'right',
+      moving: false,
+    })
+    expect(localStorage.getItem(SAVE_KEY)).toBeNull()
+
+    vi.advanceTimersByTime(dexSaveDebounceMs)
+
+    const envelope = JSON.parse(localStorage.getItem(SAVE_KEY)!) as {
+      version: number
+      data: {
+        dex: Record<string, unknown>
+        explore: { x: number; y: number; facing: string }
+        pendingEncounters?: unknown
+      }
+    }
+    expect(envelope.version).toBe(2)
+    expect(envelope.data.explore).toEqual({ x: 2, y: -1, facing: 'right' })
+    expect(envelope.data).not.toHaveProperty('pendingEncounters')
+  })
+
+  it('hydrates tile and facing from an existing v2 save on re-init path', () => {
+    persistSave({
+      dex: {},
+      explore: { x: 9, y: 8, facing: 'up' },
+    })
+    const loaded = loadSave()
+    useExploreStore.setState({
+      tile: { x: loaded.explore.x, y: loaded.explore.y },
+      facing: loaded.explore.facing,
+      moving: false,
+      pendingEncounters: [],
+      pokemonImmunitySteps: 0,
+    })
+    expect(useExploreStore.getState().tile).toEqual({ x: 9, y: 8 })
+    expect(useExploreStore.getState().facing).toBe('up')
+  })
+
+  it('moving-only updates do not schedule a save by themselves', () => {
+    useExploreStore.setState({
+      tile: { x: 1, y: 1 },
+      facing: 'down',
+      moving: false,
+      pendingEncounters: [],
+      pokemonImmunitySteps: 0,
+    })
+    useExploreStore.getState().setPlayer({
+      x: 1,
+      y: 1,
+      facing: 'down',
+      moving: true,
+    })
+    vi.advanceTimersByTime(dexSaveDebounceMs)
+    expect(localStorage.getItem(SAVE_KEY)).toBeNull()
   })
 })

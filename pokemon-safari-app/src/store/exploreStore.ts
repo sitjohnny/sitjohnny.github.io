@@ -6,6 +6,8 @@ import {
   enqueueEncounters,
   MAX_PENDING_ENCOUNTERS,
 } from '@/game/events'
+import { loadSave } from '@/services/save'
+import { scheduleSaveFlush } from '@/services/saveFlush'
 import type { Direction, EncounterCandidateEvent, PlayerState, Vec2 } from '@/types/map'
 
 /**
@@ -29,7 +31,7 @@ type ExploreState = {
   reset: () => void
 }
 
-function initialState() {
+function spawnState() {
   return {
     tile: { ...WORLD_SPAWN },
     facing: 'down' as Direction,
@@ -39,9 +41,23 @@ function initialState() {
   }
 }
 
+function initialState() {
+  const { explore } = loadSave()
+  return {
+    tile: { x: explore.x, y: explore.y },
+    facing: explore.facing,
+    moving: false,
+    pendingEncounters: [] as EncounterCandidateEvent[],
+    pokemonImmunitySteps: 0,
+  }
+}
+
 export const useExploreStore = create<ExploreState>((set, get) => ({
   ...initialState(),
-  setPlayer: (next, options) =>
+  setPlayer: (next, options) => {
+    const prev = get()
+    const tileChanged = prev.tile.x !== next.x || prev.tile.y !== next.y
+    const facingChanged = prev.facing !== next.facing
     set((state) => ({
       tile: { x: next.x, y: next.y },
       facing: next.facing,
@@ -50,7 +66,11 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
         options?.tickImmunity === true && state.pokemonImmunitySteps > 0
           ? state.pokemonImmunitySteps - 1
           : state.pokemonImmunitySteps,
-    })),
+    }))
+    if (tileChanged || facingChanged) {
+      scheduleSaveFlush()
+    }
+  },
   pushEncounters: (events) => {
     if (events.length === 0) {
       return
@@ -79,5 +99,5 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
     }
     set({ pokemonImmunitySteps: remaining - 1 })
   },
-  reset: () => set(initialState()),
+  reset: () => set(spawnState()),
 }))
