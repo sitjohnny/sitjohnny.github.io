@@ -9,9 +9,11 @@ import type { EncounterResolution, GrassOutcome, RarityBand } from '@/types/enco
 import type { BiomeId, EncounterCandidateEvent } from '@/types/map'
 import { weightedPick, type Rng } from '@/utils/rng'
 
+type GrassOutcomeWeights = Record<GrassOutcome, number>
+
 export function rollGrass(
   rng: Rng,
-  weights: typeof grassOutcomeWeights = grassOutcomeWeights,
+  weights: GrassOutcomeWeights = grassOutcomeWeights,
 ): GrassOutcome {
   return weightedPick(
     rng,
@@ -49,7 +51,7 @@ export type ResolveCandidateOptions = {
   suppressPokemon?: boolean
 }
 
-function grassWeightsForResolve(suppressPokemon: boolean): typeof grassOutcomeWeights {
+function grassWeightsForResolve(suppressPokemon: boolean): GrassOutcomeWeights {
   if (!suppressPokemon) {
     return grassOutcomeWeights
   }
