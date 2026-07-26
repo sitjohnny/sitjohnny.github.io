@@ -28,13 +28,15 @@ export function BootScreen() {
   }, [status, navigate])
 
   if (status === 'error') {
+    const offline = typeof navigator !== 'undefined' && navigator.onLine === false
+    const errorBody = offline
+      ? "You're offline. Connect to the internet, then tap Try again. We'll keep what we already caught."
+      : 'Check your connection, then tap Try again. We\u2019ll keep what we already caught.'
+
     return (
       <section className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8">
         <div className="flex w-full max-w-[320px] flex-col items-center gap-6">
-          <EmptyState
-            heading="Couldn’t catch the Pokédex data"
-            body="Check your connection, then tap Try again. We’ll keep what we already caught."
-          />
+          <EmptyState heading="Couldn’t catch the Pokédex data" body={errorBody} />
           <PixelButton variant="primary" onClick={retry}>
             Try again
           </PixelButton>

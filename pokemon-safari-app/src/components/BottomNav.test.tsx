@@ -21,13 +21,13 @@ function renderNav() {
 }
 
 describe('BottomNav', () => {
-  it('exposes three accessible links labeled Game, Dex, Settings', () => {
+  it('exposes three accessible links labeled Game, Pokédex, Settings', () => {
     const { container } = renderNav()
     const view = within(container)
 
     expect(view.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Game' })).toBeInTheDocument()
-    expect(view.getByRole('link', { name: 'Dex' })).toBeInTheDocument()
+    expect(view.getByRole('link', { name: 'Pokédex' })).toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
 
@@ -72,7 +72,10 @@ describe('BottomNav', () => {
   it('does not set inert on Main at Settings even when encounter stage is non-idle', () => {
     useEncounterStore.setState({ stage: 'question' })
     const { container } = render(
-      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/settings']}>
+      <MemoryRouter
+        basename="/pokemon-safari"
+        initialEntries={['/pokemon-safari/settings']}
+      >
         <BottomNav />
       </MemoryRouter>,
     )

@@ -5,6 +5,7 @@ import {
   clearSave,
   defaultExploreSave,
   loadSave,
+  loadSaveWithMeta,
   persistSave,
   resetSaveForTests,
 } from '@/services/save'
@@ -61,8 +62,22 @@ describe('save service v2 (Phase 7 persistence)', () => {
     assertNeighborKeysUntouched()
   })
 
-  it('missing SAVE_KEY returns empty dex + default explore', () => {
-    expect(loadSave()).toEqual({ dex: {}, explore: defaultExploreSave() })
+  it('missing SAVE_KEY returns empty defaults without marking recovered', () => {
+    const result = loadSaveWithMeta()
+    expect(result).toEqual({
+      data: { dex: {}, explore: defaultExploreSave() },
+      recovered: false,
+    })
+    assertNeighborKeysUntouched()
+  })
+
+  it('empty SAVE_KEY string returns empty defaults without marking recovered', () => {
+    localStorage.setItem(SAVE_KEY, '')
+    const result = loadSaveWithMeta()
+    expect(result).toEqual({
+      data: { dex: {}, explore: defaultExploreSave() },
+      recovered: false,
+    })
     assertNeighborKeysUntouched()
   })
 
@@ -140,6 +155,76 @@ describe('save service v2 (Phase 7 persistence)', () => {
       explore: defaultExploreSave(),
     })
     assertNeighborKeysUntouched()
+  })
+
+  it('marks recovered when partially corrupt dex entries are dropped', () => {
+    localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        version: 2,
+        savedAt: '2026-07-26T00:00:00.000Z',
+        data: {
+          dex: {
+            ...SAMPLE_DEX,
+            '26': {
+              seen: 'yes',
+              firstEncounteredAt: '2026-07-26T12:00:00.000Z',
+              firstCapturedAt: null,
+              catchCount: 1,
+              shinyOwned: false,
+            },
+            '27': null,
+          },
+          explore: SAMPLE_EXPLORE,
+        },
+      }),
+    )
+
+    const result = loadSaveWithMeta()
+    expect(result).toEqual({
+      data: { dex: SAMPLE_DEX, explore: SAMPLE_EXPLORE },
+      recovered: true,
+    })
+    assertNeighborKeysUntouched()
+  })
+
+  it('marks recovered when JSON is corrupt', () => {
+    localStorage.setItem(SAVE_KEY, '{not-json')
+    const result = loadSaveWithMeta()
+    expect(result.recovered).toBe(true)
+    expect(result.data).toEqual({ dex: {}, explore: defaultExploreSave() })
+  })
+
+  it('marks recovered false on clean v2 round-trip', () => {
+    persistSave({ dex: SAMPLE_DEX, explore: SAMPLE_EXPLORE })
+    expect(loadSaveWithMeta().recovered).toBe(false)
+  })
+
+  it('marks recovered false on valid v1 migration', () => {
+    localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        version: 1,
+        savedAt: '2026-07-26T00:00:00.000Z',
+        data: { dex: SAMPLE_DEX },
+      }),
+    )
+    expect(loadSaveWithMeta().recovered).toBe(false)
+  })
+
+  it('marks recovered when v2 explore was sanitized from garbage', () => {
+    localStorage.setItem(
+      SAVE_KEY,
+      JSON.stringify({
+        version: 2,
+        savedAt: '2026-07-26T00:00:00.000Z',
+        data: {
+          dex: SAMPLE_DEX,
+          explore: { x: 1.5, y: 'nope', facing: 'north' },
+        },
+      }),
+    )
+    expect(loadSaveWithMeta().recovered).toBe(true)
   })
 
   it('QuotaExceededError on setItem returns quota instead of throwing', () => {

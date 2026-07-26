@@ -62,17 +62,23 @@ function sanitizeEntry(raw: unknown): DexEntry | null {
   }
 }
 
+type SanitizedDex = {
+  value: DexData
+  recovered: boolean
+}
+
 /** Drops invalid entries; returns null when `raw` is not a plain object. */
-function sanitizeDex(raw: unknown): DexData | null {
+function sanitizeDex(raw: unknown): SanitizedDex | null {
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
     return null
   }
   const out: DexData = {}
-  for (const [key, value] of Object.entries(raw as Record<string, unknown>)) {
+  const entries = Object.entries(raw as Record<string, unknown>)
+  for (const [key, value] of entries) {
     const entry = sanitizeEntry(value)
     if (entry) out[key] = entry
   }
-  return out
+  return { value: out, recovered: Object.keys(out).length !== entries.length }
 }
 
 function sanitizeExplore(raw: unknown): ExploreSave {
@@ -89,42 +95,78 @@ function sanitizeExplore(raw: unknown): ExploreSave {
   return { x: obj.x, y: obj.y, facing: obj.facing as Direction }
 }
 
+function isExploreRawValid(raw: unknown): boolean {
+  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) {
+    return false
+  }
+  const obj = raw as Record<string, unknown>
+  if (!isIntegerCoord(obj.x) || !isIntegerCoord(obj.y)) {
+    return false
+  }
+  if (typeof obj.facing !== 'string' || !FACINGS.has(obj.facing as Direction)) {
+    return false
+  }
+  return true
+}
+
 function emptyLoaded(): LoadedSave {
   return { dex: {}, explore: defaultExploreSave() }
 }
 
-function parseToLoaded(raw: string | null): LoadedSave {
-  if (!raw) return emptyLoaded()
+export type LoadSaveResult = {
+  data: LoadedSave
+  /** True when corrupt/unknown version or partial slice recovery forced defaults. */
+  recovered: boolean
+}
+
+function parseToLoadedWithMeta(raw: string | null): LoadSaveResult {
+  if (raw === null || raw === '') {
+    return { data: emptyLoaded(), recovered: false }
+  }
   try {
     const parsed = JSON.parse(raw) as unknown
     if (typeof parsed !== 'object' || parsed === null || Array.isArray(parsed)) {
-      return emptyLoaded()
+      return { data: emptyLoaded(), recovered: true }
     }
     const obj = parsed as Record<string, unknown>
     if (typeof obj.data !== 'object' || obj.data === null || Array.isArray(obj.data)) {
-      return emptyLoaded()
+      return { data: emptyLoaded(), recovered: true }
     }
     const data = obj.data as Record<string, unknown>
-    const dex = sanitizeDex(data.dex)
-    if (dex === null) {
-      return emptyLoaded()
+    const dexResult = sanitizeDex(data.dex)
+    if (dexResult === null) {
+      return { data: emptyLoaded(), recovered: true }
     }
+    const { value: dex, recovered: dexRecovered } = dexResult
 
     if (obj.version === 1) {
-      return { dex, explore: defaultExploreSave() }
+      return {
+        data: { dex, explore: defaultExploreSave() },
+        recovered: dexRecovered,
+      }
     }
     if (obj.version === 2) {
-      return { dex, explore: sanitizeExplore(data.explore) }
+      const explore = sanitizeExplore(data.explore)
+      const exploreRecovered = !isExploreRawValid(data.explore)
+      return {
+        data: { dex, explore },
+        recovered: dexRecovered || exploreRecovered,
+      }
     }
-    return emptyLoaded()
+    return { data: emptyLoaded(), recovered: true }
   } catch {
-    return emptyLoaded()
+    return { data: emptyLoaded(), recovered: true }
   }
+}
+
+/** Returns empty dex + default explore on missing/corrupt/unknown version, plus recovery meta. */
+export function loadSaveWithMeta(): LoadSaveResult {
+  return parseToLoadedWithMeta(localStorage.getItem(SAVE_KEY))
 }
 
 /** Returns empty dex + default explore on missing/corrupt/unknown version. */
 export function loadSave(): LoadedSave {
-  return parseToLoaded(localStorage.getItem(SAVE_KEY))
+  return loadSaveWithMeta().data
 }
 
 export function persistSave(data: {

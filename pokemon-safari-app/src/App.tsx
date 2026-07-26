@@ -6,16 +6,19 @@ import {
   type RouterProviderProps,
 } from 'react-router-dom'
 import { AppShell } from '@/components/AppShell'
-import {
-  hasValidCache,
-  hydrateFromStorage,
-  isCacheReady,
-} from '@/services/pokeapi/cache'
+import { hasValidCache, hydrateFromStorage, isCacheReady } from '@/services/pokeapi/cache'
 import { BootScreen } from '@/screens/BootScreen'
 import { DexScreen } from '@/screens/DexScreen'
 import { GameScreen } from '@/screens/GameScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
+import { loadSaveWithMeta } from '@/services/save'
 import { useUiStore } from '@/store'
+
+/** Sets session save-recovered notice from localStorage parse meta (once per app boot). */
+export function bootstrapSaveUi(): void {
+  const { recovered } = loadSaveWithMeta()
+  if (recovered) useUiStore.getState().setSaveRecovered(true)
+}
 
 /** Matches Vite `base: '/pokemon-safari/'` (D-04) for createHashRouter (D-14). */
 export const APP_BASENAME = '/pokemon-safari'
@@ -55,10 +58,7 @@ function steerColdOpenToBoot(
   const raw = loc.hash.replace(/^#/, '')
   const path = raw === '' ? '/' : raw.startsWith('/') ? raw : `/${raw}`
   const atIndex =
-    path === '/' ||
-    path === basename ||
-    path === `${basename}/` ||
-    path === `${basename}`
+    path === '/' || path === basename || path === `${basename}/` || path === `${basename}`
   if (atIndex) {
     loc.hash = `${basename}/boot`
   }
@@ -66,6 +66,7 @@ function steerColdOpenToBoot(
 
 export function createAppRouter() {
   syncHashBasename()
+  bootstrapSaveUi()
   steerColdOpenToBoot()
   return createHashRouter(
     [

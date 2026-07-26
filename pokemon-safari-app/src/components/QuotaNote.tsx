@@ -5,7 +5,7 @@ type QuotaNoteProps = {
 }
 
 const DEFAULT_MESSAGE =
-  'Couldn\u2019t save Pokémon data on this device. You can still play this visit.'
+  "Couldn't save your progress on this device. You can still play this visit — new catches may not stick."
 
 /**
  * Non-blocking soft note when persist hits QuotaExceeded (D-06 / D-21).

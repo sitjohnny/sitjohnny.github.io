@@ -33,10 +33,12 @@ describe('App route smoke', () => {
     const user = userEvent.setup()
     render(<App />)
 
-    await user.click(screen.getByRole('link', { name: 'Dex' }))
+    await user.click(screen.getByRole('link', { name: 'Pokédex' }))
     expect(screen.getByRole('heading', { name: /pokédex/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: 'Settings' }))
-    expect(screen.getByRole('heading', { name: /^settings$/i })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: /^settings$/i }),
+    ).toBeInTheDocument()
   })
 })

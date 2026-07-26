@@ -65,10 +65,7 @@ describe('BootScreen ready navigation', () => {
     })
 
     render(
-      <MemoryRouter
-        basename="/pokemon-safari"
-        initialEntries={['/pokemon-safari/boot']}
-      >
+      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/boot']}>
         <Routes>
           <Route path="/boot" element={<BootScreen />} />
           <Route path="/game" element={<div>Game surface</div>} />
@@ -102,6 +99,11 @@ describe('BootScreen failure', () => {
     renderBoot()
 
     expect(screen.getByText('Couldn’t catch the Pokédex data')).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /Check your connection, then tap Try again\. We\u2019ll keep what we already caught\./,
+      ),
+    ).toBeInTheDocument()
     const tryAgain = screen.getByRole('button', { name: 'Try again' })
     await user.click(tryAgain)
 
@@ -111,5 +113,26 @@ describe('BootScreen failure', () => {
       configurable: true,
       value: originalLocation,
     })
+  })
+
+  it('shows offline body when navigator.onLine is false', () => {
+    vi.stubGlobal('navigator', { onLine: false })
+
+    usePokemonCacheMock.mockReturnValue({
+      status: 'error',
+      progress: { done: 0, total: 151 },
+      error: new Error('network'),
+      retry: retryMock,
+    })
+
+    renderBoot()
+
+    expect(
+      screen.getByText(
+        "You're offline. Connect to the internet, then tap Try again. We'll keep what we already caught.",
+      ),
+    ).toBeInTheDocument()
+
+    vi.unstubAllGlobals()
   })
 })
