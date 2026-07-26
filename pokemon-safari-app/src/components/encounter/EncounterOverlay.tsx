@@ -1,12 +1,11 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef } from 'react'
 import { AppearFlash } from '@/components/encounter/AppearFlash'
-import { BallShake } from '@/components/encounter/BallShake'
 import { CaughtCard } from '@/components/encounter/CaughtCard'
 import { EducationQuestion } from '@/components/encounter/EducationQuestion'
 import { FailBeat } from '@/components/encounter/FailBeat'
 import { FleeCard } from '@/components/encounter/FleeCard'
-import { GradeFlash } from '@/components/encounter/GradeFlash'
 import { RecapCard } from '@/components/encounter/RecapCard'
+import { ShakeSequence } from '@/components/encounter/ShakeSequence'
 import { TimingBar } from '@/components/encounter/TimingBar'
 import { EmptyState } from '@/components/EmptyState'
 import { PixelButton } from '@/components/PixelButton'
@@ -52,7 +51,6 @@ export function EncounterOverlay() {
   const feedback = useEncounterStore((state) => state.feedback)
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const previousFocusRef = useRef<HTMLElement | null>(null)
-  const [gradeFlashDone, setGradeFlashDone] = useState(false)
   const pokemon = session ? resolveSessionPokemon(session.speciesId) : null
   const labelledBy =
     stage === 'recap'
@@ -62,17 +60,6 @@ export function EncounterOverlay() {
         : stage === 'flee'
           ? 'encounter-flee-heading'
           : 'encounter-stage-content'
-
-  // Reset GradeFlash → BallShake handoff whenever we enter shake.
-  useEffect(() => {
-    if (stage === 'shake') {
-      setGradeFlashDone(false)
-    }
-  }, [stage])
-
-  const onGradeFlashComplete = useCallback(() => {
-    setGradeFlashDone(true)
-  }, [])
 
   const onBallShakeComplete = useCallback(() => {
     onShakeComplete()
@@ -156,10 +143,10 @@ export function EncounterOverlay() {
             sweetSpot={session.sweetSpot}
             rarity={session.rarity}
           />
-        ) : stage === 'shake' && grade && !gradeFlashDone ? (
-          <GradeFlash grade={grade} onComplete={onGradeFlashComplete} />
-        ) : stage === 'shake' && gradeFlashDone ? (
-          <BallShake
+        ) : stage === 'shake' && grade ? (
+          <ShakeSequence
+            key={`${session.attemptsUsed}:${grade}`}
+            grade={grade}
             caught={session.lastCaught === true}
             chance={session.lastChance ?? 0}
             onComplete={onBallShakeComplete}
