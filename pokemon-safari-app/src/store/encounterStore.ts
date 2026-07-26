@@ -130,11 +130,12 @@ export const useEncounterStore = create<EncounterState>((set) => ({
   registerThrow: ({ grade, caught, chance }) =>
     set((state) => {
       if (!state.session) return state
+      const nextAttempts = Math.min(3, Math.max(0, state.session.attemptsUsed + 1))
       return {
         stage: 'shake' as const,
         session: {
           ...state.session,
-          attemptsUsed: state.session.attemptsUsed + 1,
+          attemptsUsed: nextAttempts,
           lastGrade: grade,
           lastCaught: caught,
           lastChance: chance,

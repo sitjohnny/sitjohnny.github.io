@@ -39,12 +39,27 @@ const flowRngRef: { current: Rng } = { current: getDefaultRng() }
 const feedbackTimerRef: {
   current: ReturnType<typeof setTimeout> | null
 } = { current: null }
+const failBeatTimerRef: {
+  current: ReturnType<typeof setTimeout> | null
+} = { current: null }
 
 function clearFeedbackTimer() {
   if (feedbackTimerRef.current !== null) {
     clearTimeout(feedbackTimerRef.current)
     feedbackTimerRef.current = null
   }
+}
+
+function clearFailBeatTimer() {
+  if (failBeatTimerRef.current !== null) {
+    clearTimeout(failBeatTimerRef.current)
+    failBeatTimerRef.current = null
+  }
+}
+
+function clearEncounterTimers() {
+  clearFeedbackTimer()
+  clearFailBeatTimer()
 }
 
 function buildFeedbackMessage(ok: boolean, rng: Rng): string {
@@ -166,10 +181,10 @@ export function dismissRecap(): void {
 }
 
 /**
- * After BallShake fail ending: remount timing if attempts remain, else flee.
- * Minimal shell so GameScreen does not hang when a roll fails (05-04 owns polish).
+ * After BallShake ending: Gotcha → result; else fail beat → remount timing, or flee at 3 (D-04/D-26).
+ * attemptsUsed is owned solely by registerThrow (T-05-04) — this path never increments.
  */
-export function resolveAfterShake(): void {
+export function onShakeComplete(): void {
   const state = useEncounterStore.getState()
   if (state.stage !== 'shake') return
   const session = state.session
@@ -178,12 +193,27 @@ export function resolveAfterShake(): void {
     useEncounterStore.getState().toResult()
     return
   }
-  if (session.attemptsUsed >= 3) {
+  // Clamp so NaN/out-of-range never skips flee (threat T-05-04).
+  const attemptsUsed = Math.min(3, Math.max(0, session.attemptsUsed | 0))
+  if (attemptsUsed >= 3) {
     useEncounterStore.getState().toFlee()
     return
   }
-  useEncounterStore.getState().startTiming()
+  useEncounterStore.getState().setStage('failBeat')
+  clearFailBeatTimer()
+  const hold = prefersReducedMotion()
+    ? encounterTimingMs.reducedFailBeat
+    : encounterTimingMs.failBeat
+  failBeatTimerRef.current = setTimeout(() => {
+    failBeatTimerRef.current = null
+    if (useEncounterStore.getState().stage === 'failBeat') {
+      useEncounterStore.getState().startTiming()
+    }
+  }, hold)
 }
+
+/** @deprecated Prefer onShakeComplete — kept as alias for any residual callers. */
+export const resolveAfterShake = onShakeComplete
 
 /**
  * Single Phase 4/5 queue consumer: drain one candidate, restore the FIFO
@@ -202,7 +232,7 @@ export function useEncounterFlow(
     // inside close() before a stale timer can advance to timing (T-04-15).
     const unsub = useEncounterStore.subscribe((state, prev) => {
       if (prev.stage !== 'idle' && state.stage === 'idle') {
-        clearFeedbackTimer()
+        clearEncounterTimers()
       }
     })
     return () => {
@@ -210,7 +240,7 @@ export function useEncounterFlow(
       if (toastTimer.current !== null) {
         clearTimeout(toastTimer.current)
       }
-      clearFeedbackTimer()
+      clearEncounterTimers()
       useEncounterStore.getState().close()
     }
   }, [])

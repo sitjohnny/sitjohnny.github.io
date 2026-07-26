@@ -15,13 +15,10 @@ import {
   capture,
   continueFromFlee,
   continueFromResult,
-  resolveAfterShake,
+  onShakeComplete,
   submitAnswer,
   useEncounterFlow,
 } from '@/hooks/useEncounterFlow'
-
-/** Task 2 renames resolveAfterShake → onShakeComplete; alias keeps RED assertions on the live stub. */
-const onShakeComplete = resolveAfterShake
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'

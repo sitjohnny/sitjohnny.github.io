@@ -664,11 +664,14 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     }
   })
 
-  it('shows fail beat then kind flee after three misses — no Run CTA (CATCH-04)', async () => {
+  it(
+    'shows fail beat then kind flee after three misses — no Run CTA (CATCH-04)',
+    async () => {
     const user = userEvent.setup()
     const step = setupGrassApproach()
     // outcome, species, pool, fact, feedback, then three always-miss catch rolls
-    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 0.999, 0.999, 0.999))
+    // Use 1.0 so even a clamped 100% chance still fails (rng.next() < chance).
+    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 1, 1, 1))
     renderExplore()
 
     fireEvent.keyDown(window, { code: arrowFor(step.dir) })
@@ -725,6 +728,8 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
     await user.click(screen.getByRole('button', { name: 'Continue' }))
     expect(screen.queryByRole('dialog')).toBeNull()
-  })
+  },
+    30_000,
+  )
 })
 

@@ -17,6 +17,7 @@ function shakeCountFor(chance: number): 1 | 2 | 3 {
 
 /**
  * Flavor shakes to a pre-resolved caught flag (D-30 / D-31). Never rolls capture.
+ * Fail ending opens the ball briefly before onComplete → fail beat (D-33).
  */
 export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
   const reducedMotion = prefersReducedMotion()
@@ -43,14 +44,15 @@ export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
         aria-hidden="true"
         className={[
           'pixel-border flex h-16 w-16 items-center justify-center bg-accent text-text',
-          caught ? '' : 'opacity-80',
+          caught ? '' : 'ball-broke-free opacity-90',
         ]
           .filter(Boolean)
           .join(' ')}
         data-shakes={shakes}
         data-caught={caught ? 'true' : 'false'}
+        data-ending={caught ? 'caught' : 'broke-free'}
       >
-        ●
+        {caught ? '●' : '○'}
       </div>
       <p aria-live="polite" className="sr-only">
         {caught ? 'Caught' : 'Broke free'}

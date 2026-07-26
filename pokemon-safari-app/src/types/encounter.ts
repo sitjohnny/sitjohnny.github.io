@@ -13,6 +13,7 @@ export type EncounterStage =
   | 'feedback'
   | 'timing'
   | 'shake'
+  | 'failBeat'
   | 'result'
   | 'flee'
   | 'recap'

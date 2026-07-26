@@ -129,6 +129,10 @@
     color: var(--color-text);
   }
 
+  .ball-broke-free {
+    transform: scale(1.08) rotate(-8deg);
+  }
+
   /* Stacked Red walk poses: hide all, reveal only the img whose data-dir /
      data-walk matches the root's data-facing / data-frame. The rAF loop is the
      sole writer of data-frame, so the visible pose changes with no React
