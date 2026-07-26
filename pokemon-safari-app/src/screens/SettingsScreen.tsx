@@ -23,11 +23,15 @@ export function SettingsScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   return (
-    <section className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8">
-      <ScreenTitle>Settings</ScreenTitle>
-      <PixelButton variant="destructive" onClick={() => setConfirmOpen(true)}>
-        Reset Save
-      </PixelButton>
+    <section className="flex flex-1 flex-col gap-6">
+      <header className="sticky top-0 z-10 bg-dominant px-4 pb-3 pt-[max(8px,env(safe-area-inset-top))]">
+        <ScreenTitle>Settings</ScreenTitle>
+      </header>
+      <div className="flex flex-1 items-center justify-center px-4">
+        <PixelButton variant="destructive" onClick={() => setConfirmOpen(true)}>
+          Reset Save
+        </PixelButton>
+      </div>
 
       {confirmOpen ? (
         <div

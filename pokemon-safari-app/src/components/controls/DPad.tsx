@@ -78,6 +78,18 @@ export function DPad({ onPress, onRelease, className = '' }: DPadProps) {
     onRelease(dir)
   }
 
+  useEffect(() => {
+    return () => {
+      const held = heldRef.current
+      // Encounter (and any other unmount) removes the D-pad while a finger may
+      // still be down — without this, usePlayerInput keeps the direction forever.
+      if (held) {
+        heldRef.current = null
+        onRelease(held)
+      }
+    }
+  }, [onRelease])
+
   return (
     <div
       ref={rootRef}
@@ -103,11 +115,11 @@ export function DPad({ onPress, onRelease, className = '' }: DPadProps) {
             onPointerCancel={() => handleRelease(dir)}
             onLostPointerCapture={() => handleRelease(dir)}
             className={[
-              'dpad-target pixel-border flex items-center justify-center rounded-[4px]',
+              'dpad-target flex items-center justify-center rounded-[4px]',
               'shadow-[2px_2px_0_#1A3324] touch-manipulation transition-transform duration-[80ms]',
               'ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100',
               ARM_CELL[dir],
-              pressed ? 'bg-accent text-text' : 'bg-secondary text-on-secondary',
+              pressed ? 'bg-dpad-pressed text-on-secondary' : 'bg-dpad text-on-secondary',
             ].join(' ')}
           >
             <Chevron dir={dir} />

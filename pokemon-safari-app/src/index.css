@@ -4,6 +4,8 @@
   --color-dominant: #e3f2c9;
   --color-secondary: #2f7a4b;
   --color-accent: #e8b923;
+  --color-dpad: #e67e22;
+  --color-dpad-pressed: #c45f12;
   --color-destructive: #c45c4a;
   --color-text: #1a3324;
   --color-on-secondary: #f5fbef;
@@ -271,7 +273,6 @@
     opacity: 1;
   }
 }
-
 
 @media (prefers-reduced-motion: reduce) {
   *,
