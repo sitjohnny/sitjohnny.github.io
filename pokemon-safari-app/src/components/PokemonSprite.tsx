@@ -4,7 +4,8 @@ import type { PokemonDto } from '@/types/pokemon'
 type PokemonSpriteProps = {
   pokemon: PokemonDto
   shiny?: boolean
-  size?: 64 | 96
+  variant?: 'pixel' | 'artwork'
+  size?: 64 | 96 | 128
   alt: string
   /** Uncaught dex tiles pass true → `.sprite-silhouette` on the img (D-02 / D-07). */
   silhouette?: boolean
@@ -15,15 +16,30 @@ type PokemonSpriteProps = {
 /**
  * Gen 1 sprite primitive — `.pixelated` scaling, shiny URL, silhouette on missing/broken (D-07–D-09).
  */
+function resolveSpriteSrc(
+  sprites: PokemonDto['sprites'],
+  shiny: boolean,
+  variant: 'pixel' | 'artwork',
+): string | null {
+  if (shiny) {
+    return sprites.front_shiny ?? sprites.front_default
+  }
+  if (variant === 'artwork') {
+    return sprites.official_artwork ?? sprites.front_default
+  }
+  return sprites.front_default
+}
+
 export function PokemonSprite({
   pokemon,
   shiny = false,
+  variant = 'pixel',
   size = 96,
   alt,
   silhouette = false,
   loading,
 }: PokemonSpriteProps) {
-  const src = shiny ? pokemon.sprites.front_shiny : pokemon.sprites.front_default
+  const src = resolveSpriteSrc(pokemon.sprites, shiny, variant)
   const [broken, setBroken] = useState(!src)
 
   useEffect(() => {

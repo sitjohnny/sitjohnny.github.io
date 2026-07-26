@@ -1,5 +1,6 @@
 # GSD research cache
 .planning/
+docs/
 docs/superpowers/
 *.log
 

@@ -1,14 +1,24 @@
 import { vi, type Mock } from 'vitest'
 
+import { CACHE_KEY, CACHE_VERSION } from '@/services/pokeapi/keys'
+
 /** Must match `CACHE_KEY` from `@/services/pokeapi/keys` (DATA-04 / D-11). */
-export const TEST_CACHE_KEY = 'pokemon-safari:poke-cache:v2'
+export const TEST_CACHE_KEY = CACHE_KEY
 
 export type TestPokemonDto = {
   id: number
   name: string
   types: string[]
-  sprites: { front_default: string | null; front_shiny: string | null }
+  sprites: {
+    front_default: string | null
+    front_shiny: string | null
+    official_artwork: string | null
+  }
   flavorText: string | null
+  genus: string | null
+  height: number
+  weight: number
+  habitat: string | null
 }
 
 export type TestCacheEnvelope = {
@@ -29,19 +39,24 @@ export function makePokemonDto(
     sprites: {
       front_default: `https://example.test/${id}.png`,
       front_shiny: `https://example.test/s${id}.png`,
+      official_artwork: null,
     },
     flavorText: null,
+    genus: null,
+    height: 7,
+    weight: 69,
+    habitat: null,
     ...overrides,
   }
 }
 
-/** Write a valid CacheEnvelopeV2 to CACHE_KEY only — never touches SAVE_KEY. */
+/** Write a valid CacheEnvelope (v3) to CACHE_KEY only — never touches SAVE_KEY. */
 export function seedPokeCache(
   pokemon: TestPokemonDto[] = Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
   overrides: Partial<TestCacheEnvelope> = {},
 ): TestCacheEnvelope {
   const envelope: TestCacheEnvelope = {
-    version: 2,
+    version: CACHE_VERSION,
     fetchedAt: new Date().toISOString(),
     pokemon,
     ...overrides,
@@ -99,6 +114,8 @@ export function stubPokeApiFetch(options: StubFetchOptions = {}): Mock {
                 version: { name: 'emerald' },
               },
             ],
+            genera: [{ genus: `Genus ${id}`, language: { name: 'en' } }],
+            habitat: { name: 'grassland' },
           }),
         }
       }
@@ -108,9 +125,16 @@ export function stubPokeApiFetch(options: StubFetchOptions = {}): Mock {
             id,
             name: `p${id}`,
             types: [{ slot: 1, type: { name: 'normal' } }],
+            height: 7,
+            weight: 69,
             sprites: {
               front_default: `https://example.test/${id}.png`,
               front_shiny: `https://example.test/s${id}.png`,
+              other: {
+                'official-artwork': {
+                  front_default: `https://example.test/art/${id}.png`,
+                },
+              },
             },
           }
       return {

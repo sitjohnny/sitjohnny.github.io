@@ -1,6 +1,7 @@
 import { useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import { PixelButton } from '@/components/PixelButton'
-import { PokemonSprite } from '@/components/PokemonSprite'
+import { EncounterPokemonShowcase } from '@/components/encounter/EncounterPokemonShowcase'
+import { encounterDialogAccentProps } from '@/data/typeColors'
 import type { EducationQuestion as EducationQuestionData } from '@/game/education/questionTypes'
 import type { PokemonDto } from '@/types/pokemon'
 
@@ -29,6 +30,7 @@ export function EducationQuestion({
   const [answer, setAnswer] = useState('')
   const locked = feedback !== null
   const canSubmit = !locked && answer.trim().length > 0
+  const accentProps = encounterDialogAccentProps(pokemon.types)
 
   function handleChange(event: ChangeEvent<HTMLInputElement>) {
     setAnswer(event.target.value.replace(/\D/g, '').slice(0, MAX_DIGITS))
@@ -47,13 +49,14 @@ export function EducationQuestion({
   }
 
   return (
-    <div className="gba-dialog flex w-full flex-col items-center gap-6 px-6 py-6 text-center">
-      <div className="flex flex-col items-center gap-2">
-        <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
-        <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
-          {pokemon.name}
-        </h2>
-      </div>
+    <div
+      className="gba-dialog flex w-full flex-col items-center gap-6 px-6 py-6 text-center"
+      {...accentProps}
+    >
+      <EncounterPokemonShowcase pokemon={pokemon} shiny={shiny} />
+      <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
+        {pokemon.name}
+      </h2>
 
       <p className="font-[family-name:var(--font-numeral)] text-[24px] font-normal leading-[1.2] tracking-[0.06em] text-text min-[360px]:text-[28px]">
         {question.prompt}

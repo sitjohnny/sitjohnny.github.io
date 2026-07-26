@@ -1,5 +1,5 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
-import { fetchPokemon, fetchSpeciesFlavor, mapPool, sanitizeSpriteUrl } from './client'
+import { fetchPokemon, fetchSpeciesMeta, mapPool, sanitizeSpriteUrl } from './client'
 import { CACHE_KEY, CACHE_VERSION, GEN1_COUNT } from './keys'
 
 const DEFAULT_CONCURRENCY = 8
@@ -71,6 +71,26 @@ function fromStoredDto(raw: unknown): PokemonDto {
   if (!(flavorText === null || typeof flavorText === 'string')) {
     throw new Error('Invalid Pokémon flavorText')
   }
+  const officialArtworkRaw = sprites.official_artwork
+  if (!(officialArtworkRaw === undefined || officialArtworkRaw === null || typeof officialArtworkRaw === 'string')) {
+    throw new Error('Invalid Pokémon sprites.official_artwork')
+  }
+  const genus = obj.genus
+  if (!(genus === null || typeof genus === 'string')) {
+    throw new Error('Invalid Pokémon genus')
+  }
+  const height = obj.height
+  if (typeof height !== 'number' || !Number.isFinite(height)) {
+    throw new Error('Invalid Pokémon height')
+  }
+  const weight = obj.weight
+  if (typeof weight !== 'number' || !Number.isFinite(weight)) {
+    throw new Error('Invalid Pokémon weight')
+  }
+  const habitat = obj.habitat
+  if (!(habitat === null || typeof habitat === 'string')) {
+    throw new Error('Invalid Pokémon habitat')
+  }
   return {
     id,
     name: obj.name,
@@ -78,8 +98,15 @@ function fromStoredDto(raw: unknown): PokemonDto {
     sprites: {
       front_default: sanitizeSpriteUrl(sprites.front_default),
       front_shiny: sanitizeSpriteUrl(sprites.front_shiny),
+      official_artwork: sanitizeSpriteUrl(
+        officialArtworkRaw === undefined ? null : officialArtworkRaw,
+      ),
     },
     flavorText,
+    genus,
+    height,
+    weight,
+    habitat,
   }
 }
 
@@ -147,11 +174,17 @@ export function getPokemon(id: number): PokemonDto {
   return pokemon
 }
 
+function removeOrphanPokeCacheKeys(): void {
+  localStorage.removeItem('pokemon-safari:poke-cache:v1')
+  localStorage.removeItem('pokemon-safari:poke-cache:v2')
+}
+
 /** Quota-safe write — never throws on QuotaExceededError (D-06). Touches CACHE_KEY only. */
 export function persistCache(envelope: CacheEnvelope): 'ok' | 'quota' {
   try {
     const serialized = JSON.stringify(envelope)
     localStorage.setItem(CACHE_KEY, serialized)
+    removeOrphanPokeCacheKeys()
     if (import.meta.env?.DEV) {
       console.debug('[pokeapi] cache bytes', new Blob([serialized]).size)
     }
@@ -189,9 +222,9 @@ export async function ensureCache(
     }
   }
 
-  // Targeted orphan cleanup for the previous poke-cache key (RESEARCH OQ3 / T-06-15).
-  // Literal key only — never a loop, never localStorage.clear.
-  localStorage.removeItem('pokemon-safari:poke-cache:v1')
+  // Targeted orphan cleanup for legacy poke-cache keys (RESEARCH OQ3 / T-06-15).
+  // Literal keys only — never a loop, never localStorage.clear.
+  removeOrphanPokeCacheKeys()
 
   if (!resume) {
     // Full warm path: if already valid in memory/storage, hydrate and skip network.
@@ -224,8 +257,8 @@ export async function ensureCache(
       concurrency,
       async (id) => {
         const dto = await fetchPokemon(id)
-        const flavorText = await fetchSpeciesFlavor(id)
-        const full = { ...dto, flavorText }
+        const meta = await fetchSpeciesMeta(id)
+        const full = { ...dto, ...meta }
         memory.set(full.id, full)
         return full
       },

@@ -1,5 +1,10 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { fetchGen1All, toPokemonDto } from '@/services/pokeapi/client'
+import {
+  fetchGen1All,
+  selectGenus,
+  selectHabitat,
+  toPokemonDto,
+} from '@/services/pokeapi/client'
 import { getFetchMaxInFlight, stubPokeApiFetch } from '@/test/pokeapi-test-helpers'
 
 afterEach(() => {
@@ -23,7 +28,12 @@ describe('toPokemonDto', () => {
       sprites: {
         front_default: 'https://example.test/6.png',
         front_shiny: 'https://example.test/s6.png',
+        other: {
+          'official-artwork': { front_default: 'https://example.test/art6.png' },
+        },
       },
+      height: 17,
+      weight: 905,
     })
 
     expect(dto).toEqual({
@@ -33,9 +43,78 @@ describe('toPokemonDto', () => {
       sprites: {
         front_default: 'https://example.test/6.png',
         front_shiny: 'https://example.test/s6.png',
+        official_artwork: 'https://example.test/art6.png',
       },
       flavorText: null,
+      genus: null,
+      height: 17,
+      weight: 905,
+      habitat: null,
     })
+  })
+
+  it('sets official_artwork null when other or artwork URL is invalid', () => {
+    const missingOther = toPokemonDto({
+      id: 1,
+      name: 'bulbasaur',
+      types: [{ slot: 1, type: { name: 'grass' } }],
+      sprites: {
+        front_default: 'https://example.test/1.png',
+        front_shiny: null,
+      },
+      height: 7,
+      weight: 69,
+    })
+    expect(missingOther.sprites.official_artwork).toBeNull()
+
+    const httpArt = toPokemonDto({
+      id: 1,
+      name: 'bulbasaur',
+      types: [{ slot: 1, type: { name: 'grass' } }],
+      sprites: {
+        front_default: 'https://example.test/1.png',
+        front_shiny: null,
+        other: {
+          'official-artwork': { front_default: 'http://example.test/art1.png' },
+        },
+      },
+      height: 7,
+      weight: 69,
+    })
+    expect(httpArt.sprites.official_artwork).toBeNull()
+  })
+
+  it('throws on invalid height or weight', () => {
+    const base = {
+      id: 1,
+      name: 'bulbasaur',
+      types: [{ slot: 1, type: { name: 'grass' } }],
+      sprites: { front_default: null, front_shiny: null },
+    }
+    expect(() => toPokemonDto({ ...base, height: -1, weight: 69 })).toThrow()
+    expect(() => toPokemonDto({ ...base, height: 7, weight: NaN })).toThrow()
+    expect(() => toPokemonDto({ ...base, height: 1.5, weight: 69 })).toThrow()
+  })
+})
+
+describe('selectGenus / selectHabitat', () => {
+  it('selectGenus prefers English', () => {
+    expect(
+      selectGenus([
+        { genus: 'Pokémon Plante', language: { name: 'fr' } },
+        { genus: 'Seed Pokémon', language: { name: 'en' } },
+      ]),
+    ).toBe('Seed Pokémon')
+  })
+
+  it('selectGenus returns null when no English', () => {
+    expect(selectGenus([{ genus: 'X', language: { name: 'fr' } }])).toBeNull()
+  })
+
+  it('selectHabitat reads name or null', () => {
+    expect(selectHabitat({ name: 'forest' })).toBe('forest')
+    expect(selectHabitat(null)).toBeNull()
+    expect(selectHabitat(undefined)).toBeNull()
   })
 })
 
