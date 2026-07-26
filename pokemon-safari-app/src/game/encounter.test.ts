@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { grassOutcomeWeights } from '@/data/rates'
 import { biomeEncounterTables } from '@/data/encounterTables'
+import { WORLD_SEED } from '@/data/worldConfig'
 import {
   pickSpecies,
+  pickSpeciesWeighted,
   rarityForOutcome,
   resolveCandidate,
   rollGrass,
+  speciesWeightForPocket,
 } from '@/game/encounter'
+import { pocketAt } from '@/game/world/pocket'
 import { createRng, type Rng } from '@/utils/rng'
 import type { EncounterCandidateEvent } from '@/types/map'
 import type { GrassOutcome } from '@/types/encounter'
@@ -117,6 +121,50 @@ describe('pool', () => {
   })
 })
 
+describe('habitat weights', () => {
+  it('speciesWeightForPocket favors waters-edge in wetland over forest', () => {
+    expect(
+      speciesWeightForPocket('waters-edge', 'wetland'),
+    ).toBeGreaterThan(speciesWeightForPocket('forest', 'wetland'))
+  })
+
+  it('pickSpeciesWeighted skews wetland pocket toward waters-edge habitat ids', () => {
+    const watersEdgeId = 60
+    const forestId = 1
+    const habitatOf = (id: number) =>
+      id === watersEdgeId ? 'waters-edge' : 'forest'
+    const pool = [forestId, watersEdgeId]
+    let watersEdgePicks = 0
+    const n = 500
+    for (let seed = 0; seed < n; seed++) {
+      const rng = createRng(seed)
+      const id = pickSpeciesWeighted(rng, pool, 'wetland', habitatOf)
+      if (id === watersEdgeId) watersEdgePicks++
+    }
+    expect(watersEdgePicks).toBeGreaterThan(n * 0.6)
+  })
+
+  it('pickSpeciesWeighted still picks when every habitat misses the pocket', () => {
+    const pool = [3, 7, 11]
+    const habitatOf = () => 'forest'
+    for (let seed = 0; seed < 50; seed++) {
+      const id = pickSpeciesWeighted(createRng(seed), pool, 'wetland', habitatOf)
+      expect(pool).toContain(id)
+    }
+  })
+})
+
+function findCoordsForPocket(
+  pocket: ReturnType<typeof pocketAt>,
+): { x: number; y: number } {
+  for (let y = -60; y <= 60; y++) {
+    for (let x = -60; x <= 60; x++) {
+      if (pocketAt(WORLD_SEED, x, y) === pocket) return { x, y }
+    }
+  }
+  throw new Error(`no coords for pocket ${pocket}`)
+}
+
 describe('resolve', () => {
   it('rarityForOutcome maps pokemon/rare/legendary and nulls nothing', () => {
     expect(rarityForOutcome('pokemon')).toBe('common')
@@ -175,6 +223,74 @@ describe('resolve', () => {
 
     const pokemon = resolveCandidate(stubRng([0, 0]), candidate())
     expect(pokemon.kind).toBe('pokemon')
+  })
+
+  it('habitatOf skews species by grass pocket at candidate coords', () => {
+    const wetland = findCoordsForPocket('wetland')
+    const meadow = findCoordsForPocket('meadow')
+    expect(pocketAt(WORLD_SEED, wetland.x, wetland.y)).toBe('wetland')
+    expect(pocketAt(WORLD_SEED, meadow.x, meadow.y)).toBe('meadow')
+
+    const common = biomeEncounterTables.forest.common
+    const watersEdgeFixture = new Set(
+      common.filter((id) => id >= 55 && id <= 64).slice(0, 8),
+    )
+    const grasslandFixture = new Set(
+      common.filter((id) => id >= 10 && id <= 25).slice(0, 8),
+    )
+    expect(watersEdgeFixture.size).toBeGreaterThan(0)
+    expect(grasslandFixture.size).toBeGreaterThan(0)
+
+    const habitatOf = (id: number) => {
+      if (watersEdgeFixture.has(id)) return 'waters-edge'
+      if (grasslandFixture.has(id)) return 'grassland'
+      return 'forest'
+    }
+    const opts = { habitatOf, worldSeed: WORLD_SEED }
+
+    let wetlandWaters = 0
+    let wetlandPokemon = 0
+    let meadowGrass = 0
+    let meadowPokemon = 0
+    const n = 800
+    for (let i = 0; i < n; i++) {
+      const w = resolveCandidate(
+        createRng(10_000 + i),
+        {
+          type: 'encounter_candidate',
+          biome: 'forest',
+          x: wetland.x,
+          y: wetland.y,
+          at: i,
+        },
+        opts,
+      )
+      if (w.kind === 'pokemon') {
+        wetlandPokemon++
+        if (watersEdgeFixture.has(w.speciesId)) wetlandWaters++
+      }
+
+      const m = resolveCandidate(
+        createRng(20_000 + i),
+        {
+          type: 'encounter_candidate',
+          biome: 'forest',
+          x: meadow.x,
+          y: meadow.y,
+          at: i,
+        },
+        opts,
+      )
+      if (m.kind === 'pokemon') {
+        meadowPokemon++
+        if (grasslandFixture.has(m.speciesId)) meadowGrass++
+      }
+    }
+
+    expect(wetlandPokemon).toBeGreaterThan(100)
+    expect(meadowPokemon).toBeGreaterThan(100)
+    expect(wetlandWaters / wetlandPokemon).toBeGreaterThan(0.12)
+    expect(meadowGrass / meadowPokemon).toBeGreaterThan(0.12)
   })
 
   it('resolveCandidate is pure for equal stub sequences and never touches localStorage', () => {

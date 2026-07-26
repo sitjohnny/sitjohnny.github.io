@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
 import { feedbackCopy } from '@/data/educationConfig'
 import { educationCaptureBonus, encounterTimingMs, shinyRate } from '@/data/rates'
+import { WORLD_SEED } from '@/data/worldConfig'
 import { computeCatchChance, rollCapture } from '@/game/capture'
 import {
   loadAdaptiveStats,
@@ -257,7 +258,17 @@ export function useEncounterFlow(options: EncounterFlowOptions = {}): EncounterF
     }
 
     const suppressPokemon = useExploreStore.getState().pokemonImmunitySteps > 0
-    const resolution = resolveCandidate(rng, candidate, { suppressPokemon })
+    const resolution = resolveCandidate(rng, candidate, {
+      suppressPokemon,
+      worldSeed: WORLD_SEED,
+      habitatOf: (id) => {
+        try {
+          return getPokemon(id).habitat
+        } catch {
+          return null
+        }
+      },
+    })
     if (resolution.kind === 'nothing') {
       return
     }
