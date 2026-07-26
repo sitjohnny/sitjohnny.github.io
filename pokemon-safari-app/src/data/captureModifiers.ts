@@ -10,4 +10,5 @@ export const captureModifiers = {
   ball: { poke: 0, great: 0.15 },
   berry: 0.1,
   rarity: { common: 0.6, rare: 0.3, legendary: 0.1 },
+  timing: { perfect: 0.25, great: 0.15, good: 0.05, miss: -0.05 },
 } as const
