@@ -1,21 +1,43 @@
-/** Versioned save envelope types — dex slice lands in Phase 6; Phase 7 extends additively. */
+/** Versioned save envelope — dex (Phase 6) + explore position (Phase 7). */
+
+import type { Direction } from "@/types/map";
 
 export type DexEntry = {
-  seen: boolean
-  firstEncounteredAt: string | null
-  firstCapturedAt: string | null
-  catchCount: number
-  shinyOwned: boolean
-}
+  seen: boolean;
+  firstEncounteredAt: string | null;
+  firstCapturedAt: string | null;
+  catchCount: number;
+  shinyOwned: boolean;
+};
 
-export type DexData = Record<string, DexEntry>
+export type DexData = Record<string, DexEntry>;
+
+export type ExploreSave = {
+  x: number;
+  y: number;
+  facing: Direction;
+};
 
 export type SaveEnvelopeV1 = {
-  version: 1
-  savedAt: string
+  version: 1;
+  savedAt: string;
   data: {
-    dex: DexData
-  }
-}
+    dex: DexData;
+  };
+};
 
-export type SaveEnvelope = SaveEnvelopeV1
+export type SaveEnvelopeV2 = {
+  version: 2;
+  savedAt: string;
+  data: {
+    dex: DexData;
+    explore: ExploreSave;
+  };
+};
+
+export type SaveEnvelope = SaveEnvelopeV2;
+
+export type LoadedSave = {
+  dex: DexData;
+  explore: ExploreSave;
+};
