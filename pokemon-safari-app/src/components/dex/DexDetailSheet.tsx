@@ -134,7 +134,7 @@ export function DexDetailSheet({ speciesId, entry, onClose }: DexDetailSheetProp
                 <div>
                   <dt className="sr-only">First caught</dt>
                   <dd className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
-                    First caught: {formatRelativeDay(entry.firstCapturedAt)}
+                    First caught: {formatRelativeDay(entry.firstCapturedAt ?? '')}
                   </dd>
                 </div>
               </dl>
