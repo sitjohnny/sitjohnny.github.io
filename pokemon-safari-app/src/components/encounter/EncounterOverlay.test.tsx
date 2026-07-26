@@ -144,3 +144,82 @@ describe('EncounterOverlay — D-14 GradeFlash precedes BallShake on every throw
     expect(ballShakeEl(container)).not.toBeNull()
   })
 })
+
+describe('EncounterOverlay — shiny session threading (DEX-02 / D-09)', () => {
+  beforeEach(() => {
+    useExploreStore.getState().reset()
+    useEncounterStore.getState().reset()
+    clearPokeCacheKey()
+    resetCacheMemoryForTests()
+    seedPokeCache()
+    hydrateFromStorage()
+    vi.useRealTimers()
+  })
+
+  afterEach(() => {
+    cleanup()
+    useExploreStore.getState().reset()
+    useEncounterStore.getState().reset()
+    clearPokeCacheKey()
+    resetCacheMemoryForTests()
+    vi.useRealTimers()
+  })
+
+  function openShinyAppear(): void {
+    act(() => {
+      useEncounterStore.getState().open({
+        speciesId: SEEDED_SPECIES,
+        rarity: 'common',
+        biome: 'forest',
+        education: null,
+        captureBonus: 0,
+        shiny: true,
+      })
+    })
+  }
+
+  it('defaults omitted shiny to false on open', () => {
+    act(() => {
+      useEncounterStore.getState().open({
+        speciesId: SEEDED_SPECIES,
+        rarity: 'common',
+        biome: 'forest',
+        education: null,
+        captureBonus: 0,
+      })
+    })
+    expect(useEncounterStore.getState().session?.shiny).toBe(false)
+  })
+
+  it('renders shiny sprite on AppearFlash when session.shiny is true', () => {
+    render(<EncounterOverlay />)
+    openShinyAppear()
+    const img = screen.getByRole('img', { name: /p1/i })
+    expect(img).toHaveAttribute('src', 'https://example.test/s1.png')
+  })
+
+  it('renders shiny sprite on TimingBar when session.shiny is true', () => {
+    render(<EncounterOverlay />)
+    openShinyAppear()
+    act(() => {
+      useEncounterStore.getState().startTiming()
+    })
+    const img = screen.getByRole('img', { name: /p1/i })
+    expect(img).toHaveAttribute('src', 'https://example.test/s1.png')
+  })
+
+  it('passes shiny through CaughtCard (Gotcha stage)', () => {
+    render(<EncounterOverlay />)
+    openShinyAppear()
+    act(() => {
+      useEncounterStore.getState().startTiming()
+      useEncounterStore
+        .getState()
+        .registerThrow({ grade: 'perfect', caught: true, chance: 1 })
+      useEncounterStore.getState().toResult()
+    })
+    const img = screen.getByRole('img', { name: /p1/i })
+    expect(img).toHaveAttribute('src', 'https://example.test/s1.png')
+    expect(screen.getByText(captureCopy.shiny)).toBeInTheDocument()
+  })
+})
