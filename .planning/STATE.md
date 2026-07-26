@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: planning
-stopped_at: Phase 2 plans created (02-01..02-04)
-last_updated: "2026-07-25T21:20:00.000Z"
-last_activity: 2026-07-25 -- Planned Phase 02 Pokémon Data Layer (4 plans)
+status: verifying
+stopped_at: Phase 4 context gathered
+last_updated: "2026-07-26T00:15:13.437Z"
+last_activity: 2026-07-26 -- Completed 03-04-PLAN.md
 progress:
   total_phases: 8
-  completed_phases: 1
+  completed_phases: 3
   total_plans: 11
-  completed_plans: 3
-  percent: 13
+  completed_plans: 11
+  percent: 38
 ---
 
 # Project State
@@ -21,34 +21,36 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** A forgiving, rewarding explore → encounter → capture loop that a ~7-year-old can succeed at on phone or desktop, with progress that persists across sessions.
-**Current focus:** Phase 02 — pok-mon-data-layer
+**Current focus:** Phase 03 — exploration
 
 ## Current Position
 
-Phase: 02 (pok-mon-data-layer) — PLANNED
-Plan: 0 of 4
-Status: Plans ready — execute next
-Last activity: 2026-07-25 -- Planned Phase 02 (02-01..02-04)
+Phase: 03 (exploration) — VERIFYING
+Plan: 4 of 4
+Status: Phase complete — ready for verification
+Last activity: 2026-07-26 -- Completed 03-04-PLAN.md
 
-Progress: [░░░░░░░░░░] 0% (phase 2 plans)
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 3
-- Average duration: ~2.7min
-- Total execution time: 0.13 hours
+- Total plans completed: 11
+- Average duration: ~3.8min
+- Total execution time: 0.70 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 01 | 3 | 8min | ~2.7min |
+| 02 | 4 | 11min | ~2.8min |
+| 03 | 4 | 23min | ~5.8min |
 
 **Recent Trend:**
 
-- Last 5 plans: 01-01 (3min), 01-02 (3min), 01-03 (2min)
+- Last 5 plans: 03-01 (3min), 03-02 (13min), 03-03 (3min), 03-04 (4min)
 - Trend: steady
 
 *Updated after each plan completion*
@@ -58,6 +60,14 @@ Progress: [░░░░░░░░░░] 0% (phase 2 plans)
 | Phase 01 P01 | 3min | 2 tasks | 30 files |
 | Phase 01 P02 | 3min | 2 tasks | 16 files |
 | Phase 01 P03 | 2min | 2 tasks | 10 files |
+| Phase 02 P01 | 2min | 2 tasks | 7 files |
+| Phase 02 P02 | 3min | 2 tasks | 10 files |
+| Phase 02 P03 | 3min | 2 tasks | 6 files |
+| Phase 02 P04 | 3min | 2 tasks | 6 files |
+| Phase 03 P01 | 3min | 2 tasks | 9 files |
+| Phase 03 P02 | 13min | 3 tasks | 14 files |
+| Phase 03 P03 | 3min | 3 tasks | 6 files |
+| Phase 03 P04 | 4min | 3 tasks | 8 files |
 
 ## Accumulated Context
 
@@ -83,6 +93,32 @@ Recent decisions affecting current work:
 - [Phase 01]: Root listing uses hardcoded /food-crawl/ and /pokemon-safari/ hrefs only (T-01-07) — Mitigate open-redirect spoofing on site root
 - [Phase 01]: deploy:copy targets ../pokemon-safari only — food-crawl untouched (T-01-09) — Prevent accidental overwrite of sibling Pages project
 - [Phase 01]: No origin-root 404.html; HashRouter keeps SPA refresh safe (T-01-08 / D-14) — Origin-wide SPA fallback would break food-crawl
+- [Phase 02]: Helpers use TEST_CACHE_KEY literal matching pokemon-safari:poke-cache:v1 so helpers load before keys.ts exists
+- [Phase 02]: GameScreen.test asserts live GameScreen (no hook mock) so RED is missing gate copy, not missing module
+- [Phase 02]: BootScreen.test mocks usePokemonCache; loading vs failure describes named for Wave 2/3 -t gates
+- [Phase 02]: Sprite URL guard accepts any https: URL (reject non-https/javascript) so Vitest example.test hosts pass
+- [Phase 02]: Cold-open steers only index/root hash to /boot; deep links stay put for D-02 chrome
+- [Phase 02]: App smoke tests seed warm poke-cache so Home path remains stable under D-03 skip-Boot
+- [Phase 02]: GameScreen uses isCacheReady() OR store.cacheReady so warm hydrate without Boot still unlocks Explore
+- [Phase 02]: Warm App bootstrap calls setCacheReady(true) after sync hydrate to avoid store lag when Boot is skipped
+- [Phase 02]: Boot failure reload assertion uses redefine window.location (jsdom blocks spyOn reload)
+- [Phase 02]: Silhouette placeholder uses bg-text/20 (UI-SPEC text at 22% opacity) with .pixelated box
+- [Phase 02]: Boot does not auto-navigate on quota — shows QuotaNote until Got it; explore already unlocked via cacheReady
+- [Phase 02]: quotaSoftFail in ui store so Game can still surface the note if user leaves Boot via nav
+- [Phase 03]: Logical tile commit + grass event fire at tryStep return; tween is presentation-only
+- [Phase 03]: Forest map authored as 15x20 char grid mapped via CHAR_TILE for hand-editable layouts
+- [Phase 03]: tileAt is the single bounds gate for all collision/walkability callers (T-03-02)
+- [Phase 03]: Move lock releases on STEP_DURATION_MS in the explore loop so one press walks exactly one tile before 03-03's tween
+- [Phase 03]: Explore store is written once per committed tile; completion and next step collapse into a single setPlayer
+- [Phase 03]: Phase 2 D-02 cache gate preserved and extracted to CacheGateNotice so GameScreen is pure explore composition
+- [Phase 03]: D-pad box is 208px (3x64 arms + 2x8 gaps); 192px cannot hold the 64px UI-SPEC hit targets
+- [Phase 03]: Deterministic rAF shim replaces jsdom pretendToBeVisual so frame-driven explore tests are stable
+- [Phase 03]: Reduced-motion and dtMs<=0 snap still clamp to map bounds (T-03-09) before writing the world transform
+- [Phase 03]: useMapCamera returns a stable API object so the explore effect does not restart every render
+- [Phase 03]: GameScreen needed no structural change — spriteRef + facing wiring from 03-02 was already correct
+- [Phase 03]: Phase 4 reads pending grass events only via useExploreStore.getState().drainEncounters()
+- [Phase 03]: enqueueEncounters caps at MAX_PENDING_ENCOUNTERS=32 by dropping oldest
+- [Phase 03]: Map error recovery uses EmptyState + PixelButton; ExploreSurface unmounts so the rAF loop never runs on invalid data
 
 ### Pending Todos
 
@@ -104,6 +140,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-25T21:20:00.000Z
-Stopped at: Phase 2 plans created (02-01..02-04)
-Resume file: .planning/phases/02-pok-mon-data-layer/02-01-PLAN.md
+Last session: 2026-07-26T00:15:13.430Z
+Stopped at: Phase 4 context gathered
+Resume file: .planning/phases/04-encounters/04-CONTEXT.md
