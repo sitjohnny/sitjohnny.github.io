@@ -1,19 +1,24 @@
 type QuotaNoteProps = {
   onDismiss: () => void
+  /** Override soft-fail body; default keeps Phase 2 poke-cache copy. */
+  message?: string
 }
 
+const DEFAULT_MESSAGE =
+  'Couldn\u2019t save Pokémon data on this device. You can still play this visit.'
+
 /**
- * Non-blocking soft note when poke-cache persist hits QuotaExceeded (D-06).
+ * Non-blocking soft note when persist hits QuotaExceeded (D-06 / D-21).
  * Does not gate Explore — memory play remains allowed.
  */
-export function QuotaNote({ onDismiss }: QuotaNoteProps) {
+export function QuotaNote({ onDismiss, message = DEFAULT_MESSAGE }: QuotaNoteProps) {
   return (
     <aside
       className="w-full max-w-[320px] border-l-4 border-accent bg-dominant px-3 py-3"
       role="status"
     >
       <p className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-muted">
-        Couldn’t save Pokémon data on this device. You can still play this visit.
+        {message}
       </p>
       <button
         type="button"

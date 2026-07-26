@@ -18,5 +18,7 @@ export default defineConfig({
   test: {
     environment: 'jsdom',
     setupFiles: './src/test/setup.ts',
+    // Encounter integration tests wait on feedbackHold + shake (>5s wall clock).
+    testTimeout: 15_000,
   },
 })
