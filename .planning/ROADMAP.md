@@ -169,12 +169,21 @@ Plans:
 5. A child can reliably catch common Pokémon while legendaries remain a genuine chase
 
 **Plans:** 4 plans
-
 Plans:
+**Wave 1**
 
 - [ ] 05-01-PLAN.md — Wave 0 tests + pure capture/timing math + config (CATCH-02/03/05)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 05-02-PLAN.md — Happy-path catch: timing → roll → shake → Gotcha (CATCH-02/03)
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 05-03-PLAN.md — Timing-bar ping-pong, rarity bands, Capture lock (CATCH-02)
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 05-04-PLAN.md — Retry, flee after 3 fails, recap routing (CATCH-04/05)
 
 **UI hint**: yes
