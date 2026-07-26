@@ -214,6 +214,7 @@ describe('DATA-03 config surface', () => {
     expect(typeof shinyRate).toBe('number')
     expect(shinyRate).toBeGreaterThan(0)
     expect(shinyRate).toBeLessThanOrEqual(1)
+    expect(shinyRate).toBe(1 / 50)
     expect(typeof dexSaveDebounceMs).toBe('number')
     expect(dexSaveDebounceMs).toBeGreaterThan(0)
     expect(dexSaveDebounceMs).toBe(800)

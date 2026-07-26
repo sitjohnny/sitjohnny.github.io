@@ -41,7 +41,7 @@ export const encounterTimingMs = {
 } as const
 
 /** Kid-tunable shiny encounter rate (DEX-02 / Assumption A2) — consumed by 06-04. */
-export const shinyRate = 1 / 75
+export const shinyRate = 1 / 50
 
 /** Committed tile steps (any tile) with no Pokémon after an encounter ends. */
 export const postEncounterPokemonImmunitySteps = 10
