@@ -56,9 +56,17 @@ export function DPad({ onPress, onRelease, className = '' }: DPadProps) {
 
   function handlePress(event: ReactPointerEvent<HTMLButtonElement>, dir: Direction) {
     event.preventDefault()
+    const prev = heldRef.current
+    if (prev && prev !== dir) {
+      onRelease(prev)
+    }
     heldRef.current = dir
     setHeldDir(dir)
     onPress(dir)
+    // jsdom (and some older engines) lack pointer capture — skip when unavailable.
+    if (typeof event.currentTarget.setPointerCapture === 'function') {
+      event.currentTarget.setPointerCapture(event.pointerId)
+    }
   }
 
   function handleRelease(dir: Direction) {
