@@ -1,0 +1,63 @@
+/**
+ * MAP-03: Pure config-driven grass resolver — no react/zustand/DOM imports.
+ * All randomness is an injected Rng; rates and pools live in data/.
+ */
+
+import { grassOutcomeWeights } from '@/data/rates'
+import { biomeEncounterTables } from '@/data/encounterTables'
+import type { EncounterResolution, GrassOutcome, RarityBand } from '@/types/encounter'
+import type { BiomeId, EncounterCandidateEvent } from '@/types/map'
+import { weightedPick, type Rng } from '@/utils/rng'
+
+export function rollGrass(
+  rng: Rng,
+  weights: typeof grassOutcomeWeights = grassOutcomeWeights,
+): GrassOutcome {
+  return weightedPick(
+    rng,
+    (Object.entries(weights) as [GrassOutcome, number][]).map(([id, weight]) => ({
+      id,
+      weight,
+    })),
+  )
+}
+
+/** 'pokemon' -> 'common', 'rare' -> 'rare', 'legendary' -> 'legendary', else null. */
+export function rarityForOutcome(outcome: GrassOutcome): RarityBand | null {
+  if (outcome === 'pokemon') return 'common'
+  if (outcome === 'rare') return 'rare'
+  if (outcome === 'legendary') return 'legendary'
+  return null
+}
+
+export function pickSpecies(
+  rng: Rng,
+  biome: BiomeId,
+  rarity: RarityBand,
+  tables: typeof biomeEncounterTables = biomeEncounterTables,
+): number {
+  const pool = tables[biome][rarity]
+  if (pool.length === 0) {
+    throw new Error(`Empty encounter pool for biome=${biome} rarity=${rarity}`)
+  }
+  const index = Math.min(Math.floor(rng.next() * pool.length), pool.length - 1)
+  return pool[index]!
+}
+
+export function resolveCandidate(
+  rng: Rng,
+  event: EncounterCandidateEvent,
+): EncounterResolution {
+  const outcome = rollGrass(rng)
+  if (outcome === 'nothing') return { kind: 'nothing' }
+  if (outcome === 'item') return { kind: 'item' }
+  const rarity = rarityForOutcome(outcome)
+  if (!rarity) {
+    throw new Error(`Unexpected grass outcome without rarity: ${outcome}`)
+  }
+  return {
+    kind: 'pokemon',
+    speciesId: pickSpecies(rng, event.biome, rarity),
+    rarity,
+  }
+}
