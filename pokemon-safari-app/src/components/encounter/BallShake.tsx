@@ -7,18 +7,15 @@ import ballFullOpen from '@/assets/encounter/ball-full-open.png'
 
 type BallShakeProps = {
   caught: boolean
-  /** Pre-resolved catch chance — drives 1–3 flavor shakes only (D-30). */
+  /** Kept for call-site compatibility; shake count is always 3. */
   chance: number
   onComplete: () => void
 }
 
 type Phase = 'shaking' | 'resolve-caught' | 'resolve-mid-open' | 'resolve-full-open'
 
-function shakeCountFor(chance: number): 1 | 2 | 3 {
-  if (chance >= 0.75) return 3
-  if (chance >= 0.4) return 2
-  return 1
-}
+/** Every throw always plays three flavor shakes before resolve. */
+const SHAKE_COUNT = 3 as const
 
 function spriteFor(phase: Phase): string {
   if (phase === 'resolve-mid-open') return ballMidOpen
@@ -30,9 +27,9 @@ function spriteFor(phase: Phase): string {
  * Flavor shakes to a pre-resolved caught flag (D-30 / D-31). Never rolls capture.
  * Fail ending opens the ball (mid → full hold) before onComplete → fail beat.
  */
-export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
+export function BallShake({ caught, chance: _chance, onComplete }: BallShakeProps) {
   const reducedMotion = prefersReducedMotion()
-  const shakes = shakeCountFor(chance)
+  const shakes = SHAKE_COUNT
   const [phase, setPhase] = useState<Phase>('shaking')
   /** While shaking (and not reduced), true only during each `shakeOnce` window. */
   const [rocking, setRocking] = useState(() => !reducedMotion)

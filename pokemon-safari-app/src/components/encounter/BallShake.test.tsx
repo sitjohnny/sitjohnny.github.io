@@ -35,9 +35,13 @@ afterEach(() => {
 })
 
 describe('BallShake sprites + phases', () => {
-  it('stays on closed sprite while shaking and reports shake count from chance', () => {
+  const threeShakeTotal = 3 * encounterTimingMs.shakeOnce + 2 * encounterTimingMs.shakeGap
+  const threeShakeTotalReduced =
+    3 * encounterTimingMs.reducedShakeOnce + 2 * encounterTimingMs.reducedShakeGap
+
+  it('stays on closed sprite while shaking and always reports 3 shakes', () => {
     const onComplete = vi.fn()
-    render(<BallShake caught chance={0.8} onComplete={onComplete} />)
+    render(<BallShake caught chance={0.2} onComplete={onComplete} />)
 
     expect(ballRoot().getAttribute('data-shakes')).toBe('3')
     expect(ballRoot().getAttribute('data-caught')).toBe('true')
@@ -50,11 +54,9 @@ describe('BallShake sprites + phases', () => {
   it('on catch: after shakes enters resolve-caught with sparkles, never opens, then completes', () => {
     const onComplete = vi.fn()
     render(<BallShake caught chance={0.5} onComplete={onComplete} />)
-    // 2 shakes: once + gap + once
-    const shakeTotal = 2 * encounterTimingMs.shakeOnce + encounterTimingMs.shakeGap
 
     act(() => {
-      vi.advanceTimersByTime(shakeTotal)
+      vi.advanceTimersByTime(threeShakeTotal)
     })
     expect(phase()).toBe('resolve-caught')
     expect(spriteSrc()).toMatch(/ball-closed/)
@@ -73,10 +75,9 @@ describe('BallShake sprites + phases', () => {
     expect(ballRoot().getAttribute('data-caught')).toBe('false')
     expect(ballRoot().getAttribute('data-ending')).toBe('broke-free')
     expect(screen.getByText('Broke free')).toBeInTheDocument()
-    const shakeTotal = encounterTimingMs.shakeOnce // 1 shake
 
     act(() => {
-      vi.advanceTimersByTime(shakeTotal)
+      vi.advanceTimersByTime(threeShakeTotal)
     })
     expect(phase()).toBe('resolve-mid-open')
     expect(spriteSrc()).toMatch(/ball-mid-open/)
@@ -99,7 +100,7 @@ describe('BallShake sprites + phases', () => {
     render(<BallShake caught={false} chance={0.2} onComplete={onComplete} />)
 
     act(() => {
-      vi.advanceTimersByTime(encounterTimingMs.reducedShakeOnce)
+      vi.advanceTimersByTime(threeShakeTotalReduced)
     })
     expect(phase()).toBe('resolve-full-open')
     expect(spriteSrc()).toMatch(/ball-full-open/)
@@ -114,11 +115,9 @@ describe('BallShake sprites + phases', () => {
     prefersReducedMotionMock.mockReturnValue(true)
     const onComplete = vi.fn()
     render(<BallShake caught chance={0.5} onComplete={onComplete} />)
-    const shakeTotal =
-      2 * encounterTimingMs.reducedShakeOnce + encounterTimingMs.reducedShakeGap
 
     act(() => {
-      vi.advanceTimersByTime(shakeTotal)
+      vi.advanceTimersByTime(threeShakeTotalReduced)
     })
     expect(phase()).toBe('resolve-caught')
     expect(spriteSrc()).toMatch(/ball-closed/)

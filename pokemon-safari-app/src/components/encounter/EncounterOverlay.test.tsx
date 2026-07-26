@@ -10,10 +10,10 @@ import { clearPokeCacheKey, seedPokeCache } from '@/test/pokeapi-test-helpers'
 
 const SEEDED_SPECIES = 1
 
-/** chance 0.5 → BallShake plays 2 flavor shakes (see BallShake.shakeCountFor). */
+/** BallShake always plays 3 flavor shakes before resolve. */
 const BALL_SHAKE_TOTAL_MS =
-  2 * encounterTimingMs.shakeOnce +
-  1 * encounterTimingMs.shakeGap +
+  3 * encounterTimingMs.shakeOnce +
+  2 * encounterTimingMs.shakeGap +
   encounterTimingMs.shakeOpen +
   encounterTimingMs.shakeEscapeHold
 
