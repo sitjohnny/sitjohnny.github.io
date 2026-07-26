@@ -1,11 +1,10 @@
 /**
- * MAP-04: Pure camera follow + clamp — no react/zustand/DOM imports.
- * Exponential ease toward a target centre, then clamp so the viewport never
- * shows space beyond the map (letterbox-stable when the map is smaller).
+ * Pure camera follow — no react/zustand/DOM imports.
+ * Exponential ease toward a target centre; no map-edge clamp (infinite world).
  */
 
-import { CAMERA_STIFFNESS, TILE_PX } from '@/data/exploreConfig'
-import type { MapDef, Vec2 } from '@/types/map'
+import { CAMERA_STIFFNESS } from '@/data/exploreConfig'
+import type { Vec2 } from '@/types/map'
 
 export type Camera = { x: number; y: number }
 export type Size = { w: number; h: number }
@@ -17,18 +16,12 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
-export function mapPixelSize(map: MapDef): Size {
-  return { w: map.width * TILE_PX, h: map.height * TILE_PX }
-}
-
 /**
- * Exponential ease toward target, then clamp so the viewport never leaves the map.
+ * Exponential ease toward target. No spatial clamp — camera may follow anywhere.
  */
 export function updateCamera(
   cam: Camera,
   target: Camera,
-  mapPx: Size,
-  view: Size,
   dtMs: number,
   stiffness: number = CAMERA_STIFFNESS,
 ): Camera {
@@ -37,14 +30,9 @@ export function updateCamera(
   }
 
   const follow = 1 - Math.exp((-stiffness * dtMs) / 1000)
-  const halfW = view.w / 2
-  const halfH = view.h / 2
-  const x = cam.x + (target.x - cam.x) * follow
-  const y = cam.y + (target.y - cam.y) * follow
-
   return {
-    x: clamp(x, halfW, Math.max(halfW, mapPx.w - halfW)),
-    y: clamp(y, halfH, Math.max(halfH, mapPx.h - halfH)),
+    x: cam.x + (target.x - cam.x) * follow,
+    y: cam.y + (target.y - cam.y) * follow,
   }
 }
 

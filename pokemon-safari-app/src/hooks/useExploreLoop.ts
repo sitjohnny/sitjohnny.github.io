@@ -53,7 +53,7 @@ export function useExploreLoop({
   playerRef,
   viewportRef,
 }: ExploreLoopOptions): void {
-  const camera = useMapCamera(map, worldRef)
+  const camera = useMapCamera(worldRef)
 
   useEffect(() => {
     let frame = 0
