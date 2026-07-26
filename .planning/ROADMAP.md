@@ -194,7 +194,7 @@ Plans:
 
 ### Phase 6: Pokédex
 
-**Goal**: The Pokédex becomes the visible collection reward that drives the endless loop
+**Goal:** As a child catching Pokémon on Safari, I want to open a Gen 1 Pokédex where unknowns stay silhouettes until I catch them and my Seen/Caught progress is visible, so that the endless loop has a collection reward that drives me back into the grass.
 **Mode:** mvp
 **Depends on**: Phase 5
 **Requirements**: DEX-01, DEX-02, DEX-03
@@ -204,7 +204,24 @@ Plans:
 2. Undiscovered species show as silhouettes, and seen vs. caught states are visually distinct at a glance
 3. Each entry records first encounter, first capture, number caught, and shiny status
 
-**Plans**: TBD
+**Plans:** 4 plans
+Plans:
+**Wave 1**
+
+- [ ] 06-01-PLAN.md — Wave 0 failing tests for dex reducers, save, flavor, relativeDay, DexScreen
+
+**Wave 2** _(blocked on Wave 1)_
+
+- [ ] 06-02-PLAN.md — Browse slice: SAVE_KEY dex + silhouette grid + sticky header + stub sheet (DEX-01/03)
+
+**Wave 3** _(blocked on Wave 2)_
+
+- [ ] 06-03-PLAN.md — Catch→dex binding, shiny roll, debounced persist, silhouette lifts (DEX-02)
+
+**Wave 4** _(blocked on Wave 3)_
+
+- [ ] 06-04-PLAN.md — Cache v2 flavor text, caught detail lore, relative dates, quota note (DEX-01/02/03)
+
 **UI hint**: yes
 
 ### Phase 7: Persistence, Unlocks, Items & Daily
@@ -252,7 +269,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Exploration                           | 6/6            | UAT pending | -          |
 | 4. Encounters                            | 6/6            | Complete    | 2026-07-26 |
 | 5. Capture Flow                          | 5/5 | Complete   | 2026-07-26 |
-| 6. Pokédex                               | 0/TBD          | Not started | -          |
+| 6. Pokédex                               | 0/4            | Planned    | -          |
 | 7. Persistence, Unlocks, Items & Daily   | 0/TBD          | Not started | -          |
 | 8. Audio, Feedback & Polish              | 0/TBD          | Not started | -          |
 
