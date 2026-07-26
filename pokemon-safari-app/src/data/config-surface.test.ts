@@ -18,6 +18,7 @@ import {
 import { biomeUnlockThresholds } from '@/data/unlocks'
 import { dailyRewardAmounts } from '@/data/dailyRewards'
 import { captureModifiers } from '@/data/captureModifiers'
+import { timingBar } from '@/data/timingBar'
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -74,6 +75,16 @@ describe('DATA-03 config surface', () => {
       'feedbackHold',
       'reducedFeedbackHold',
       'itemToast',
+      'gradeFlash',
+      'reducedGradeFlash',
+      'failBeat',
+      'reducedFailBeat',
+      'shakeOnce',
+      'reducedShakeOnce',
+      'shakeGap',
+      'reducedShakeGap',
+      'shakeResolve',
+      'reducedShakeResolve',
     ] as const) {
       expect(typeof encounterTimingMs[key]).toBe('number')
     }
@@ -110,6 +121,18 @@ describe('DATA-03 config surface', () => {
     expect(typeof dailyRewardAmounts.berry).toBe('number')
     expect(typeof captureModifiers).toBe('object')
     expect(captureModifiers).not.toBeNull()
+    expect(Object.keys(captureModifiers.timing).sort()).toEqual(
+      ['good', 'great', 'miss', 'perfect'].sort(),
+    )
+  })
+
+  it('exports timingBar period, zones, and sweet-spot config', () => {
+    expect(typeof timingBar.periodMs).toBe('number')
+    expect(typeof timingBar.reducedMotionScale).toBe('number')
+    expect(timingBar.zones.common).toBeDefined()
+    expect(timingBar.zones.rare).toBeDefined()
+    expect(timingBar.zones.legendary).toBeDefined()
+    expect(timingBar.sweetSpotOffsets.length).toBeGreaterThanOrEqual(3)
   })
 })
 

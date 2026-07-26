@@ -38,10 +38,10 @@ created: 2026-07-26
 
 | Task ID  | Plan | Wave | Requirement | Threat Ref | Secure Behavior                        | Test Type   | Automated Command                                            | File Exists | Status     |
 | -------- | ---- | ---- | ----------- | ---------- | -------------------------------------- | ----------- | ------------------------------------------------------------ | ----------- | ---------- |
-| 05-01-T1 | 01   | 1    | CATCH-03    | T-05-01    | Odds only from `data/`                 | unit        | `npx vitest run src/game/capture.test.ts`                    | ❌ W0       | ⬜ pending |
-| 05-01-T1 | 01   | 1    | CATCH-02    | —          | N/A                                    | unit        | `npx vitest run src/game/timing.test.ts`                     | ❌ W0       | ⬜ pending |
-| 05-01-T2 | 01   | 1    | CATCH-05    | —          | N/A                                    | unit        | `npx vitest run src/game/capture.test.ts`                    | ❌ W0       | ⬜ pending |
-| 05-01-T2 | 01   | 1    | DATA-03     | T-05-01    | No rate literals / Math.random in game | unit        | `npx vitest run src/data/config-surface.test.ts`             | ⚠️ extend   | ⬜ pending |
+| 05-01-T1 | 01   | 1    | CATCH-03    | T-05-01    | Odds only from `data/`                 | unit        | `npx vitest run src/game/capture.test.ts`                    | ✅ exists   | ❌ in progress (RED) |
+| 05-01-T1 | 01   | 1    | CATCH-02    | —          | N/A                                    | unit        | `npx vitest run src/game/timing.test.ts`                     | ✅ exists   | ❌ in progress (RED) |
+| 05-01-T2 | 01   | 1    | CATCH-05    | —          | N/A                                    | unit        | `npx vitest run src/game/capture.test.ts`                    | ✅ exists   | ❌ in progress (RED) |
+| 05-01-T2 | 01   | 1    | DATA-03     | T-05-01    | No rate literals / Math.random in game | unit        | `npx vitest run src/data/config-surface.test.ts`             | ⚠️ extend   | ❌ in progress (RED) |
 | 05-02-T1 | 02   | 2    | CATCH-03    | T-05-04    | Capture gated to timing stage          | integration | `npx vitest run src/hooks/useEncounterFlow.test.ts`          | ⚠️ extend   | ⬜ pending |
 | 05-03-T1 | 03   | 3    | CATCH-02    | T-05-04    | Mash lock during flash/shake           | component   | `npx vitest run src/components/encounter/TimingBar.test.tsx` | ❌ W0       | ⬜ pending |
 | 05-04-T1 | 04   | 4    | CATCH-04    | T-05-04    | Attempt counter single-writer          | integration | `npx vitest run src/hooks/useEncounterFlow.test.ts`          | ⚠️ extend   | ⬜ pending |
@@ -52,11 +52,11 @@ _Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky_
 
 ## Wave 0 Requirements
 
-- [ ] `src/game/capture.test.ts` — stubs for CATCH-03, CATCH-05, D-25
-- [ ] `src/game/timing.test.ts` — stubs for CATCH-02 grading + sweet-spot
+- [x] `src/game/capture.test.ts` — stubs for CATCH-03, CATCH-05, D-25 (written; awaiting GREEN in Task 2)
+- [x] `src/game/timing.test.ts` — stubs for CATCH-02 grading + sweet-spot (written; awaiting GREEN in Task 2)
 - [ ] `src/components/encounter/TimingBar.test.tsx` — Capture lock / keyboard (uses `flushFrames`)
 - [ ] Extend `src/hooks/useEncounterFlow.test.ts` — timing→shake→result/flee + recap routing
-- [ ] Extend `src/data/config-surface.test.ts` — `captureModifiers.timing` + `timingBar` exports
+- [x] Extend `src/data/config-surface.test.ts` — `captureModifiers.timing` + `timingBar` exports (assertions added; awaiting GREEN in Task 2)
 - [ ] Framework install: none — Vitest infra already present
 
 ---
