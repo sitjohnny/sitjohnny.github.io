@@ -422,20 +422,6 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(screen.queryByRole('status')).toBeNull()
   })
 
-  it('shows a non-blocking item toast and keeps the D-pad present', async () => {
-    const step = setupGrassApproach()
-    setDefaultRngForTests(encounterRng(0.75))
-    renderExplore()
-
-    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
-    await flushFrames(8)
-    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
-
-    expect(await screen.findByRole('status')).toHaveTextContent('Found an item!')
-    expect(screen.queryByRole('dialog')).toBeNull()
-    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
-  })
-
   it('freezes keyboard movement and hides the D-pad while the dialog is open', async () => {
     const step = setupGrassApproach()
     setDefaultRngForTests(encounterRng(0, 0))

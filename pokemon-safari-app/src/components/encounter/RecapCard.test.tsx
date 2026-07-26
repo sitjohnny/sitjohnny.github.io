@@ -47,7 +47,6 @@ describe('RecapCard', () => {
         encounterTimingMs.appearFlash,
         encounterTimingMs.spriteReveal,
         encounterTimingMs.feedbackHold,
-        encounterTimingMs.itemToast,
       ) + 5000
 
     await act(async () => {

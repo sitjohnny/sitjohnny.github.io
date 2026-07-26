@@ -2,7 +2,6 @@ import { useEffect, useRef } from 'react'
 import { CacheGateNotice } from '@/components/CacheGateNotice'
 import { DPad } from '@/components/controls/DPad'
 import { EncounterOverlay } from '@/components/encounter/EncounterOverlay'
-import { ItemToast } from '@/components/encounter/ItemToast'
 import { MapViewport } from '@/components/map/MapViewport'
 import { PlayerSprite } from '@/components/map/PlayerSprite'
 import { TerrainCanvas } from '@/components/map/TerrainCanvas'
@@ -54,7 +53,6 @@ function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) 
   const world = worldRef.current
   const input = usePlayerInput()
   const stage = useEncounterStore((state) => state.stage)
-  const itemToastVisible = useEncounterStore((state) => state.itemToastVisible)
 
   useEncounterFlow()
 
@@ -96,12 +94,6 @@ function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) 
       {quotaSoftFail ? (
         <div className="absolute left-1/2 top-10 z-10 -translate-x-1/2">
           <QuotaNote onDismiss={onDismissQuota} />
-        </div>
-      ) : null}
-
-      {itemToastVisible ? (
-        <div className="absolute left-1/2 top-10 z-10 -translate-x-1/2">
-          <ItemToast onDismiss={() => useEncounterStore.getState().hideItemToast()} />
         </div>
       ) : null}
 

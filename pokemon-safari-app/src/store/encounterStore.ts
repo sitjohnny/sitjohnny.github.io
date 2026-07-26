@@ -15,7 +15,6 @@ import type {
 type EncounterState = {
   stage: EncounterStage
   session: EncounterSession | null
-  itemToastVisible: boolean
   lastFactKey: string | null
   question: EducationQuestion | null
   feedback: { ok: boolean; message: string } | null
@@ -55,8 +54,6 @@ type EncounterState = {
   toResult: () => void
   toFlee: () => void
   fail: () => void
-  showItemToast: () => void
-  hideItemToast: () => void
   toRecap: () => void
   close: () => void
   reset: () => void
@@ -66,7 +63,6 @@ function initialState() {
   return {
     stage: 'idle' as EncounterStage,
     session: null as EncounterSession | null,
-    itemToastVisible: false,
     lastFactKey: null as string | null,
     question: null as EducationQuestion | null,
     feedback: null as { ok: boolean; message: string } | null,
@@ -166,8 +162,6 @@ export const useEncounterStore = create<EncounterState>((set) => ({
   toResult: () => set({ stage: 'result' }),
   toFlee: () => set({ stage: 'flee' }),
   fail: () => set({ stage: 'error' }),
-  showItemToast: () => set({ itemToastVisible: true }),
-  hideItemToast: () => set({ itemToastVisible: false }),
   toRecap: () => set({ stage: 'recap' }),
   close: () =>
     set((state) => ({
@@ -176,7 +170,6 @@ export const useEncounterStore = create<EncounterState>((set) => ({
       question: null,
       feedback: null,
       lastFactKey: state.lastFactKey,
-      itemToastVisible: state.itemToastVisible,
     })),
   reset: () => set(initialState()),
 }))

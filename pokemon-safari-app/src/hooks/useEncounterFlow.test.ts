@@ -153,23 +153,8 @@ describe('useEncounterFlow', () => {
     )
     expect(useEncounterStore.getState()).toMatchObject({
       stage: 'idle',
-      itemToastVisible: false,
       session: null,
     })
-  })
-
-  it('shows an item toast without opening a modal stage', async () => {
-    render(createElement(QueueLater, { rng: sequenceRng(0.75), event: candidate() }))
-
-    await waitFor(() => expect(useEncounterStore.getState().itemToastVisible).toBe(true))
-    expect(useEncounterStore.getState().stage).toBe('idle')
-  })
-
-  it('does not arm pokemon immunity after an item toast', async () => {
-    render(createElement(QueueLater, { rng: sequenceRng(0.75), event: candidate() }))
-
-    await waitFor(() => expect(useEncounterStore.getState().itemToastVisible).toBe(true))
-    expect(useExploreStore.getState().pokemonImmunitySteps).toBe(0)
   })
 
   it('arms pokemon immunity when a session closes and suppresses pokemon rolls', async () => {
@@ -192,7 +177,6 @@ describe('useEncounterFlow', () => {
     expect(useEncounterStore.getState()).toMatchObject({
       stage: 'idle',
       session: null,
-      itemToastVisible: false,
     })
   })
 
@@ -360,7 +344,7 @@ describe('useEncounterFlow', () => {
     }
   })
 
-  it('never reaches question for nothing or item outcomes', async () => {
+  it('never reaches question for nothing outcomes', async () => {
     render(createElement(QueueLater, { rng: sequenceRng(0.5), event: candidate(1) }))
     await waitFor(() =>
       expect(useExploreStore.getState().pendingEncounters).toHaveLength(0),
@@ -372,8 +356,11 @@ describe('useEncounterFlow', () => {
     useExploreStore.getState().reset()
     useEncounterStore.getState().reset()
 
+    // 0.75 is still inside the nothing band (0.45–0.90) after item removal
     render(createElement(QueueLater, { rng: sequenceRng(0.75), event: candidate(2) }))
-    await waitFor(() => expect(useEncounterStore.getState().itemToastVisible).toBe(true))
+    await waitFor(() =>
+      expect(useExploreStore.getState().pendingEncounters).toHaveLength(0),
+    )
     expect(useEncounterStore.getState().stage).toBe('idle')
     expect(useEncounterStore.getState().question).toBeNull()
   })

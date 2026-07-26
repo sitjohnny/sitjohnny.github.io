@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect } from 'react'
 import { feedbackCopy } from '@/data/educationConfig'
 import { educationCaptureBonus, encounterTimingMs, shinyRate } from '@/data/rates'
 import { computeCatchChance, rollCapture } from '@/game/capture'
@@ -223,7 +223,6 @@ export function useEncounterFlow(options: EncounterFlowOptions = {}): EncounterF
   const rng = options.rng ?? getDefaultRng()
   flowRngRef.current = rng
   const pendingEncounters = useExploreStore((state) => state.pendingEncounters)
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
     // Zustand subscribe runs synchronously on set — clear the feedback hold
@@ -238,9 +237,6 @@ export function useEncounterFlow(options: EncounterFlowOptions = {}): EncounterF
     })
     return () => {
       unsub()
-      if (toastTimer.current !== null) {
-        clearTimeout(toastTimer.current)
-      }
       clearEncounterTimers()
       useEncounterStore.getState().close()
     }
@@ -263,18 +259,6 @@ export function useEncounterFlow(options: EncounterFlowOptions = {}): EncounterF
     const suppressPokemon = useExploreStore.getState().pokemonImmunitySteps > 0
     const resolution = resolveCandidate(rng, candidate, { suppressPokemon })
     if (resolution.kind === 'nothing') {
-      return
-    }
-    if (resolution.kind === 'item') {
-      const encounter = useEncounterStore.getState()
-      encounter.showItemToast()
-      if (toastTimer.current !== null) {
-        clearTimeout(toastTimer.current)
-      }
-      toastTimer.current = setTimeout(() => {
-        useEncounterStore.getState().hideItemToast()
-        toastTimer.current = null
-      }, encounterTimingMs.itemToast)
       return
     }
 
