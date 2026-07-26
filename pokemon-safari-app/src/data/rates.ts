@@ -35,4 +35,6 @@ export const encounterTimingMs = {
   reducedShakeGap: 80,
   shakeResolve: 400,
   reducedShakeResolve: 200,
+  shakeOpen: 120,
+  shakeEscapeHold: 250,
 } as const

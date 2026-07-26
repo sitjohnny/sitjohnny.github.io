@@ -85,6 +85,8 @@ describe('DATA-03 config surface', () => {
       'reducedShakeGap',
       'shakeResolve',
       'reducedShakeResolve',
+      'shakeOpen',
+      'shakeEscapeHold',
     ] as const) {
       expect(typeof encounterTimingMs[key]).toBe('number')
     }
