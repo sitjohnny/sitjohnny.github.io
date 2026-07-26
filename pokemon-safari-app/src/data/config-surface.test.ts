@@ -22,6 +22,13 @@ import { dailyRewardAmounts } from '@/data/dailyRewards'
 import { captureModifiers } from '@/data/captureModifiers'
 import { timingBar } from '@/data/timingBar'
 import { primaryTypeAccentStyle, primaryTypeColor, typeColors } from '@/data/typeColors'
+import {
+  POCKET_NOISE_SCALE,
+  pocketHabitats,
+  pocketHabitatWeights,
+  pocketThresholds,
+  type PocketId,
+} from '@/data/pocketConfig'
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -240,6 +247,30 @@ describe('DATA-03 config surface', () => {
       borderLeftStyle: 'solid',
       borderLeftColor: typeColors.water,
     })
+  })
+
+  it('exports forest pocket thresholds, habitats, and habitat weights', () => {
+    expect(POCKET_NOISE_SCALE).toBe(14)
+    expect(pocketThresholds).toEqual({
+      wetland: 0.22,
+      meadow: 0.45,
+      woodland: 0.72,
+    })
+    expect(pocketHabitatWeights).toEqual({
+      match: 5,
+      miss: 1,
+      meadowNull: 2,
+      meadowUrban: 2,
+    })
+    const ids: PocketId[] = ['woodland', 'meadow', 'wetland', 'canopy']
+    for (const id of ids) {
+      expect(Array.isArray(pocketHabitats[id])).toBe(true)
+      expect(pocketHabitats[id].length).toBeGreaterThan(0)
+    }
+    expect(pocketHabitats.woodland).toEqual(['forest', 'grassland'])
+    expect(pocketHabitats.meadow).toEqual(['grassland'])
+    expect(pocketHabitats.wetland).toEqual(['waters-edge'])
+    expect(pocketHabitats.canopy).toEqual(['forest', 'rare'])
   })
 
   it('exports shinyRate and dexSaveDebounceMs for Phase 6 dex (DATA-03)', () => {
