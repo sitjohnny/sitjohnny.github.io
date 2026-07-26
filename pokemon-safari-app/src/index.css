@@ -129,8 +129,61 @@
     color: var(--color-text);
   }
 
-  .ball-broke-free {
-    transform: scale(1.08) rotate(-8deg);
+  .ball-shake__sprite {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+    width: 64px;
+    height: 64px;
+    object-fit: contain;
+    display: block;
+  }
+
+  .ball-rock {
+    transform-origin: 50% 100%;
+    animation-name: ball-rock;
+    animation-timing-function: ease-in-out;
+  }
+
+  .ball-sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--color-accent);
+    clip-path: polygon(
+      50% 0%,
+      61% 35%,
+      98% 35%,
+      68% 57%,
+      79% 91%,
+      50% 70%,
+      21% 91%,
+      32% 57%,
+      2% 35%,
+      39% 35%
+    );
+    animation: ball-sparkle-pop 400ms ease-out both;
+  }
+
+  .ball-sparkle--static {
+    animation: none;
+    opacity: 1;
+  }
+
+  .ball-sparkle[data-sparkle='0'] {
+    top: 2px;
+    left: 8px;
+  }
+  .ball-sparkle[data-sparkle='1'] {
+    top: 4px;
+    right: 6px;
+  }
+  .ball-sparkle[data-sparkle='2'] {
+    bottom: 10px;
+    left: 4px;
+  }
+  .ball-sparkle[data-sparkle='3'] {
+    bottom: 8px;
+    right: 8px;
   }
 
   /* Stacked Red walk poses: hide all, reveal only the img whose data-dir /
@@ -181,6 +234,36 @@
   }
 }
 
+@keyframes ball-rock {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-12deg);
+  }
+  75% {
+    transform: rotate(12deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ball-sparkle-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 .home-meadow {
   background: linear-gradient(180deg, #e3f2c9 0%, #c8e6a0 100%);
 }
@@ -214,5 +297,13 @@
 
   .encounter-flash {
     animation: none;
+  }
+
+  .ball-rock {
+    animation: none !important;
+  }
+  .ball-sparkle {
+    animation: none;
+    opacity: 1;
   }
 }

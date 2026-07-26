@@ -142,4 +142,16 @@ describe("BallShake sprites + phases", () => {
     });
     expect(onComplete).not.toHaveBeenCalled();
   });
+
+  it("applies ball-rock while shaking unless reduced motion", () => {
+    const { unmount } = render(
+      <BallShake caught chance={0.2} onComplete={vi.fn()} />,
+    );
+    expect(ballRoot().className).toMatch(/ball-rock/);
+    unmount();
+
+    prefersReducedMotionMock.mockReturnValue(true);
+    render(<BallShake caught chance={0.2} onComplete={vi.fn()} />);
+    expect(ballRoot().className).not.toMatch(/ball-rock/);
+  });
 });
