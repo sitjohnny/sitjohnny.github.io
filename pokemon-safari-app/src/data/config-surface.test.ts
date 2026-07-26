@@ -95,10 +95,33 @@ describe('DATA-03 config surface', () => {
     }
   })
 
-  it('exports biomeEncounterTables.forest rarity pools', () => {
-    expect(Array.isArray(biomeEncounterTables.forest.common)).toBe(true)
-    expect(Array.isArray(biomeEncounterTables.forest.rare)).toBe(true)
-    expect(Array.isArray(biomeEncounterTables.forest.legendary)).toBe(true)
+  it('forest encounter pools partition Gen 1 (1..151) with no gaps or duplicates', () => {
+    const { common, rare, legendary } = biomeEncounterTables.forest
+    expect([...legendary].sort((a, b) => a - b)).toEqual([
+      144, 145, 146, 150, 151,
+    ])
+    expect(new Set(rare).size).toBe(rare.length)
+    expect(new Set(common).size).toBe(common.length)
+
+    const all = [...common, ...rare, ...legendary]
+    expect(all).toHaveLength(151)
+    expect(new Set(all).size).toBe(151)
+    expect([...all].sort((a, b) => a - b)).toEqual(
+      Array.from({ length: 151 }, (_, i) => i + 1),
+    )
+  })
+
+  it('forest rare pool matches the approved finals / cool list', () => {
+    const expectedRare = [
+      3, 6, 9, 12, 15, 18, 22, 24, 26, 28, 31, 34, 36, 38, 40, 45, 47, 49, 51, 53,
+      55, 57, 59, 62, 65, 68, 71, 73, 76, 78, 80, 82, 85, 87, 89, 91, 94, 97, 99,
+      101, 103, 105, 106, 107, 110, 112, 113, 115, 117, 119, 121, 122, 123, 124,
+      125, 126, 127, 128, 130, 131, 132, 134, 135, 136, 137, 139, 141, 142, 143,
+      149,
+    ]
+    expect([...biomeEncounterTables.forest.rare].sort((a, b) => a - b)).toEqual(
+      expectedRare,
+    )
   })
 
   it('exports education adaptive knobs and copy with {boost} placeholder', () => {
