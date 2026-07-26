@@ -1,12 +1,15 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { CacheGateNotice } from '@/components/CacheGateNotice'
 import { DPad } from '@/components/controls/DPad'
+import { EmptyState } from '@/components/EmptyState'
 import { MapViewport } from '@/components/map/MapViewport'
 import { PlayerSprite } from '@/components/map/PlayerSprite'
 import { TileWorld } from '@/components/map/TileWorld'
+import { PixelButton } from '@/components/PixelButton'
 import { QuotaNote } from '@/components/QuotaNote'
 import { TILE_PX } from '@/data/exploreConfig'
 import { forestMap } from '@/data/maps/forest'
+import { isValidMap } from '@/game/collision'
 import { useExploreLoop } from '@/hooks/useExploreLoop'
 import { usePlayerInput } from '@/hooks/usePlayerInput'
 import { isCacheReady } from '@/services/pokeapi/cache'
@@ -16,6 +19,11 @@ import { useExploreStore } from '@/store/exploreStore'
 const WORLD_WIDTH_PX = forestMap.width * TILE_PX
 const WORLD_HEIGHT_PX = forestMap.height * TILE_PX
 
+const MAP_ERROR_HEADING = 'Map didn’t load'
+const TRY_AGAIN_LABEL = 'Try Again'
+const MAP_ERROR_BODY =
+  `Something went wrong showing the Forest. Tap ${TRY_AGAIN_LABEL}. If it keeps failing, go back Home.`
+
 /**
  * Explore/Game — the Forest surface, still behind the Gen 1 cache gate (D-02).
  */
@@ -24,13 +32,39 @@ export function GameScreen() {
   const quotaSoftFail = useUiStore((s) => s.quotaSoftFail)
   const setQuotaSoftFail = useUiStore((s) => s.setQuotaSoftFail)
   const ready = isCacheReady() || storeReady
+  // reloadKey forces a re-check of map integrity after recovery (T-03-11).
+  const [reloadKey, setReloadKey] = useState(0)
+  const mapOk = isValidMap(forestMap)
 
   if (!ready) {
     return <CacheGateNotice />
   }
 
+  if (!mapOk) {
+    return (
+      <section className="relative flex flex-1 flex-col" key={reloadKey}>
+        <p className="px-4 py-2 font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-text">
+          Forest
+        </p>
+        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 pb-8">
+          <EmptyState heading={MAP_ERROR_HEADING} body={MAP_ERROR_BODY} />
+          <PixelButton
+            variant="primary"
+            onClick={() => {
+              useExploreStore.getState().reset()
+              setReloadKey((k) => k + 1)
+            }}
+          >
+            {TRY_AGAIN_LABEL}
+          </PixelButton>
+        </div>
+      </section>
+    )
+  }
+
   return (
     <ExploreSurface
+      key={reloadKey}
       quotaSoftFail={quotaSoftFail}
       onDismissQuota={() => setQuotaSoftFail(false)}
     />

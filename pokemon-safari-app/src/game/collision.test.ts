@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { forestMap } from '@/data/maps/forest'
 import type { MapDef } from '@/types/map'
-import { isGrass, isWalkable, tileAt } from './collision'
+import { isGrass, isValidMap, isWalkable, tileAt } from './collision'
 
 const sample: MapDef = {
   id: 'forest',
@@ -45,6 +45,42 @@ describe('isGrass', () => {
     expect(isGrass(sample, 0, 0)).toBe(false)
     expect(isGrass(sample, 2, 0)).toBe(false)
     expect(isGrass(sample, -1, 0)).toBe(false)
+  })
+})
+
+describe('isValidMap', () => {
+  it('accepts the authored forestMap', () => {
+    expect(isValidMap(forestMap)).toBe(true)
+  })
+
+  it('rejects a tiles length off by one', () => {
+    expect(
+      isValidMap({
+        ...forestMap,
+        tiles: forestMap.tiles.slice(0, -1),
+      }),
+    ).toBe(false)
+  })
+
+  it('rejects an unknown tile string', () => {
+    const bad = {
+      ...sample,
+      tiles: ['ground', 'grass', 'water', 'obstacle', 'ground', 'grass'],
+    } as unknown as MapDef
+    expect(isValidMap(bad)).toBe(false)
+  })
+
+  it('rejects a spawn outside bounds', () => {
+    expect(isValidMap({ ...sample, spawn: { x: 99, y: 0 } })).toBe(false)
+  })
+
+  it('rejects a spawn on an obstacle tile', () => {
+    expect(isValidMap({ ...sample, spawn: { x: 2, y: 0 } })).toBe(false)
+  })
+
+  it('rejects zero or negative dimensions', () => {
+    expect(isValidMap({ ...sample, width: 0 })).toBe(false)
+    expect(isValidMap({ ...sample, height: -1 })).toBe(false)
   })
 })
 

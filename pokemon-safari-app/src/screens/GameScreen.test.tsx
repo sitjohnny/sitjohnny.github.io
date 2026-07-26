@@ -11,13 +11,32 @@ import { useExploreStore } from '@/store/exploreStore'
 import { clearPokeCacheKey } from '@/test/pokeapi-test-helpers'
 import { flushFrames } from '@/test/setup'
 
+const forestMock = vi.hoisted(() => ({ corrupt: false }))
+
+vi.mock('@/data/maps/forest', async (importOriginal) => {
+  const mod = await importOriginal<typeof import('@/data/maps/forest')>()
+  return {
+    get forestMap() {
+      if (forestMock.corrupt) {
+        return {
+          ...mod.forestMap,
+          tiles: mod.forestMap.tiles.slice(0, -1),
+        }
+      }
+      return mod.forestMap
+    },
+  }
+})
+
 beforeEach(() => {
+  forestMock.corrupt = false
   clearPokeCacheKey()
   resetCacheMemoryForTests()
   useUiStore.setState({ cacheReady: false })
 })
 
 afterEach(() => {
+  forestMock.corrupt = false
   cleanup()
   clearPokeCacheKey()
   resetCacheMemoryForTests()
@@ -259,5 +278,39 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(first[0]).toMatchObject({ type: 'encounter_candidate', x: 10, y: 5 })
     expect(useExploreStore.getState().pendingEncounters).toEqual([])
     expect(useExploreStore.getState().drainEncounters()).toEqual([])
+  })
+
+  it('does not show map-error copy when forestMap is valid', () => {
+    renderExplore()
+
+    expect(screen.queryByText(/Map didn’t load/)).toBeNull()
+    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+  })
+})
+
+describe('GameScreen map-load error recovery', () => {
+  beforeEach(() => {
+    useUiStore.setState({ cacheReady: true })
+    useExploreStore.getState().reset()
+    forestMock.corrupt = true
+  })
+
+  afterEach(() => {
+    forestMock.corrupt = false
+    useExploreStore.getState().reset()
+  })
+
+  it('renders the Map didn’t load recovery card instead of Walk controls', () => {
+    renderExplore()
+
+    expect(screen.getByRole('heading', { name: 'Map didn’t load' })).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        'Something went wrong showing the Forest. Tap Try Again. If it keeps failing, go back Home.',
+      ),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try Again' })).toBeInTheDocument()
+    expect(screen.queryByRole('group', { name: 'Walk controls' })).toBeNull()
+    expect(screen.getByText('Forest')).toBeInTheDocument()
   })
 })
