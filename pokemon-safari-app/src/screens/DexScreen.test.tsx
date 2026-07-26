@@ -2,15 +2,23 @@ import { MemoryRouter } from 'react-router-dom'
 import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
+import { BottomNav } from '@/components/BottomNav'
+import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { DexScreen } from '@/screens/DexScreen'
+import { useUiStore } from '@/store'
 import { clearPokeCacheKey, makePokemonDto, seedPokeCache } from '@/test/pokeapi-test-helpers'
 
 afterEach(() => {
   cleanup()
   clearPokeCacheKey()
+  resetCacheMemoryForTests()
+  useUiStore.setState({ dexSheetOpen: false })
 })
 
 beforeEach(() => {
+  clearPokeCacheKey()
+  resetCacheMemoryForTests()
+  useUiStore.setState({ dexSheetOpen: false })
   seedPokeCache(
     Array.from({ length: 151 }, (_, i) =>
       makePokemonDto(i + 1, {
@@ -18,12 +26,22 @@ beforeEach(() => {
       }),
     ),
   )
+  hydrateFromStorage()
 })
 
 function renderDex() {
   return render(
     <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/dex']}>
       <DexScreen />
+    </MemoryRouter>,
+  )
+}
+
+function renderDexWithNav() {
+  return render(
+    <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/dex']}>
+      <DexScreen />
+      <BottomNav />
     </MemoryRouter>,
   )
 }
@@ -64,5 +82,25 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
 
     await user.click(within(dialog).getByRole('button', { name: 'Close' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+  })
+
+  it('marks Main nav inert while the stub sheet is open and clears it after Close', async () => {
+    const user = userEvent.setup()
+    renderDexWithNav()
+
+    const tile = screen.getByRole('button', { name: /Pokémon #025/i })
+    await user.click(tile)
+    expect(screen.getByRole('dialog')).toBeInTheDocument()
+
+    const navOpen = document.querySelector('nav[aria-label="Main"]')
+    expect(navOpen).not.toBeNull()
+    expect(navOpen!.hasAttribute('inert')).toBe(true)
+
+    await user.click(screen.getByRole('button', { name: 'Close' }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    const navClosed = document.querySelector('nav[aria-label="Main"]')
+    expect(navClosed).not.toBeNull()
+    expect(navClosed!.hasAttribute('inert')).toBe(false)
   })
 })

@@ -3,11 +3,13 @@ import userEvent from '@testing-library/user-event'
 import { cleanup, render, within } from '@testing-library/react'
 import { afterEach, describe, expect, it } from 'vitest'
 import { useEncounterStore } from '@/store/encounterStore'
+import { useUiStore } from '@/store'
 import { BottomNav } from './BottomNav'
 
 afterEach(() => {
   cleanup()
   useEncounterStore.getState().reset()
+  useUiStore.setState({ dexSheetOpen: false })
 })
 
 function renderNav() {
@@ -79,5 +81,38 @@ describe('BottomNav', () => {
 
     expect(nav.hasAttribute('inert')).toBe(false)
     expect(nav).not.toHaveAttribute('inert')
+  })
+
+  it('sets inert on Main when dexSheetOpen is true on /dex', () => {
+    useUiStore.setState({ dexSheetOpen: true })
+    const { container } = render(
+      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/dex']}>
+        <BottomNav />
+      </MemoryRouter>,
+    )
+    const nav = within(container).getByLabelText('Main')
+    expect(nav.hasAttribute('inert')).toBe(true)
+  })
+
+  it('does not set inert on Main on /dex when dexSheetOpen is false', () => {
+    useUiStore.setState({ dexSheetOpen: false })
+    const { container } = render(
+      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/dex']}>
+        <BottomNav />
+      </MemoryRouter>,
+    )
+    const nav = within(container).getByLabelText('Main')
+    expect(nav.hasAttribute('inert')).toBe(false)
+  })
+
+  it('does not set inert on Main on a non-dex route even when dexSheetOpen is true', () => {
+    useUiStore.setState({ dexSheetOpen: true })
+    const { container } = render(
+      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/']}>
+        <BottomNav />
+      </MemoryRouter>,
+    )
+    const nav = within(container).getByLabelText('Main')
+    expect(nav.hasAttribute('inert')).toBe(false)
   })
 })

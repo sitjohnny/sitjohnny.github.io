@@ -12,10 +12,13 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const setLastRoute = useUiStore((s) => s.setLastRoute)
+  const dexSheetOpen = useUiStore((s) => s.dexSheetOpen)
   const encounterActive = useEncounterStore((s) => s.stage !== 'idle')
   const { pathname } = useLocation()
   const isGameRoute = pathname === '/game'
-  const navInert = isGameRoute && encounterActive
+  const isDexRoute = pathname === '/dex'
+  const navInert =
+    (isGameRoute && encounterActive) || (isDexRoute && dexSheetOpen)
 
   return (
     <nav
