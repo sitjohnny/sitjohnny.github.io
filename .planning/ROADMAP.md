@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pokémon Safari ships as eight vertical phases that follow the forced dependency chain: deploy-correct app shell → Gen 1 data cache → walkable tile map → config-driven encounters → the signature timing-bar capture loop → the Pokédex reward surface → persistence, biome unlocks, items, and daily rewards → audio and kid-facing polish. From Phase 3 onward every phase ends with something playable; the game is a complete, endless explore → encounter → capture loop by Phase 7, and Phase 8 makes it feel rewarding for a 7-year-old.
+Pokémon Safari ships as eight vertical phases that follow the forced dependency chain: deploy-correct app shell → Gen 1 data cache → walkable tile map → config-driven encounters → the signature timing-bar capture loop → the Pokédex reward surface → persistence, biome unlocks, and daily rewards → audio and kid-facing polish. From Phase 3 onward every phase ends with something playable; the game is a complete, endless explore → encounter → capture loop by Phase 7, and Phase 8 makes it feel rewarding for a 7-year-old.
 
 ## Phases
 
@@ -16,10 +16,10 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 1: App Shell, Subpath & Site Integration** - Vite/React/TS scaffold deployed correctly at `/pokemon-safari/` with root site listing both projects (completed 2026-07-25)
 - [x] **Phase 2: Pokémon Data Layer** - Gen 1 prefetch, versioned localStorage cache, boot progress screen, crisp sprite rendering (completed 2026-07-25)
 - [ ] **Phase 3: Exploration** - Walkable Forest tile map with D-pad + keyboard input and camera follow (plans 6/6 executed — UAT pending)
-- [x] **Phase 4: Encounters** - Config-driven grass rolls (45/25/20/8/2) with per-biome encounter tables (completed 2026-07-26)
+- [x] **Phase 4: Encounters** - Config-driven grass rolls (45/45/8/2) with per-biome encounter tables (completed 2026-07-26)
 - [x] **Phase 5: Capture Flow** - Timing bar → capture roll with retry, flee, and kid-friendly odds (completed 2026-07-26)
-- [ ] **Phase 6: Pokédex** - 151-entry dex with silhouettes, seen/caught states, counts, and shiny flags
-- [ ] **Phase 7: Persistence, Unlocks, Items & Daily** - Versioned auto-save, biome unlocks at 10/30 catches, inventory, daily reward
+- [x] **Phase 6: Pokédex** - 151-entry dex with silhouettes, seen/caught states, counts, and shiny flags (completed 2026-07-26)
+- [ ] **Phase 7: Persistence, Unlocks & Daily** - Versioned auto-save, biome unlocks at 10/30 catches, daily reward
 - [ ] **Phase 8: Audio, Feedback & Polish** - SFX with gesture unlock and mute, celebration moments, real-device kid playtest
 
 ## Phase Details
@@ -126,7 +126,7 @@ Plans:
 **Requirements**: MAP-03, DATA-03, CATCH-01
 **Success Criteria** (what must be TRUE):
 
-1. Stepping on grass triggers outcomes at 45% Pokémon / 25% nothing / 20% item / 8% rare / 2% legendary, with a visible encounter flash when a Pokémon appears
+1. Stepping on grass triggers outcomes at 45% Pokémon / 45% nothing / 8% rare / 2% legendary, with a visible encounter flash when a Pokémon appears
 2. All encounter rates, biome tables, capture modifiers, unlock thresholds, and daily amounts live in `data/` config files — changing a rate requires no component edits
 3. Encounter outcome distribution is verified by seeded-RNG unit tests against the config tables
 
@@ -204,39 +204,43 @@ Plans:
 2. Undiscovered species show as silhouettes, and seen vs. caught states are visually distinct at a glance
 3. Each entry records first encounter, first capture, number caught, and shiny status
 
-**Plans:** 4 plans
+**Plans:** 6/6 plans complete
 Plans:
 **Wave 1**
 
-- [ ] 06-01-PLAN.md — Wave 0 failing tests for dex reducers, save, flavor, relativeDay, DexScreen
+- [x] 06-01-PLAN.md — Wave 0 failing tests for dex reducers, save, flavor, relativeDay, DexScreen
 
 **Wave 2** _(blocked on Wave 1)_
 
-- [ ] 06-02-PLAN.md — Browse slice: SAVE_KEY dex + silhouette grid + sticky header + stub sheet (DEX-01/03)
+- [x] 06-02-PLAN.md — Dex data plane: SaveEnvelope dex slice, pure reducers, quota-safe save, debounced dexStore (DEX-01/02)
+- [x] 06-05-PLAN.md — Poke-cache v2 with Emerald flavor text prefetch + helper bump (DEX-03)
 
 **Wave 3** _(blocked on Wave 2)_
 
-- [ ] 06-03-PLAN.md — Catch→dex binding, shiny roll, debounced persist, silhouette lifts (DEX-02)
+- [x] 06-03-PLAN.md — Browse slice: silhouette grid, sticky Seen/Caught header, stub detail sheet (DEX-01/03)
 
 **Wave 4** _(blocked on Wave 3)_
 
-- [ ] 06-04-PLAN.md — Cache v2 flavor text, caught detail lore, relative dates, quota note (DEX-01/02/03)
+- [x] 06-04-PLAN.md — Catch→dex binding, shiny roll at open, Dex reflects catches (DEX-01/02)
+
+**Wave 5** _(blocked on Waves 2 and 4)_
+
+- [x] 06-06-PLAN.md — Caught detail lore, relative dates, shiny toggle, Dex quota note, phase gate (DEX-01/02/03)
 
 **UI hint**: yes
 
-### Phase 7: Persistence, Unlocks, Items & Daily
+### Phase 7: Persistence, Unlocks & Daily
 
-**Goal**: Progress persists safely across sessions and the full progression economy (biomes, items, daily reward) is live
+**Goal**: Progress persists safely across sessions; biome unlocks and a non-inventory daily reward are live (exact daily reward contents TBD in Phase 7 planning)
 **Mode:** mvp
 **Depends on**: Phase 6
 **Requirements**: SAVE-01, SAVE-02, SAVE-03, DAILY-01, PROG-01, PROG-02, PROG-03, PROG-04
 **Success Criteria** (what must be TRUE):
 
-1. Closing and reopening the game resumes the player at their saved position and biome with inventory, dex, unlocks, stats, and settings intact — no manual save ever needed
+1. Closing and reopening the game resumes the player at their saved position and biome with dex, unlocks, stats, and settings intact — no manual save ever needed
 2. The save schema is versioned with a migration chain, so an app update never wipes a child's collection
 3. Lake unlocks at 10 total catches and Mountain at 30; locked biomes show clear progress toward unlock, and player can travel freely between unlocked biomes
-4. Poké Balls, Great Balls, and Berries accumulate from grass item rolls and daily claims (unlimited capacity) and can be selected during capture
-5. Once per local calendar day, player can claim free balls/berries with no streak penalty, and the claim cannot be double-triggered
+4. Once per local calendar day, player can claim a daily reward with no streak penalty, and the claim cannot be double-triggered (reward contents TBD in Phase 7 planning)
 
 **Plans**: TBD
 **UI hint**: yes
@@ -269,8 +273,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 3. Exploration                           | 6/6            | UAT pending | -          |
 | 4. Encounters                            | 6/6            | Complete    | 2026-07-26 |
 | 5. Capture Flow                          | 5/5 | Complete   | 2026-07-26 |
-| 6. Pokédex                               | 0/4            | Planned    | -          |
-| 7. Persistence, Unlocks, Items & Daily   | 0/TBD          | Not started | -          |
+| 6. Pokédex                               | 6/6 | Complete   | 2026-07-26 |
+| 7. Persistence, Unlocks & Daily          | 0/TBD          | Not started | -          |
 | 8. Audio, Feedback & Polish              | 0/TBD          | Not started | -          |
 
 ---
