@@ -52,17 +52,23 @@ function stripCommentLines(source: string): string {
 }
 
 describe('DATA-03 config surface', () => {
-  it('exports grassOutcomeWeights with MAP-03 integer weights summing to 100', () => {
+  it('exports grassOutcomeWeights with 1% legendary among Pokémon outcomes', () => {
     expect(Object.keys(grassOutcomeWeights).sort()).toEqual(
       ['legendary', 'nothing', 'pokemon', 'rare'].sort(),
     )
-    expect(grassOutcomeWeights.pokemon).toBe(45)
+    expect(grassOutcomeWeights.pokemon).toBe(80)
     expect(grassOutcomeWeights.nothing).toBe(45)
-    expect(grassOutcomeWeights.rare).toBe(8)
-    expect(grassOutcomeWeights.legendary).toBe(2)
+    expect(grassOutcomeWeights.rare).toBe(19)
+    expect(grassOutcomeWeights.legendary).toBe(1)
     expect('item' in grassOutcomeWeights).toBe(false)
-    const total = Object.values(grassOutcomeWeights).reduce((a, b) => a + b, 0)
-    expect(total).toBe(100)
+
+    const pokemonTotal =
+      grassOutcomeWeights.pokemon +
+      grassOutcomeWeights.rare +
+      grassOutcomeWeights.legendary
+    expect(pokemonTotal).toBe(100)
+    expect(grassOutcomeWeights.legendary / pokemonTotal).toBe(0.01)
+
     for (const w of Object.values(grassOutcomeWeights)) {
       expect(Number.isInteger(w)).toBe(true)
     }
@@ -95,10 +101,33 @@ describe('DATA-03 config surface', () => {
     }
   })
 
-  it('exports biomeEncounterTables.forest rarity pools', () => {
-    expect(Array.isArray(biomeEncounterTables.forest.common)).toBe(true)
-    expect(Array.isArray(biomeEncounterTables.forest.rare)).toBe(true)
-    expect(Array.isArray(biomeEncounterTables.forest.legendary)).toBe(true)
+  it('forest encounter pools partition Gen 1 (1..151) with no gaps or duplicates', () => {
+    const { common, rare, legendary } = biomeEncounterTables.forest
+    expect([...legendary].sort((a, b) => a - b)).toEqual([
+      144, 145, 146, 150, 151,
+    ])
+    expect(new Set(rare).size).toBe(rare.length)
+    expect(new Set(common).size).toBe(common.length)
+
+    const all = [...common, ...rare, ...legendary]
+    expect(all).toHaveLength(151)
+    expect(new Set(all).size).toBe(151)
+    expect([...all].sort((a, b) => a - b)).toEqual(
+      Array.from({ length: 151 }, (_, i) => i + 1),
+    )
+  })
+
+  it('forest rare pool matches the approved finals / cool list', () => {
+    const expectedRare = [
+      3, 6, 9, 12, 15, 18, 22, 24, 26, 28, 31, 34, 36, 38, 40, 45, 47, 49, 51, 53,
+      55, 57, 59, 62, 65, 68, 71, 73, 76, 78, 80, 82, 85, 87, 89, 91, 94, 97, 99,
+      101, 103, 105, 106, 107, 110, 112, 113, 115, 117, 119, 121, 122, 123, 124,
+      125, 126, 127, 128, 130, 131, 132, 134, 135, 136, 137, 139, 141, 142, 143,
+      149,
+    ]
+    expect([...biomeEncounterTables.forest.rare].sort((a, b) => a - b)).toEqual(
+      expectedRare,
+    )
   })
 
   it('exports education adaptive knobs and copy with {boost} placeholder', () => {
@@ -140,10 +169,52 @@ describe('DATA-03 config surface', () => {
     expect(timingBar.sweetSpotOffsets.length).toBeGreaterThanOrEqual(3)
   })
 
+  it('exports steeper capture rarity bases (common easiest, legendary hardest)', () => {
+    expect(captureModifiers.rarity).toEqual({
+      common: 0.75,
+      rare: 0.25,
+      legendary: 0.05,
+    })
+    expect(captureModifiers.rarity.common).toBeGreaterThan(
+      captureModifiers.rarity.rare,
+    )
+    expect(captureModifiers.rarity.rare).toBeGreaterThan(
+      captureModifiers.rarity.legendary,
+    )
+  })
+
+  it('exports steeper timingBar zones with common > rare > legendary widths', () => {
+    expect(timingBar.zones.common).toEqual({
+      perfect: 0.12,
+      great: 0.32,
+      good: 0.5,
+    })
+    expect(timingBar.zones.rare).toEqual({
+      perfect: 0.04,
+      great: 0.15,
+      good: 0.26,
+    })
+    expect(timingBar.zones.legendary).toEqual({
+      perfect: 0.02,
+      great: 0.08,
+      good: 0.14,
+    })
+
+    for (const key of ['perfect', 'great', 'good'] as const) {
+      expect(timingBar.zones.common[key]).toBeGreaterThan(
+        timingBar.zones.rare[key],
+      )
+      expect(timingBar.zones.rare[key]).toBeGreaterThan(
+        timingBar.zones.legendary[key],
+      )
+    }
+  })
+
   it('exports shinyRate and dexSaveDebounceMs for Phase 6 dex (DATA-03)', () => {
     expect(typeof shinyRate).toBe('number')
     expect(shinyRate).toBeGreaterThan(0)
     expect(shinyRate).toBeLessThanOrEqual(1)
+    expect(shinyRate).toBe(1 / 50)
     expect(typeof dexSaveDebounceMs).toBe('number')
     expect(dexSaveDebounceMs).toBeGreaterThan(0)
     expect(dexSaveDebounceMs).toBe(800)

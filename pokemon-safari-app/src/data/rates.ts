@@ -5,10 +5,10 @@
  * total, so they can be retuned without touching resolver code.
  */
 export const grassOutcomeWeights = {
-  pokemon: 45,
+  pokemon: 80,
   nothing: 45,
-  rare: 8,
-  legendary: 2,
+  rare: 19,
+  legendary: 1,
 } as const
 
 /** D-11 / D-24 education capture bonus applied before Phase 5 timing throw. */
@@ -41,7 +41,7 @@ export const encounterTimingMs = {
 } as const
 
 /** Kid-tunable shiny encounter rate (DEX-02 / Assumption A2) — consumed by 06-04. */
-export const shinyRate = 1 / 75
+export const shinyRate = 1 / 50
 
 /** Committed tile steps (any tile) with no Pokémon after an encounter ends. */
 export const postEncounterPokemonImmunitySteps = 10
