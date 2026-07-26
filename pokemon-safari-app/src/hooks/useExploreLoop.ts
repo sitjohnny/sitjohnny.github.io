@@ -8,6 +8,7 @@ import {
   WALK_FRAME_MS,
 } from '@/data/exploreConfig'
 import { clamp } from '@/game/camera'
+import { asTileSource } from '@/game/collision'
 import { completeStep, tileToPx, tryStep } from '@/game/movement'
 import { prefersReducedMotion, useMapCamera } from '@/hooks/useMapCamera'
 import { primaryDirection } from '@/hooks/usePlayerInput'
@@ -150,7 +151,7 @@ export function useExploreLoop({
           moving: store.moving,
         }
 
-        const result = tryStep(state, primaryDirection(heldRef.current), map, now)
+        const result = tryStep(state, primaryDirection(heldRef.current), asTileSource(map), now)
 
         if (!samePlayer(state, result.next)) {
           store.setPlayer(result.next)

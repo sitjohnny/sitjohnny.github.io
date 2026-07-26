@@ -1,59 +1,70 @@
 import { describe, expect, it } from 'vitest'
 import { STEP_DURATION_MS, TILE_PX } from '@/data/exploreConfig'
-import type { MapDef, PlayerState } from '@/types/map'
+import type { PlayerState, TileId, TileSource } from '@/types/map'
 import { completeStep, offsetTile, tileToPx, tryStep } from './movement'
 
-const fixture3x3: MapDef = {
-  id: 'forest',
-  width: 3,
-  height: 3,
-  tiles: [
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'ground',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-  ],
-  spawn: { x: 1, y: 1 },
+function sourceFromGrid(
+  width: number,
+  height: number,
+  tiles: TileId[],
+): TileSource {
+  return {
+    id: 'forest',
+    tileAt(x, y) {
+      if (
+        !Number.isInteger(x) ||
+        !Number.isInteger(y) ||
+        x < 0 ||
+        y < 0 ||
+        x >= width ||
+        y >= height
+      ) {
+        return null
+      }
+      return tiles[y * width + x] ?? null
+    },
+  }
 }
 
-const fixture5x5: MapDef = {
-  id: 'forest',
-  width: 5,
-  height: 5,
-  tiles: [
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'ground',
-    'ground',
-    'grass',
-    'obstacle',
-    'obstacle',
-    'ground',
-    'ground',
-    'ground',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'ground',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-    'obstacle',
-  ],
-  spawn: { x: 2, y: 2 },
-}
+const fixture3x3 = sourceFromGrid(3, 3, [
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'ground',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+])
+
+const fixture5x5 = sourceFromGrid(5, 5, [
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'ground',
+  'ground',
+  'grass',
+  'obstacle',
+  'obstacle',
+  'ground',
+  'ground',
+  'ground',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'ground',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+  'obstacle',
+])
 
 function idleAt(x: number, y: number, facing: PlayerState['facing'] = 'down'): PlayerState {
   return { x, y, facing, moving: false }
@@ -127,14 +138,8 @@ describe('tryStep', () => {
     expect(result.events).toEqual([])
   })
 
-  it('out-of-bounds reject leaves tile unchanged like an obstacle', () => {
-    const openEdge: MapDef = {
-      id: 'forest',
-      width: 2,
-      height: 1,
-      tiles: ['ground', 'ground'],
-      spawn: { x: 0, y: 0 },
-    }
+  it('missing tile reject leaves tile unchanged like an obstacle', () => {
+    const openEdge = sourceFromGrid(2, 1, ['ground', 'ground'])
     const state = idleAt(1, 0, 'right')
     const result = tryStep(state, 'right', openEdge, 1000)
     expect(result.next).toEqual({ x: 1, y: 0, facing: 'right', moving: false })

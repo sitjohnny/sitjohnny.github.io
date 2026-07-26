@@ -1,12 +1,10 @@
 /**
- * MAP-04: Pure discrete-step rules — no react/zustand/DOM imports.
- * This is the only place step legality is decided. The logical tile commit
- * happens the moment `tryStep` returns (the tween is presentation only),
- * which is why the grass event is emitted at step start.
+ * Pure discrete-step rules — no react/zustand/DOM imports.
+ * Logical tile commit happens the moment `tryStep` returns (tween is presentation).
  */
 
 import { STEP_DURATION_MS, TILE_PX } from '@/data/exploreConfig'
-import type { Direction, MapDef, PlayerState, StepResult, Vec2 } from '@/types/map'
+import type { Direction, PlayerState, StepResult, TileSource, Vec2 } from '@/types/map'
 import { isGrass, isWalkable } from './collision'
 import { createEncounterCandidate } from './events'
 
@@ -29,7 +27,7 @@ export function tileToPx(pos: Vec2): Vec2 {
 export function tryStep(
   state: PlayerState,
   intent: Direction | null,
-  map: MapDef,
+  source: TileSource,
   now: number,
 ): StepResult {
   if (intent === null) {
@@ -45,7 +43,7 @@ export function tryStep(
   }
 
   const target = offsetTile(state, intent)
-  if (!isWalkable(map, target.x, target.y)) {
+  if (!isWalkable(source, target.x, target.y)) {
     return { next: { ...state, facing: intent }, events: [] }
   }
 
@@ -56,8 +54,8 @@ export function tryStep(
     moving: true,
   }
 
-  const events = isGrass(map, target.x, target.y)
-    ? [createEncounterCandidate(map.id, target.x, target.y, now)]
+  const events = isGrass(source, target.x, target.y)
+    ? [createEncounterCandidate(source.id, target.x, target.y, now)]
     : []
 
   return {

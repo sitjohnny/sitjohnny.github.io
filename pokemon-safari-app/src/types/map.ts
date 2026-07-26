@@ -5,6 +5,7 @@ export type TileId = 'ground' | 'grass' | 'obstacle'
 export type BiomeId = 'forest'
 export type Vec2 = { x: number; y: number }
 
+/** Finite authored map — retained for legacy fixtures until explore fully migrates. */
 export type MapDef = {
   id: BiomeId
   width: number
@@ -12,6 +13,12 @@ export type MapDef = {
   /** Row-major, length === width * height */
   tiles: TileId[]
   spawn: Vec2
+}
+
+/** Infinite or finite tile lookup used by collision and movement. */
+export type TileSource = {
+  id: BiomeId
+  tileAt: (x: number, y: number) => TileId | null
 }
 
 export type PlayerState = {
