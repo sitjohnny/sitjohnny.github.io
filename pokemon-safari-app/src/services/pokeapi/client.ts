@@ -2,7 +2,11 @@ import type { PokemonDto } from '@/types/pokemon'
 import { GEN1_COUNT } from './keys'
 
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2/pokemon'
+const POKEAPI_SPECIES_BASE = 'https://pokeapi.co/api/v2/pokemon-species'
 const DEFAULT_CONCURRENCY = 8
+
+/** Emerald → Ruby → Sapphire → FireRed (D-15 / D-16). */
+export const FLAVOR_VERSION_PRIORITY = ['emerald', 'ruby', 'sapphire', 'firered'] as const
 
 export type PokeApiPokemon = {
   id: number
@@ -12,6 +16,13 @@ export type PokeApiPokemon = {
     front_default: string | null
     front_shiny: string | null
   }
+}
+
+/** Loose species flavor entry — malformed fields are skipped (D-15/D-16). */
+export type FlavorTextEntry = {
+  flavor_text?: unknown
+  language?: { name?: string } | null
+  version?: { name?: string } | null
 }
 
 /** Accept only https: sprite URLs; reject javascript: and non-https (T-02-04). */
@@ -68,7 +79,33 @@ export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
       front_default: sanitizeSpriteUrl(sprites.front_default),
       front_shiny: sanitizeSpriteUrl(sprites.front_shiny),
     },
+    flavorText: null,
   }
+}
+
+/** D-17: collapse control chars/whitespace, preserve official wording + capitalization. */
+export function sanitizeFlavorText(raw: string): string {
+  return raw
+    .replace(/\u00ad\n/g, '') // soft-hyphen line breaks (newer games) → rejoin word
+    .replace(/[\s\u00a0]+/g, ' ') // \s matches \n, \f, \t; also NBSP
+    .trim()
+}
+
+/** D-15/D-16: Emerald → Ruby/Sapphire/FireRed → any English → null. Pure, unit-testable. */
+export function selectFlavorText(entries: FlavorTextEntry[]): string | null {
+  const english = entries.filter(
+    (e) => e.language?.name === 'en' && typeof e.flavor_text === 'string',
+  )
+  for (const version of FLAVOR_VERSION_PRIORITY) {
+    const hit = english.find((e) => e.version?.name === version)
+    if (hit && typeof hit.flavor_text === 'string') {
+      return sanitizeFlavorText(hit.flavor_text)
+    }
+  }
+  const any = english[0]
+  return any && typeof any.flavor_text === 'string'
+    ? sanitizeFlavorText(any.flavor_text)
+    : null
 }
 
 /** Bounded concurrency pool; calls onProgress after each settle. */
@@ -108,6 +145,21 @@ export async function fetchPokemon(id: number): Promise<PokemonDto> {
   }
   const json = (await res.json()) as PokeApiPokemon
   return toPokemonDto(json)
+}
+
+/** Prefetch-time species lore — stores only the final string (never the raw array). */
+export async function fetchSpeciesFlavor(id: number): Promise<string | null> {
+  assertGen1Id(id)
+  const res = await fetch(`${POKEAPI_SPECIES_BASE}/${id}`)
+  if (!res.ok) {
+    throw new Error(`PokéAPI species failed for id ${id}: ${res.status}`)
+  }
+  const json = (await res.json()) as { flavor_text_entries?: unknown }
+  return selectFlavorText(
+    Array.isArray(json.flavor_text_entries)
+      ? (json.flavor_text_entries as FlavorTextEntry[])
+      : [],
+  )
 }
 
 export type FetchGen1Options = {

@@ -34,6 +34,7 @@ describe('toPokemonDto', () => {
         front_default: 'https://example.test/6.png',
         front_shiny: 'https://example.test/s6.png',
       },
+      flavorText: null,
     })
   })
 })

@@ -5,12 +5,14 @@ export type PokemonDto = {
   name: string
   types: string[]
   sprites: { front_default: string | null; front_shiny: string | null }
+  /** Pre-selected, pre-sanitized English lore (D-14–D-17). null → UI placeholder. */
+  flavorText: string | null
 }
 
-export type CacheEnvelopeV1 = {
-  version: 1
+export type CacheEnvelopeV2 = {
+  version: 2
   fetchedAt: string
   pokemon: PokemonDto[]
 }
 
-export type CacheEnvelope = CacheEnvelopeV1
+export type CacheEnvelope = CacheEnvelopeV2
