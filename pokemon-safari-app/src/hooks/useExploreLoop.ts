@@ -88,7 +88,7 @@ export function useExploreLoop({
   canvasRef,
   imagesRef,
 }: ExploreLoopOptions): void {
-  const camera = useMapCamera(worldRef)
+  const camera = useMapCamera(worldRef, useExploreStore.getState().tile)
 
   useEffect(() => {
     let frame = 0
