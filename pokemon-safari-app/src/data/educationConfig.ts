@@ -3,6 +3,13 @@
 /** D-08 single-digit multiplication range. */
 export const multiplicationRange = { min: 1, max: 9 } as const
 
+/** Double-digit × single-digit facts (double-digit operand first). */
+export const doubleDigitMultiplication = {
+  min: 10,
+  max: 20,
+  probability: 0.2, // chance a question draws from this pool
+} as const
+
 /** D-17 / D-19 adaptive weighting defaults from 04-RESEARCH. */
 export const adaptiveWeights = {
   starterWeight: 10,

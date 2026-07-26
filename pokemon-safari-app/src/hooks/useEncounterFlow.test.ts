@@ -3,7 +3,7 @@ import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { biomeEncounterTables } from '@/data/encounterTables'
 import { educationCaptureBonus, encounterTimingMs } from '@/data/rates'
-import { allFacts } from '@/game/education/adaptiveLearning'
+import { allDoubleDigitFacts, allFacts } from '@/game/education/adaptiveLearning'
 import {
   loadAdaptiveStats,
   persistAdaptiveStats,
@@ -14,10 +14,7 @@ import {
   submitAnswer,
   useEncounterFlow,
 } from '@/hooks/useEncounterFlow'
-import {
-  hydrateFromStorage,
-  resetCacheMemoryForTests,
-} from '@/services/pokeapi/cache'
+import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
 import {
@@ -28,7 +25,7 @@ import {
 import type { EncounterCandidateEvent } from '@/types/map'
 import type { Rng } from '@/utils/rng'
 
-const FACT_SET = new Set(allFacts())
+const FACT_SET = new Set([...allFacts(), ...allDoubleDigitFacts()])
 
 const candidate = (at = 1): EncounterCandidateEvent => ({
   type: 'encounter_candidate',
@@ -125,9 +122,7 @@ describe('useEncounterFlow', () => {
   it('shows an item toast without opening a modal stage', async () => {
     render(createElement(QueueLater, { rng: sequenceRng(0.75), event: candidate() }))
 
-    await waitFor(() =>
-      expect(useEncounterStore.getState().itemToastVisible).toBe(true),
-    )
+    await waitFor(() => expect(useEncounterStore.getState().itemToastVisible).toBe(true))
     expect(useEncounterStore.getState().stage).toBe('idle')
   })
 
@@ -136,9 +131,9 @@ describe('useEncounterFlow', () => {
     render(createElement(Harness, { rng: sequenceRng(0, 0) }))
 
     await waitFor(() => expect(useEncounterStore.getState().stage).toBe('appear'))
-    expect(useExploreStore.getState().pendingEncounters.map((event) => event.at)).toEqual([
-      2, 3,
-    ])
+    expect(useExploreStore.getState().pendingEncounters.map((event) => event.at)).toEqual(
+      [2, 3],
+    )
   })
 
   it('does not consume another candidate while an encounter is active', async () => {
@@ -155,9 +150,7 @@ describe('useEncounterFlow', () => {
   })
 
   it('routes a species missing from cache to error instead of throwing', async () => {
-    seedPokeCache(
-      Array.from({ length: 150 }, (_, index) => makePokemonDto(index + 2)),
-    )
+    seedPokeCache(Array.from({ length: 150 }, (_, index) => makePokemonDto(index + 2)))
     hydrateFromStorage()
     render(createElement(QueueLater, { rng: sequenceRng(0, 0), event: candidate() }))
 
@@ -255,12 +248,13 @@ describe('useEncounterFlow', () => {
 
   it('never repeats lastFactKey on the next encounter', async () => {
     // Keep every grass roll in the pokemon band; vary only selection draws.
+    // Per encounter: outcome + species + pool roll + fact pick + feedback = 5 draws.
     let draw = 0
     const rng: Rng = {
       next: () => {
         draw += 1
         // Outcome + species index stay at 0; later draws feed fact/copy picks.
-        if (draw % 4 === 1 || draw % 4 === 2) return 0
+        if (draw % 5 === 1 || draw % 5 === 2) return 0
         return ((draw * 17) % 100) / 100
       },
     }
@@ -305,9 +299,7 @@ describe('useEncounterFlow', () => {
     useEncounterStore.getState().reset()
 
     render(createElement(QueueLater, { rng: sequenceRng(0.75), event: candidate(2) }))
-    await waitFor(() =>
-      expect(useEncounterStore.getState().itemToastVisible).toBe(true),
-    )
+    await waitFor(() => expect(useEncounterStore.getState().itemToastVisible).toBe(true))
     expect(useEncounterStore.getState().stage).toBe('idle')
     expect(useEncounterStore.getState().question).toBeNull()
   })

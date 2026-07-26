@@ -5,10 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BottomNav } from '@/components/BottomNav'
 import { encounterTimingMs } from '@/data/rates'
 import { forestMap } from '@/data/maps/forest'
-import {
-  hydrateFromStorage,
-  resetCacheMemoryForTests,
-} from '@/services/pokeapi/cache'
+import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { GameScreen } from '@/screens/GameScreen'
 import { HomeScreen } from '@/screens/HomeScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
@@ -123,15 +120,16 @@ function renderAppShellLike({ showGame }: { showGame: boolean }) {
 
 async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>) {
   useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
-  setDefaultRngForTests(encounterRng(0, 0, 0, 0.2, 0.3))
+  // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback
+  setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3))
 
   fireEvent.keyDown(window, { code: 'ArrowUp' })
   await flushFrames(8)
   fireEvent.keyUp(window, { code: 'ArrowUp' })
 
   await screen.findByRole('dialog')
-  const prompt = await screen.findByText(/What is \d × \d\?/)
-  const match = prompt.textContent?.match(/What is (\d) × (\d)\?/)
+  const prompt = await screen.findByText(/What is \d+ × \d+\?/)
+  const match = prompt.textContent?.match(/What is (\d+) × (\d+)\?/)
   expect(match).not.toBeNull()
   return { a: Number(match![1]), b: Number(match![2]), user }
 }
@@ -336,7 +334,8 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     const user = userEvent.setup()
     // (10, 6) is ground; (10, 5) is grass in the northern patch.
     useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
-    setDefaultRngForTests(encounterRng(0, 0, 0, 0.2, 0.3))
+    // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback
+    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3))
     renderExplore()
 
     fireEvent.keyDown(window, { code: 'ArrowUp' })
@@ -347,11 +346,11 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(dialog).toHaveTextContent('A wild p10 appeared!')
     expect(useExploreStore.getState().pendingEncounters).toEqual([])
 
-    const prompt = await screen.findByText(/What is \d × \d\?/)
+    const prompt = await screen.findByText(/What is \d+ × \d+\?/)
     expect(screen.getByLabelText('Your answer')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ready to throw!' })).toBeNull()
 
-    const match = prompt.textContent?.match(/What is (\d) × (\d)\?/)
+    const match = prompt.textContent?.match(/What is (\d+) × (\d+)\?/)
     expect(match).not.toBeNull()
     const a = Number(match![1])
     const b = Number(match![2])
@@ -421,9 +420,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   })
 
   it('shows recovery UI when the rolled species is absent from cache', async () => {
-    seedPokeCache(
-      Array.from({ length: 150 }, (_, index) => makePokemonDto(index + 2)),
-    )
+    seedPokeCache(Array.from({ length: 150 }, (_, index) => makePokemonDto(index + 2)))
     hydrateFromStorage()
     useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
     setDefaultRngForTests(encounterRng(0, 0))

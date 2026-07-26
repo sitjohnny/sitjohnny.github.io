@@ -2,10 +2,15 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
-import { grassOutcomeWeights, educationCaptureBonus, encounterTimingMs } from '@/data/rates'
+import {
+  grassOutcomeWeights,
+  educationCaptureBonus,
+  encounterTimingMs,
+} from '@/data/rates'
 import { biomeEncounterTables } from '@/data/encounterTables'
 import {
   multiplicationRange,
+  doubleDigitMultiplication,
   adaptiveWeights,
   masteryThreshold,
   feedbackCopy,
@@ -82,6 +87,7 @@ describe('DATA-03 config surface', () => {
 
   it('exports education adaptive knobs and copy with {boost} placeholder', () => {
     expect(multiplicationRange).toEqual({ min: 1, max: 9 })
+    expect(doubleDigitMultiplication).toEqual({ min: 10, max: 20, probability: 0.2 })
     expect(typeof adaptiveWeights.starterWeight).toBe('number')
     expect(typeof adaptiveWeights.missBonus).toBe('number')
     expect(typeof adaptiveWeights.correctPenalty).toBe('number')
