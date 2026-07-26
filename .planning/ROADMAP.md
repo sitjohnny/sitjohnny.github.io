@@ -2,7 +2,7 @@
 
 ## Overview
 
-Pokémon Safari ships as eight vertical phases that follow the forced dependency chain: deploy-correct app shell → Gen 1 data cache → walkable tile map → config-driven encounters → the signature timing-bar capture loop → the Pokédex reward surface → persistence, biome unlocks, and daily rewards → audio and kid-facing polish. From Phase 3 onward every phase ends with something playable; the game is a complete, endless explore → encounter → capture loop by Phase 7, and Phase 8 makes it feel rewarding for a 7-year-old.
+Pokémon Safari ships as eight vertical phases that follow the forced dependency chain: deploy-correct app shell → Gen 1 data cache → walkable tile map → config-driven encounters → the signature timing-bar capture loop → the Pokédex reward surface → persistence → audio and kid-facing polish. From Phase 3 onward every phase ends with something playable; the game is a complete, endless explore → encounter → capture loop by Phase 7, and Phase 8 makes it feel rewarding for a 7-year-old.
 
 ## Phases
 
@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Encounters** - Config-driven grass rolls (45/45/8/2) with per-biome encounter tables (completed 2026-07-26)
 - [x] **Phase 5: Capture Flow** - Timing bar → capture roll with retry, flee, and kid-friendly odds (completed 2026-07-26)
 - [x] **Phase 6: Pokédex** - 151-entry dex with silhouettes, seen/caught states, counts, and shiny flags (completed 2026-07-26)
-- [ ] **Phase 7: Persistence, Unlocks & Daily** - Versioned auto-save, biome unlocks at 10/30 catches, daily reward
+- [ ] **Phase 7: Persistence** - Versioned auto-save for dex and explore position/facing across sessions
 - [ ] **Phase 8: Audio, Feedback & Polish** - SFX with gesture unlock and mute, celebration moments, real-device kid playtest
 
 ## Phase Details
@@ -229,21 +229,21 @@ Plans:
 
 **UI hint**: yes
 
-### Phase 7: Persistence, Unlocks & Daily
+### Phase 7: Persistence
 
-**Goal**: Progress persists safely across sessions; biome unlocks and a non-inventory daily reward are live (exact daily reward contents TBD in Phase 7 planning)
+**Goal**: Progress persists safely across sessions — Pokédex and map position/facing resume on reopen with no manual save
 **Mode:** mvp
 **Depends on**: Phase 6
-**Requirements**: SAVE-01, SAVE-02, SAVE-03, DAILY-01, PROG-01, PROG-02, PROG-03, PROG-04
+**Requirements**: SAVE-01, SAVE-02, SAVE-03
 **Success Criteria** (what must be TRUE):
 
-1. Closing and reopening the game resumes the player at their saved position and biome with dex, unlocks, stats, and settings intact — no manual save ever needed
-2. The save schema is versioned with a migration chain, so an app update never wipes a child's collection
-3. Lake unlocks at 10 total catches and Mountain at 30; locked biomes show clear progress toward unlock, and player can travel freely between unlocked biomes
-4. Once per local calendar day, player can claim a daily reward with no streak penalty, and the claim cannot be double-triggered (reward contents TBD in Phase 7 planning)
+1. Closing and reopening the game resumes the player at their saved tile and facing with dex intact — no manual save ever needed
+2. The save schema is versioned with a migration chain (v1 → v2), so an app update never wipes a child's collection
+3. Mid-encounter state is not restored; reload lands on the map at the saved position
+4. Lake/Mountain unlocks and daily rewards are **not** part of this phase (deferred)
 
-**Plans**: TBD
-**UI hint**: yes
+**Plans**: See `docs/superpowers/plans/2026-07-26-phase7-persistence.md`
+**UI hint**: no
 
 ### Phase 8: Audio, Feedback & Polish
 
@@ -274,7 +274,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Encounters                            | 6/6            | Complete    | 2026-07-26 |
 | 5. Capture Flow                          | 5/5 | Complete   | 2026-07-26 |
 | 6. Pokédex                               | 6/6 | Complete   | 2026-07-26 |
-| 7. Persistence, Unlocks & Daily          | 0/TBD          | Not started | -          |
+| 7. Persistence                           | 0/TBD          | Not started | -          |
 | 8. Audio, Feedback & Polish              | 0/TBD          | Not started | -          |
 
 ---

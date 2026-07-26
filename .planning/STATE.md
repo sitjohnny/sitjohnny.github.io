@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: verifying
-stopped_at: Awaiting Phase 05 human verification
-last_updated: "2026-07-26T14:55:00.000Z"
-last_activity: 2026-07-26 -- Phase 05 automated verification passed; 4 UAT checks pending
+stopped_at: Completed 06-06-PLAN.md
+last_updated: "2026-07-26T17:09:29.501Z"
+last_activity: 2026-07-26 -- Completed 06-06-PLAN.md
 progress:
   total_phases: 8
-  completed_phases: 5
-  total_plans: 24
-  completed_plans: 24
-  percent: 63
+  completed_phases: 6
+  total_plans: 30
+  completed_plans: 30
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,18 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** A forgiving, rewarding explore → encounter → capture loop that a ~7-year-old can succeed at on phone or desktop, with progress that persists across sessions.
-**Current focus:** Phase 05 — capture-flow
+**Current focus:** Phase 07 — persistence (dex + explore)
 
 ## Current Position
 
-Phase: 05 (capture-flow) — VERIFYING
-Plan: 5 of 5
-Status: Human verification required (4 UAT checks pending)
-Last activity: 2026-07-26 -- Automated verification passed 10/10
+Phase: 07 (persistence)
+Plan: Superpowers persistence plan — in progress
+Status: Implementation in progress (GSD phase plans TBD)
+Last activity: 2026-07-26 -- Phase 7 roadmap slimmed to persistence-only scope
 
-Progress: [██████████] 100%
+Progress: [██████████] 100% (through Phase 6 GSD plans)
+
+Note: Phase 05 capture-flow still has pending human UAT (4 checks) from prior verification.
 
 ## Performance Metrics
 
@@ -43,44 +45,50 @@ Progress: [██████████] 100%
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
-|-------|-------|-------|----------|
-| 01 | 3 | 8min | ~2.7min |
-| 02 | 4 | 11min | ~2.8min |
-| 03 | 4 | 23min | ~5.8min |
+| ----- | ----- | ----- | -------- |
+| 01    | 3     | 8min  | ~2.7min  |
+| 02    | 4     | 11min | ~2.8min  |
+| 03    | 4     | 23min | ~5.8min  |
 
 **Recent Trend:**
 
 - Last 5 plans: 03-01 (3min), 03-02 (13min), 03-03 (3min), 03-04 (4min)
 - Trend: steady
 
-*Updated after each plan completion*
+_Updated after each plan completion_
 
-| Plan | Duration | Tasks | Files |
-|------|----------|-------|-------|
-| Phase 01 P01 | 3min | 2 tasks | 30 files |
-| Phase 01 P02 | 3min | 2 tasks | 16 files |
-| Phase 01 P03 | 2min | 2 tasks | 10 files |
-| Phase 02 P01 | 2min | 2 tasks | 7 files |
-| Phase 02 P02 | 3min | 2 tasks | 10 files |
-| Phase 02 P03 | 3min | 2 tasks | 6 files |
-| Phase 02 P04 | 3min | 2 tasks | 6 files |
-| Phase 03 P01 | 3min | 2 tasks | 9 files |
-| Phase 03 P02 | 13min | 3 tasks | 14 files |
-| Phase 03 P03 | 3min | 3 tasks | 6 files |
-| Phase 03 P04 | 4min | 3 tasks | 8 files |
-| Phase 03 P05 | 5min | 2 tasks | 8 files |
-| Phase 03 P06 | 9min | 2 tasks | 11 files |
-| Phase 04 P01 | 3min | 3 tasks | 15 files |
-| Phase 04 P02 | 53min | 3 tasks | 13 files |
-| Phase 04 P03 | 10min | 3 tasks | 10 files |
-| Phase 04 P04 | 5min | 3 tasks | 8 files |
-| Phase 04 P05 | 5min | 3 tasks | 9 files |
-| Phase 04 P06 | 2min | 2 tasks | 6 files |
-| Phase 05 P01 | 3min | 2 tasks | 9 files |
-| Phase 05 P02 | 5min | 2 tasks | 11 files |
-| Phase 05 P03 | 3min | 2 tasks | 5 files |
-| Phase 05 P04 | 4min | 2 tasks | 11 files |
-| Phase 05 P05 | 10min | 2 tasks | 5 files |
+| Plan         | Duration | Tasks   | Files    |
+| ------------ | -------- | ------- | -------- |
+| Phase 01 P01 | 3min     | 2 tasks | 30 files |
+| Phase 01 P02 | 3min     | 2 tasks | 16 files |
+| Phase 01 P03 | 2min     | 2 tasks | 10 files |
+| Phase 02 P01 | 2min     | 2 tasks | 7 files  |
+| Phase 02 P02 | 3min     | 2 tasks | 10 files |
+| Phase 02 P03 | 3min     | 2 tasks | 6 files  |
+| Phase 02 P04 | 3min     | 2 tasks | 6 files  |
+| Phase 03 P01 | 3min     | 2 tasks | 9 files  |
+| Phase 03 P02 | 13min    | 3 tasks | 14 files |
+| Phase 03 P03 | 3min     | 3 tasks | 6 files  |
+| Phase 03 P04 | 4min     | 3 tasks | 8 files  |
+| Phase 03 P05 | 5min     | 2 tasks | 8 files  |
+| Phase 03 P06 | 9min     | 2 tasks | 11 files |
+| Phase 04 P01 | 3min     | 3 tasks | 15 files |
+| Phase 04 P02 | 53min    | 3 tasks | 13 files |
+| Phase 04 P03 | 10min    | 3 tasks | 10 files |
+| Phase 04 P04 | 5min     | 3 tasks | 8 files  |
+| Phase 04 P05 | 5min     | 3 tasks | 9 files  |
+| Phase 04 P06 | 2min     | 2 tasks | 6 files  |
+| Phase 05 P01 | 3min     | 2 tasks | 9 files  |
+| Phase 05 P02 | 5min     | 2 tasks | 11 files |
+| Phase 05 P03 | 3min     | 2 tasks | 5 files  |
+| Phase 05 P04 | 4min     | 2 tasks | 11 files |
+| Phase 05 P05 | 10min    | 2 tasks | 5 files  |
+| Phase 06 P01 | 3min | 2 tasks | 9 files |
+| Phase 06 P02 | 2min | 2 tasks | 6 files |
+| Phase 06 P05 | 4min | 2 tasks | 8 files |
+| Phase 06 P03 | 6min | 2 tasks | 11 files |
+| Phase 06 P04 | 3min | 2 tasks | 9 files |
+| Phase 06 P06 | 7min | 2 tasks | 9 files |
 
 ## Accumulated Context
 
@@ -90,7 +98,7 @@ Decisions are logged in PROJECT.md Key Decisions table.
 Recent decisions affecting current work:
 
 - Roadmap: 8 vertical phases following the research dependency chain (shell → cache → map → encounters → capture → dex → persistence → polish); each phase from 3 onward ends playable
-- Roadmap: Save envelope *types* designed in Phase 1 even though persist wiring lands in Phase 7 (retrofitting a versioned save is the costliest mistake)
+- Roadmap: Save envelope _types_ designed in Phase 1 even though persist wiring lands in Phase 7 (retrofitting a versioned save is the costliest mistake)
 - Roadmap: All rates/windows/thresholds live in `data/` config (DATA-03 anchored to Phase 4, applied in every later phase)
 - Phase 1: `createHashRouter` + Vite `base: '/pokemon-safari/'` (no origin-root SPA 404) — protects food-crawl
 - Phase 1: Source in `pokemon-safari-app/`; publish build to `pokemon-safari/`
@@ -98,7 +106,7 @@ Recent decisions affecting current work:
 - Phase 2 CONTEXT decisions D-01…D-11 locked (Boot route, Game-only gate, skip warm Boot, progress+retry, quota soft-fail, sprites+shiny, versioned namespaced keys)
 - Phase 2 plans: Wave 0 tests → cache+Boot happy path → retry/gate/skip → sprite+quota
 - [Phase 01]: Pinned typescript@5.9.3 for typescript-eslint peer range (A5)
-- [Phase 01]: Excluded Wave 0 *.test.tsx from tsc -b so missing BottomNav does not block build
+- [Phase 01]: Excluded Wave 0 \*.test.tsx from tsc -b so missing BottomNav does not block build
 - [Phase 01]: Zustand ui stub uses lastRoute + settings.mute with no persist middleware
 - [Phase 01]: HashRouter basename /pokemon-safari requires syncHashBasename so empty # matches routes
 - [Phase 01]: createAppRouter per App mount keeps Vitest isolation with fresh router state
@@ -169,6 +177,24 @@ Recent decisions affecting current work:
 - [Phase 05]: FleeCard copy from captureCopy; GameScreen miss stubs use rng.next()===1 so 100% chance still fails
 - [Phase 05]: GradeFlash->BallShake handoff owned by keyed ShakeSequence child (remount per throw) — immune to gradeFlashDone leak (D-14/WR-01)
 - [Phase 05]: registerThrow guarded to stage==='timing' so stray calls cannot inflate attemptsUsed (WR-03/T-05-04)
+- [Phase 06]: Wave 0 only — no production dex modules; RED via missing imports or unmet assertions
+- [Phase 06]: dexTileState unknown label #NNN Pokémon; DexTile a11y Pokémon #NNN per UI-SPEC
+- [Phase 06]: Invalid relative-day ISO → Sometime; config asserts dexSaveDebounceMs === 800
+- [Phase 06]: Dex lives in SaveEnvelopeV1.data.dex under pokemon-safari:save:v1 (D-18); no dex-only key
+- [Phase 06]: dexTileState encodes silhouette-until-catch; seen-only equals unknown on the grid (D-06/D-07)
+- [Phase 06]: Debounce interval 800ms from data/rates.ts; eager flush on visibilitychange/pagehide (D-19, A3)
+- [Phase 06]: toPokemonDto defaults flavorText to null; ensureCache overwrites after species fetch
+- [Phase 06]: Orphan v1 cleanup is a single literal removeItem on every ensureCache (noop when absent)
+- [Phase 06]: stubPokeApiFetch answers /pokemon-species/{id} so doubled prefetch stays offline-testable
+- [Phase 06]: DexTile falls back to a silent tryGetPokemon so a missing cache entry still renders a #NNN button without throwing
+- [Phase 06]: Caught DexDetailSheet is a minimal #NNN + Close shell — lore/shiny/flavor deferred to 06-06
+- [Phase 06]: DexScreen hydrates poke-cache on mount so getPokemon works without a Boot visit in tests/deep-links
+- [Phase 06]: Shiny defaults in withCaptureDefaults (session.shiny ?? false) so existing open() callers stay type-safe
+- [Phase 06]: TimingBar gained optional shiny prop so the timing-phase sprite matches AppearFlash/CaughtCard
+- [Phase 06]: Flow-test helpers default to a non-shiny third Rng roll after shiny consumption was inserted
+- [Phase 06]: Caught sheet opens on shiny when shinyOwned; toggle is view-state only
+- [Phase 06]: QuotaNote message prop defaults to poke-cache copy; Dex passes Pokédex override
+- [Phase 06]: Vitest testTimeout 15s so encounter integration holds finish under npm test
 
 ### Pending Todos
 
@@ -185,11 +211,11 @@ None yet.
 Items acknowledged and carried forward from previous milestone close:
 
 | Category | Item | Status | Deferred At |
-|----------|------|--------|-------------|
-| *(none)* | | | |
+| -------- | ---- | ------ | ----------- |
+| _(none)_ |      |        |             |
 
 ## Session Continuity
 
-Last session: 2026-07-26T14:42:05.247Z
-Stopped at: Completed 05-04-PLAN.md
+Last session: 2026-07-26T17:09:29.495Z
+Stopped at: Completed 06-06-PLAN.md
 Resume file: None
