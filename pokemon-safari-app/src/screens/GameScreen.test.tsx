@@ -4,8 +4,9 @@ import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BottomNav } from '@/components/BottomNav'
 import { encounterTimingMs } from '@/data/rates'
-import { forestMap } from '@/data/maps/forest'
+import { WORLD_SPAWN } from '@/data/worldConfig'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
+import { findStepOnto } from '@/test/world-step-helpers'
 import { GameScreen } from '@/screens/GameScreen'
 import { HomeScreen } from '@/screens/HomeScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
@@ -27,32 +28,13 @@ function encounterRng(...values: number[]) {
   }
 }
 
-const forestMock = vi.hoisted(() => ({ corrupt: false }))
-
-vi.mock('@/data/maps/forest', async (importOriginal) => {
-  const mod = await importOriginal<typeof import('@/data/maps/forest')>()
-  return {
-    get forestMap() {
-      if (forestMock.corrupt) {
-        return {
-          ...mod.forestMap,
-          tiles: mod.forestMap.tiles.slice(0, -1),
-        }
-      }
-      return mod.forestMap
-    },
-  }
-})
-
 beforeEach(() => {
-  forestMock.corrupt = false
   clearPokeCacheKey()
   resetCacheMemoryForTests()
   useUiStore.setState({ cacheReady: false })
 })
 
 afterEach(() => {
-  forestMock.corrupt = false
   cleanup()
   clearPokeCacheKey()
   resetCacheMemoryForTests()
@@ -118,14 +100,37 @@ function renderAppShellLike({ showGame }: { showGame: boolean }) {
   )
 }
 
+
+function setupGrassApproach() {
+  const step = findStepOnto('grass')
+  useExploreStore.setState({
+    tile: { ...step.from },
+    facing: step.dir,
+    moving: false,
+  })
+  return step
+}
+
+function arrowFor(dir: 'up' | 'down' | 'left' | 'right') {
+  return dir === 'up'
+    ? 'ArrowUp'
+    : dir === 'down'
+      ? 'ArrowDown'
+      : dir === 'left'
+        ? 'ArrowLeft'
+        : 'ArrowRight'
+}
+
 async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>) {
-  useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+  const step = findStepOnto('grass')
+  const key = arrowFor(step.dir)
+  useExploreStore.setState({ tile: { ...step.from }, facing: step.dir, moving: false })
   // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback
   setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3))
 
-  fireEvent.keyDown(window, { code: 'ArrowUp' })
+  fireEvent.keyDown(window, { code: key })
   await flushFrames(8)
-  fireEvent.keyUp(window, { code: 'ArrowUp' })
+  fireEvent.keyUp(window, { code: key })
 
   await screen.findByRole('dialog')
   const prompt = await screen.findByText(/What is \d+ × \d+\?/)
@@ -164,17 +169,18 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(screen.queryByRole('heading', { name: /^game$/i })).toBeNull()
   })
 
-  it('renders pixelated tile images on the explore surface (MAP-02 visual swap)', () => {
+  it('renders terrain canvas and pixelated player sprites on the explore surface', () => {
     renderExplore()
 
     expect(screen.getByText('Forest')).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+    expect(screen.getByTestId('terrain-canvas')).toBeInTheDocument()
     expect(document.querySelectorAll('img.pixelated').length).toBeGreaterThan(0)
   })
 
   it('walks one tile down on an arrow key and stops once the key is released', async () => {
     renderExplore()
-    const spawn = forestMap.spawn
+    const spawn = WORLD_SPAWN
 
     fireEvent.keyDown(window, { code: 'ArrowDown' })
     await flushFrames(4)
@@ -219,7 +225,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
   it('walks with WASD through the same held-direction path', async () => {
     renderExplore()
-    const spawn = forestMap.spawn
+    const spawn = WORLD_SPAWN
 
     fireEvent.keyDown(window, { code: 'KeyD' })
     await flushFrames(4)
@@ -231,7 +237,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
   it('walks when a D-pad arm is pressed and stops on pointer up', async () => {
     renderExplore()
-    const spawn = forestMap.spawn
+    const spawn = WORLD_SPAWN
     const up = screen.getByRole('button', { name: 'Move up' })
 
     fireEvent.pointerDown(up, { pointerId: 1 })
@@ -246,7 +252,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
   it('ignores key codes outside the allowlist', async () => {
     renderExplore()
-    const spawn = forestMap.spawn
+    const spawn = WORLD_SPAWN
 
     fireEvent.keyDown(window, { code: 'Space' })
     await flushFrames(6)
@@ -257,16 +263,16 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   })
 
   it('blocks a step into an obstacle while still turning to face it', async () => {
-    // (10, 13) is walkable ground; (10, 14) is the map's obstacle border row.
-    useExploreStore.setState({ tile: { x: 10, y: 13 }, facing: 'up', moving: false })
+    const step = findStepOnto('obstacle')
+    useExploreStore.setState({ tile: { ...step.from }, facing: step.dir, moving: false })
     renderExplore()
 
-    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
     await flushFrames(8)
-    fireEvent.keyUp(window, { code: 'ArrowDown' })
+    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
 
-    expect(useExploreStore.getState().tile).toEqual({ x: 10, y: 13 })
-    expect(useExploreStore.getState().facing).toBe('down')
+    expect(useExploreStore.getState().tile).toEqual(step.from)
+    expect(useExploreStore.getState().facing).toBe(step.dir)
   })
 
   it('commits to the store per tile, not per frame (MAP-04)', async () => {
@@ -301,7 +307,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   })
 
   it('clears the move lock on unmount so remount can walk again', async () => {
-    const spawn = forestMap.spawn
+    const spawn = WORLD_SPAWN
     const { unmount } = renderExplore()
 
     // Start a step, then leave /game before the tween finishes.
@@ -332,15 +338,14 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
   it('shows a wild Pokémon, asks a question, then handoff, and returns to the map', async () => {
     const user = userEvent.setup()
-    // (10, 6) is ground; (10, 5) is grass in the northern patch.
-    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    const step = setupGrassApproach()
     // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback
     setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3))
     renderExplore()
 
-    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
     await flushFrames(8)
-    fireEvent.keyUp(window, { code: 'ArrowUp' })
+    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
 
     const dialog = await screen.findByRole('dialog')
     expect(dialog).toHaveTextContent('A wild p10 appeared!')
@@ -374,26 +379,26 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   })
 
   it('keeps a nothing roll silent', async () => {
-    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    const step = setupGrassApproach()
     setDefaultRngForTests(encounterRng(0.5))
     renderExplore()
 
-    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
     await flushFrames(8)
-    fireEvent.keyUp(window, { code: 'ArrowUp' })
+    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
 
     expect(screen.queryByRole('dialog')).toBeNull()
     expect(screen.queryByRole('status')).toBeNull()
   })
 
   it('shows a non-blocking item toast and keeps the D-pad present', async () => {
-    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    const step = setupGrassApproach()
     setDefaultRngForTests(encounterRng(0.75))
     renderExplore()
 
-    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
     await flushFrames(8)
-    fireEvent.keyUp(window, { code: 'ArrowUp' })
+    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
 
     expect(await screen.findByRole('status')).toHaveTextContent('Found an item!')
     expect(screen.queryByRole('dialog')).toBeNull()
@@ -401,13 +406,13 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   })
 
   it('freezes keyboard movement and hides the D-pad while the dialog is open', async () => {
-    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    const step = setupGrassApproach()
     setDefaultRngForTests(encounterRng(0, 0))
     renderExplore()
 
-    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
     await flushFrames(8)
-    fireEvent.keyUp(window, { code: 'ArrowUp' })
+    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
     await screen.findByRole('dialog')
     const frozenTile = useExploreStore.getState().tile
 
@@ -422,13 +427,13 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   it('shows recovery UI when the rolled species is absent from cache', async () => {
     seedPokeCache(Array.from({ length: 150 }, (_, index) => makePokemonDto(index + 2)))
     hydrateFromStorage()
-    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    const step = setupGrassApproach()
     setDefaultRngForTests(encounterRng(0, 0))
     renderExplore()
 
-    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
     await flushFrames(8)
-    fireEvent.keyUp(window, { code: 'ArrowUp' })
+    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
 
     expect(
       await screen.findByRole('heading', { name: 'That encounter got stuck.' }),
@@ -437,9 +442,9 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   })
 
   it('emits nothing when stepping onto ground', async () => {
-    // Spawn (10, 7) → walk up onto (10, 6) ground.
+    // Spawn carve is all ground — step up onto (0, -1).
     useExploreStore.setState({
-      tile: { ...forestMap.spawn },
+      tile: { ...WORLD_SPAWN },
       facing: 'up',
       moving: false,
       pendingEncounters: [],
@@ -450,7 +455,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await flushFrames(8)
     fireEvent.keyUp(window, { code: 'ArrowUp' })
 
-    expect(useExploreStore.getState().tile).toEqual({ x: 10, y: 6 })
+    expect(useExploreStore.getState().tile).toEqual({ x: 0, y: -1 })
     expect(useExploreStore.getState().pendingEncounters).toEqual([])
   })
 
@@ -484,7 +489,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(useExploreStore.getState().drainEncounters()).toEqual([])
   })
 
-  it('does not show map-error copy when forestMap is valid', () => {
+  it('does not show map-error copy on a healthy explore surface', () => {
     renderExplore()
 
     expect(screen.queryByText(/Map didn’t load/)).toBeNull()
@@ -632,29 +637,3 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   })
 })
 
-describe('GameScreen map-load error recovery', () => {
-  beforeEach(() => {
-    useUiStore.setState({ cacheReady: true })
-    useExploreStore.getState().reset()
-    forestMock.corrupt = true
-  })
-
-  afterEach(() => {
-    forestMock.corrupt = false
-    useExploreStore.getState().reset()
-  })
-
-  it('renders the Map didn’t load recovery card instead of Walk controls', () => {
-    renderExplore()
-
-    expect(screen.getByRole('heading', { name: 'Map didn’t load' })).toBeInTheDocument()
-    expect(
-      screen.getByText(
-        'Something went wrong showing the Forest. Tap Try Again. If it keeps failing, go back Home.',
-      ),
-    ).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: 'Try Again' })).toBeInTheDocument()
-    expect(screen.queryByRole('group', { name: 'Walk controls' })).toBeNull()
-    expect(screen.getByText('Forest')).toBeInTheDocument()
-  })
-})

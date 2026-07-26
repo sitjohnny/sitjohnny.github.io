@@ -8,20 +8,23 @@ import {
   WALK_FRAME_MS,
 } from '@/data/exploreConfig'
 import { clamp } from '@/game/camera'
-import { asTileSource } from '@/game/collision'
 import { completeStep, tileToPx, tryStep } from '@/game/movement'
+import { drawTerrain, type TileImages } from '@/game/world/drawTerrain'
+import type { WorldProvider } from '@/game/world/worldProvider'
 import { prefersReducedMotion, useMapCamera } from '@/hooks/useMapCamera'
 import { primaryDirection } from '@/hooks/usePlayerInput'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
-import type { Direction, MapDef, PlayerState, Vec2 } from '@/types/map'
+import type { Direction, PlayerState, Vec2 } from '@/types/map'
 
 export type ExploreLoopOptions = {
-  map: MapDef
+  world: WorldProvider
   heldRef: RefObject<Direction[]>
   worldRef: RefObject<HTMLDivElement | null>
   playerRef: RefObject<HTMLDivElement | null>
   viewportRef: RefObject<HTMLDivElement | null>
+  canvasRef: RefObject<HTMLCanvasElement | null>
+  imagesRef: RefObject<TileImages>
 }
 
 type ActiveTween = {
@@ -39,19 +42,51 @@ function lerp(from: number, to: number, t: number): number {
   return from + (to - from) * t
 }
 
+function paintTerrain(
+  canvasRef: RefObject<HTMLCanvasElement | null>,
+  imagesRef: RefObject<TileImages>,
+  world: WorldProvider,
+  cam: { x: number; y: number },
+  view: { w: number; h: number },
+): void {
+  const canvas = canvasRef.current
+  if (!canvas || view.w <= 0 || view.h <= 0) {
+    return
+  }
+  const dpr = typeof window !== 'undefined' ? window.devicePixelRatio || 1 : 1
+  const cssW = Math.max(1, Math.floor(view.w))
+  const cssH = Math.max(1, Math.floor(view.h))
+  const pixelW = Math.floor(cssW * dpr)
+  const pixelH = Math.floor(cssH * dpr)
+  if (canvas.width !== pixelW || canvas.height !== pixelH) {
+    canvas.width = pixelW
+    canvas.height = pixelH
+    canvas.style.width = `${cssW}px`
+    canvas.style.height = `${cssH}px`
+  }
+  const ctx = canvas.getContext('2d')
+  if (!ctx) {
+    return
+  }
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+  drawTerrain(ctx, world, cam, { w: cssW, h: cssH }, imagesRef.current)
+}
+
 /**
- * The only per-frame code in the app (MAP-04).
+ * The only per-frame code in the app.
  *
  * Frame state lives in effect-local variables, never React state. The store is
- * written at tile commit / step completion only; pixels, camera, and walk
- * frames are painted through refs.
+ * written at tile commit / step completion only; pixels, camera, terrain, and
+ * walk frames are painted through refs.
  */
 export function useExploreLoop({
-  map,
+  world,
   heldRef,
   worldRef,
   playerRef,
   viewportRef,
+  canvasRef,
+  imagesRef,
 }: ExploreLoopOptions): void {
   const camera = useMapCamera(worldRef)
 
@@ -64,7 +99,8 @@ export function useExploreLoop({
     let lastTime = 0
     let playerPx: Vec2 = tileToPx(useExploreStore.getState().tile)
 
-    // Remount with moving:true and no tween soft-locks tryStep until reload.
+    world.ensureAround(useExploreStore.getState().tile)
+
     const boot = useExploreStore.getState()
     if (boot.moving) {
       boot.setPlayer({
@@ -141,7 +177,6 @@ export function useExploreLoop({
 
       const encounterActive = useEncounterStore.getState().stage !== 'idle'
 
-      // Finish an in-flight tween, but never start another step under the modal.
       if (!tween && !encounterActive) {
         store = useExploreStore.getState()
         state = {
@@ -151,14 +186,16 @@ export function useExploreLoop({
           moving: store.moving,
         }
 
-        const result = tryStep(state, primaryDirection(heldRef.current), asTileSource(map), now)
+        const result = tryStep(state, primaryDirection(heldRef.current), world, now)
 
         if (!samePlayer(state, result.next)) {
           store.setPlayer(result.next)
+          if (result.tween) {
+            world.ensureAround({ x: result.next.x, y: result.next.y })
+          }
         }
         if (result.events.length > 0) {
           for (const event of result.events) {
-            // DEV-only trace (T-03-10) — Vite strips import.meta.env.DEV from production.
             if (import.meta.env.DEV)
               console.debug('[explore] encounter_candidate', event.x, event.y)
           }
@@ -166,7 +203,6 @@ export function useExploreLoop({
         }
 
         if (result.tween) {
-          // Prefer the tween's duration (STEP_DURATION_MS from tryStep); reduced motion snaps.
           const durationMs = reduced ? 0 : result.tween.durationMs || STEP_DURATION_MS
           if (durationMs <= 0) {
             writePlayer(result.tween.to)
@@ -199,6 +235,7 @@ export function useExploreLoop({
         view,
         dtMs,
       )
+      paintTerrain(canvasRef, imagesRef, world, camera.cameraRef.current, view)
 
       frame = requestAnimationFrame(tick)
     }
@@ -210,16 +247,19 @@ export function useExploreLoop({
       { x: playerPx.x + TILE_PX / 2, y: playerPx.y + TILE_PX / 2 },
       { w: viewportWidth, h: viewportHeight },
     )
+    paintTerrain(canvasRef, imagesRef, world, camera.cameraRef.current, {
+      w: viewportWidth,
+      h: viewportHeight,
+    })
     frame = requestAnimationFrame(tick)
 
     return () => {
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', measure)
-      // Leaving /game mid-step must clear the move lock — tween dies with rAF.
       const s = useExploreStore.getState()
       if (s.moving) {
         s.setPlayer({ x: s.tile.x, y: s.tile.y, facing: s.facing, moving: false })
       }
     }
-  }, [map, heldRef, worldRef, playerRef, viewportRef, camera])
+  }, [world, heldRef, worldRef, playerRef, viewportRef, canvasRef, imagesRef, camera])
 }

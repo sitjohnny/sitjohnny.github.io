@@ -1,17 +1,14 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef } from 'react'
 import { CacheGateNotice } from '@/components/CacheGateNotice'
 import { DPad } from '@/components/controls/DPad'
 import { EncounterOverlay } from '@/components/encounter/EncounterOverlay'
 import { ItemToast } from '@/components/encounter/ItemToast'
-import { EmptyState } from '@/components/EmptyState'
 import { MapViewport } from '@/components/map/MapViewport'
 import { PlayerSprite } from '@/components/map/PlayerSprite'
-import { TileWorld } from '@/components/map/TileWorld'
-import { PixelButton } from '@/components/PixelButton'
+import { TerrainCanvas } from '@/components/map/TerrainCanvas'
 import { QuotaNote } from '@/components/QuotaNote'
-import { TILE_PX } from '@/data/exploreConfig'
-import { forestMap } from '@/data/maps/forest'
-import { isValidMap } from '@/game/collision'
+import type { TileImages } from '@/game/world/drawTerrain'
+import { createWorld } from '@/game/world/worldProvider'
 import { useEncounterFlow } from '@/hooks/useEncounterFlow'
 import { useExploreLoop } from '@/hooks/useExploreLoop'
 import { usePlayerInput } from '@/hooks/usePlayerInput'
@@ -20,58 +17,21 @@ import { useUiStore } from '@/store'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
 
-const WORLD_WIDTH_PX = forestMap.width * TILE_PX
-const WORLD_HEIGHT_PX = forestMap.height * TILE_PX
-
-const MAP_ERROR_HEADING = 'Map didn’t load'
-const TRY_AGAIN_LABEL = 'Try Again'
-const MAP_ERROR_BODY =
-  `Something went wrong showing the Forest. Tap ${TRY_AGAIN_LABEL}. If it keeps failing, go back Home.`
-
 /**
- * Explore/Game — the Forest surface, still behind the Gen 1 cache gate (D-02).
+ * Explore/Game — infinite procedural Forest, behind the Gen 1 cache gate (D-02).
  */
 export function GameScreen() {
   const storeReady = useUiStore((s) => s.cacheReady)
   const quotaSoftFail = useUiStore((s) => s.quotaSoftFail)
   const setQuotaSoftFail = useUiStore((s) => s.setQuotaSoftFail)
   const ready = isCacheReady() || storeReady
-  // reloadKey remounts ExploreSurface after recovery. For a static module map
-  // like forestMap, Try Again cannot heal a permanently invalid definition —
-  // isValidMap still reads the same constant. Remount helps once map data can
-  // change (fetch/rebuild); until then the copy correctly points users Home.
-  const [reloadKey, setReloadKey] = useState(0)
-  const mapOk = isValidMap(forestMap)
 
   if (!ready) {
     return <CacheGateNotice />
   }
 
-  if (!mapOk) {
-    return (
-      <section className="relative flex flex-1 flex-col" key={reloadKey}>
-        <p className="px-4 py-2 font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-text">
-          Forest
-        </p>
-        <div className="flex flex-1 flex-col items-center justify-center gap-4 px-4 pb-8">
-          <EmptyState heading={MAP_ERROR_HEADING} body={MAP_ERROR_BODY} />
-          <PixelButton
-            variant="primary"
-            onClick={() => {
-              useExploreStore.getState().reset()
-              setReloadKey((k) => k + 1)
-            }}
-          >
-            {TRY_AGAIN_LABEL}
-          </PixelButton>
-        </div>
-      </section>
-    )
-  }
-
   return (
     <ExploreSurface
-      key={reloadKey}
       quotaSoftFail={quotaSoftFail}
       onDismissQuota={() => setQuotaSoftFail(false)}
     />
@@ -84,11 +44,14 @@ type ExploreSurfaceProps = {
 }
 
 function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) {
-  // Facing changes at most once per step — a coarse subscription, not per frame.
   const facing = useExploreStore((s) => s.facing)
   const viewportRef = useRef<HTMLDivElement | null>(null)
-  const worldRef = useRef<HTMLDivElement | null>(null)
+  const worldLayerRef = useRef<HTMLDivElement | null>(null)
   const playerRef = useRef<HTMLDivElement | null>(null)
+  const canvasRef = useRef<HTMLCanvasElement | null>(null)
+  const imagesRef = useRef<TileImages>({})
+  const worldRef = useRef(createWorld())
+  const world = worldRef.current
   const input = usePlayerInput()
   const stage = useEncounterStore((state) => state.stage)
   const itemToastVisible = useEncounterStore((state) => state.itemToastVisible)
@@ -96,14 +59,15 @@ function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) 
   useEncounterFlow()
 
   useExploreLoop({
-    map: forestMap,
+    world,
     heldRef: input.heldRef,
-    worldRef,
+    worldRef: worldLayerRef,
     playerRef,
     viewportRef,
+    canvasRef,
+    imagesRef,
   })
 
-  // Leaving /game mid-walk must not leave a direction held.
   const { clear } = input
   useEffect(() => clear, [clear])
 
@@ -115,16 +79,12 @@ function ExploreSurface({ quotaSoftFail, onDismissQuota }: ExploreSurfaceProps) 
 
       <MapViewport
         viewportRef={viewportRef}
-        worldRef={worldRef}
-        widthPx={WORLD_WIDTH_PX}
-        heightPx={WORLD_HEIGHT_PX}
+        worldRef={worldLayerRef}
+        backdrop={<TerrainCanvas canvasRef={canvasRef} imagesRef={imagesRef} />}
       >
-        <TileWorld map={forestMap} />
         <PlayerSprite spriteRef={playerRef} facing={facing} />
       </MapViewport>
 
-      {/* The shell already clears the BottomNav and its safe area, so the
-          overlay only needs its own 16px inset. */}
       {stage === 'idle' ? (
         <DPad
           onPress={input.press}

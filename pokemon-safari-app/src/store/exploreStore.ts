@@ -1,5 +1,5 @@
 import { create } from 'zustand'
-import { forestMap } from '@/data/maps/forest'
+import { WORLD_SPAWN } from '@/data/worldConfig'
 import {
   drainEncounters as drainEncounterQueue,
   enqueueEncounters,
@@ -8,24 +8,16 @@ import {
 import type { Direction, EncounterCandidateEvent, PlayerState, Vec2 } from '@/types/map'
 
 /**
- * Coarse explore session state (MAP-04).
+ * Coarse explore session state.
  *
  * This store holds integer tiles, facing, the move lock, and the encounter
  * queue only. Pixel offsets, tween progress, and camera translation must never
- * live here — the frame loop writes those straight to the DOM through refs, so
- * the store is touched at most once per committed tile. No persist middleware:
- * saving is Phase 7.
+ * live here — the frame loop writes those straight to the DOM through refs.
  */
 type ExploreState = {
   tile: Vec2
   facing: Direction
   moving: boolean
-  /**
-   * Phase 4 integration point: pending `encounter_candidate` events from grass
-   * steps. Phase 3 has no consumer by design — Phase 4 reads via
-   * `useExploreStore.getState().drainEncounters()`. Capped at
-   * {@link MAX_PENDING_ENCOUNTERS}.
-   */
   pendingEncounters: EncounterCandidateEvent[]
   setPlayer: (next: PlayerState) => void
   pushEncounters: (events: EncounterCandidateEvent[]) => void
@@ -35,7 +27,7 @@ type ExploreState = {
 
 function initialState() {
   return {
-    tile: { ...forestMap.spawn },
+    tile: { ...WORLD_SPAWN },
     facing: 'down' as Direction,
     moving: false,
     pendingEncounters: [] as EncounterCandidateEvent[],

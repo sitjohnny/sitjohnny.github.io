@@ -1,5 +1,4 @@
 import { describe, expect, it } from 'vitest'
-import { forestMap } from '@/data/maps/forest'
 import type { MapDef, TileSource } from '@/types/map'
 import { asTileSource, isGrass, isValidMap, isWalkable, mapTileAt, tileAt } from './collision'
 import { createWorld } from './world/worldProvider'
@@ -66,15 +65,15 @@ describe('isGrass', () => {
 })
 
 describe('isValidMap', () => {
-  it('accepts the authored forestMap', () => {
-    expect(isValidMap(forestMap)).toBe(true)
+  it('accepts a well-formed sample map', () => {
+    expect(isValidMap(sample)).toBe(true)
   })
 
   it('rejects a tiles length off by one', () => {
     expect(
       isValidMap({
-        ...forestMap,
-        tiles: forestMap.tiles.slice(0, -1),
+        ...sample,
+        tiles: sample.tiles.slice(0, -1),
       }),
     ).toBe(false)
   })
@@ -98,15 +97,6 @@ describe('isValidMap', () => {
   it('rejects zero or negative dimensions', () => {
     expect(isValidMap({ ...sample, width: 0 })).toBe(false)
     expect(isValidMap({ ...sample, height: -1 })).toBe(false)
-  })
-})
-
-describe('forestMap', () => {
-  it('has tiles.length === width * height and a walkable spawn', () => {
-    expect(forestMap.tiles.length).toBe(forestMap.width * forestMap.height)
-    expect(forestMap.tiles.length).toBe(300)
-    expect(isWalkable(asTileSource(forestMap), forestMap.spawn.x, forestMap.spawn.y)).toBe(true)
-    expect(mapTileAt(forestMap, forestMap.spawn.x, forestMap.spawn.y)).toBe('ground')
   })
 })
 
