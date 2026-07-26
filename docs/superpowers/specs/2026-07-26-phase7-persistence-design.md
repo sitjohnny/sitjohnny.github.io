@@ -32,14 +32,14 @@ This is a **slimmed Phase 7**: data persistence only. Lake/Mountain unlocks and 
 
 ## Architecture
 
-| Piece | Role |
-| ----- | ---- |
-| `types/save.ts` | `ExploreSave`, `SaveEnvelopeV2`; `SaveEnvelope = SaveEnvelopeV2` |
-| `services/save.ts` | Parse, sanitize, migrate v1→v2, load/persist full envelope |
-| `services/saveFlush.ts` (or equivalent) | Single debounce + `visibilitychange` / `pagehide` flush coordinator |
-| `store/dexStore.ts` | Hydrate dex from shared load; schedule flush via coordinator |
-| `store/exploreStore.ts` | Hydrate tile/facing from shared load; schedule flush on position/facing changes |
-| Game / camera | First paint uses hydrated tile (not hard-coded spawn when a save exists) |
+| Piece                                   | Role                                                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------- |
+| `types/save.ts`                         | `ExploreSave`, `SaveEnvelopeV2`; `SaveEnvelope = SaveEnvelopeV2`                |
+| `services/save.ts`                      | Parse, sanitize, migrate v1→v2, load/persist full envelope                      |
+| `services/saveFlush.ts` (or equivalent) | Single debounce + `visibilitychange` / `pagehide` flush coordinator             |
+| `store/dexStore.ts`                     | Hydrate dex from shared load; schedule flush via coordinator                    |
+| `store/exploreStore.ts`                 | Hydrate tile/facing from shared load; schedule flush on position/facing changes |
+| Game / camera                           | First paint uses hydrated tile (not hard-coded spawn when a save exists)        |
 
 **LocalStorage key:** keep `SAVE_KEY` (`pokemon-safari:save:v1`). The schema version lives in the envelope `version` field, not the key name.
 
@@ -104,14 +104,14 @@ Encounter overlay state, pending encounter queue, `moving`, and pokemon immunity
 
 Vitest, extending existing save/dex patterns:
 
-| Case | Expectation |
-| ---- | ----------- |
-| v1 on disk → load | Same dex; explore = spawn + `'down'`; next persist is v2 |
-| Round-trip explore | Persist tile/facing → reload store → same values |
-| No clobber | Dex flush after an explore move keeps both slices |
-| Corrupt explore field | Spawn defaults; dex preserved |
-| Envelope shape | Persisted JSON has no encounter / overlay keys |
-| Quota | Soft-fail still surfaces; existing tests updated for new `persistSave` signature |
+| Case                  | Expectation                                                                      |
+| --------------------- | -------------------------------------------------------------------------------- |
+| v1 on disk → load     | Same dex; explore = spawn + `'down'`; next persist is v2                         |
+| Round-trip explore    | Persist tile/facing → reload store → same values                                 |
+| No clobber            | Dex flush after an explore move keeps both slices                                |
+| Corrupt explore field | Spawn defaults; dex preserved                                                    |
+| Envelope shape        | Persisted JSON has no encounter / overlay keys                                   |
+| Quota                 | Soft-fail still surfaces; existing tests updated for new `persistSave` signature |
 
 ## Success criteria
 
