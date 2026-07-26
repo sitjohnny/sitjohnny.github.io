@@ -106,7 +106,32 @@ describe("BallShake sprites + phases", () => {
     expect(onComplete).toHaveBeenCalledTimes(1);
   });
 
-  it("clears timers on unmount without calling onComplete twice", () => {
+  it("reduced motion: on catch, resolve-caught with static sparkles, never opens, then completes", () => {
+    prefersReducedMotionMock.mockReturnValue(true);
+    const onComplete = vi.fn();
+    render(<BallShake caught chance={0.5} onComplete={onComplete} />);
+    const shakeTotal = 2 * encounterTimingMs.reducedShakeOnce;
+
+    act(() => {
+      vi.advanceTimersByTime(shakeTotal);
+    });
+    expect(phase()).toBe("resolve-caught");
+    expect(spriteSrc()).toMatch(/ball-closed/);
+    expect(spriteSrc()).not.toMatch(/open/);
+    const sparkles = ballRoot().querySelectorAll("[data-sparkle]");
+    expect(sparkles).toHaveLength(4);
+    for (const el of sparkles) {
+      expect(el).toHaveClass("ball-sparkle--static");
+    }
+
+    act(() => {
+      vi.advanceTimersByTime(encounterTimingMs.reducedShakeResolve);
+    });
+    expect(onComplete).toHaveBeenCalledTimes(1);
+    expect(spriteSrc()).not.toMatch(/open/);
+  });
+
+  it("clears scheduled timers on unmount so onComplete is not called", () => {
     const onComplete = vi.fn();
     const { unmount } = render(
       <BallShake caught chance={0.2} onComplete={onComplete} />,
