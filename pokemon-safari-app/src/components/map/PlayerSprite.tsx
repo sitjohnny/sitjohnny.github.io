@@ -2,9 +2,6 @@ import type { RefObject } from 'react'
 import { TILE_PX } from '@/data/exploreConfig'
 import type { Direction } from '@/types/map'
 
-/** Frame indices the explore loop cycles through via `data-frame`. */
-export const WALK_FRAME_CLASSES = ['0', '1'] as const
-
 export type PlayerSpriteProps = {
   spriteRef: RefObject<HTMLDivElement | null>
   facing: Direction
