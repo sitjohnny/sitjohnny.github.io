@@ -6,6 +6,8 @@ import {
   grassOutcomeWeights,
   educationCaptureBonus,
   encounterTimingMs,
+  shinyRate,
+  dexSaveDebounceMs,
 } from '@/data/rates'
 import { biomeEncounterTables } from '@/data/encounterTables'
 import {
@@ -135,6 +137,15 @@ describe('DATA-03 config surface', () => {
     expect(timingBar.zones.rare).toBeDefined()
     expect(timingBar.zones.legendary).toBeDefined()
     expect(timingBar.sweetSpotOffsets.length).toBeGreaterThanOrEqual(3)
+  })
+
+  it('exports shinyRate and dexSaveDebounceMs for Phase 6 dex (DATA-03)', () => {
+    expect(typeof shinyRate).toBe('number')
+    expect(shinyRate).toBeGreaterThan(0)
+    expect(shinyRate).toBeLessThanOrEqual(1)
+    expect(typeof dexSaveDebounceMs).toBe('number')
+    expect(dexSaveDebounceMs).toBeGreaterThan(0)
+    expect(dexSaveDebounceMs).toBe(800)
   })
 })
 
