@@ -32,11 +32,14 @@ function matchesStatus(dex: DexData, speciesId: number, status: DexStatusFilter)
 }
 
 function matchesType(
+  dex: DexData,
   typeOf: (speciesId: number) => string[],
   speciesId: number,
   type: string | null,
 ): boolean {
   if (type === null) return true
+  const entry = dex[String(speciesId)]
+  if (entry?.firstCapturedAt == null) return false
   const types = safeTypes(typeOf, speciesId)
   return types.includes(type)
 }
@@ -49,7 +52,7 @@ export function filterDexSpeciesIds(
   const out: number[] = []
   for (let id = 1; id <= GEN1_COUNT; id += 1) {
     if (!matchesStatus(dex, id, filter.status)) continue
-    if (!matchesType(typeOf, id, filter.type)) continue
+    if (!matchesType(dex, typeOf, id, filter.type)) continue
     out.push(id)
   }
   return out

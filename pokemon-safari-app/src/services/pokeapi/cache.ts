@@ -174,11 +174,17 @@ export function getPokemon(id: number): PokemonDto {
   return pokemon
 }
 
+function removeOrphanPokeCacheKeys(): void {
+  localStorage.removeItem('pokemon-safari:poke-cache:v1')
+  localStorage.removeItem('pokemon-safari:poke-cache:v2')
+}
+
 /** Quota-safe write — never throws on QuotaExceededError (D-06). Touches CACHE_KEY only. */
 export function persistCache(envelope: CacheEnvelope): 'ok' | 'quota' {
   try {
     const serialized = JSON.stringify(envelope)
     localStorage.setItem(CACHE_KEY, serialized)
+    removeOrphanPokeCacheKeys()
     if (import.meta.env?.DEV) {
       console.debug('[pokeapi] cache bytes', new Blob([serialized]).size)
     }
@@ -216,9 +222,9 @@ export async function ensureCache(
     }
   }
 
-  // Targeted orphan cleanup for the previous poke-cache key (RESEARCH OQ3 / T-06-15).
-  // Literal key only — never a loop, never localStorage.clear.
-  localStorage.removeItem('pokemon-safari:poke-cache:v1')
+  // Targeted orphan cleanup for legacy poke-cache keys (RESEARCH OQ3 / T-06-15).
+  // Literal keys only — never a loop, never localStorage.clear.
+  removeOrphanPokeCacheKeys()
 
   if (!resume) {
     // Full warm path: if already valid in memory/storage, hydrate and skip network.

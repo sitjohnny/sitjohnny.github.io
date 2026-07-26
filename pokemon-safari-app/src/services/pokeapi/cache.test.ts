@@ -163,6 +163,7 @@ describe('cache v3 DTO shape (species meta)', () => {
     expect(sample.sprites).toMatchObject({
       official_artwork: 'https://example.test/art/25.png',
     })
+    expect(localStorage.getItem('pokemon-safari:poke-cache:v2')).toBeNull()
   })
 })
 

@@ -62,9 +62,16 @@ describe('filterDexSpeciesIds', () => {
     expect(ids).toEqual([25])
   })
 
-  it('type filter keeps species whose types include the filter type', () => {
-    const ids = filterDexSpeciesIds({}, { status: 'all', type: 'fire' }, typeOf)
-    expect(ids).toEqual([4])
+  it('type filter on all status only includes caught species of that type', () => {
+    expect(filterDexSpeciesIds({}, { status: 'all', type: 'fire' }, typeOf)).toEqual([])
+    const dex = dexWithCaught([4, 25])
+    expect(filterDexSpeciesIds(dex, { status: 'all', type: 'fire' }, typeOf)).toEqual([4])
+    expect(filterDexSpeciesIds(dex, { status: 'all', type: 'electric' }, typeOf)).toEqual([25])
+  })
+
+  it('missing + type is always empty (type match requires caught)', () => {
+    const dex = dexWithCaught([4])
+    expect(filterDexSpeciesIds(dex, { status: 'missing', type: 'fire' }, typeOf)).toEqual([])
   })
 
   it('type AND caught combine', () => {
