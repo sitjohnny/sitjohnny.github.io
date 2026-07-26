@@ -1,5 +1,5 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
-import { fetchPokemon, mapPool, sanitizeSpriteUrl } from './client'
+import { fetchPokemon, fetchSpeciesFlavor, mapPool, sanitizeSpriteUrl } from './client'
 import { CACHE_KEY, CACHE_VERSION, GEN1_COUNT } from './keys'
 
 const DEFAULT_CONCURRENCY = 8
@@ -67,6 +67,10 @@ function fromStoredDto(raw: unknown): PokemonDto {
     throw new Error('Invalid Pokémon sprites')
   }
   const sprites = spritesRaw as Record<string, unknown>
+  const flavorText = obj.flavorText
+  if (!(flavorText === null || typeof flavorText === 'string')) {
+    throw new Error('Invalid Pokémon flavorText')
+  }
   return {
     id,
     name: obj.name,
@@ -75,6 +79,7 @@ function fromStoredDto(raw: unknown): PokemonDto {
       front_default: sanitizeSpriteUrl(sprites.front_default),
       front_shiny: sanitizeSpriteUrl(sprites.front_shiny),
     },
+    flavorText,
   }
 }
 
@@ -120,7 +125,7 @@ function isCompleteGen1(map: Map<number, PokemonDto>): boolean {
   return true
 }
 
-/** True when storage (or already-hydrated memory) holds a full v1 Gen 1 set. */
+/** True when storage (or already-hydrated memory) holds a full Gen 1 set at CACHE_VERSION. */
 export function hasValidCache(): boolean {
   if (isCompleteGen1(memory)) {
     return true
@@ -184,11 +189,15 @@ export async function ensureCache(
     }
   }
 
+  // Targeted orphan cleanup for the previous poke-cache key (RESEARCH OQ3 / T-06-15).
+  // Literal key only — never a loop, never localStorage.clear.
+  localStorage.removeItem('pokemon-safari:poke-cache:v1')
+
   if (!resume) {
     // Full warm path: if already valid in memory/storage, hydrate and skip network.
     if (memory.size === GEN1_COUNT) {
       const envelope: CacheEnvelope = {
-        version: 1,
+        version: CACHE_VERSION,
         fetchedAt: new Date().toISOString(),
         pokemon: Array.from({ length: GEN1_COUNT }, (_, i) => getPokemon(i + 1)),
       }
@@ -208,15 +217,17 @@ export async function ensureCache(
     : Array.from({ length: GEN1_COUNT }, (_, i) => i + 1)
 
   if (ids.length > 0) {
-    // Commit each DTO into memory as soon as its fetch succeeds (D-05).
+    // One worker per id: pokemon then species, merge, then commit (Pitfall 3).
     // mapPool rejects on first failure, but prior successes remain in memory for resume.
     await mapPool(
       ids,
       concurrency,
       async (id) => {
         const dto = await fetchPokemon(id)
-        memory.set(dto.id, dto)
-        return dto
+        const flavorText = await fetchSpeciesFlavor(id)
+        const full = { ...dto, flavorText }
+        memory.set(full.id, full)
+        return full
       },
       () => {
         onProgress?.(memory.size, GEN1_COUNT)
@@ -227,7 +238,7 @@ export async function ensureCache(
   }
 
   const envelope: CacheEnvelope = {
-    version: 1,
+    version: CACHE_VERSION,
     fetchedAt: new Date().toISOString(),
     pokemon: Array.from({ length: GEN1_COUNT }, (_, i) => {
       const p = memory.get(i + 1)

@@ -14,9 +14,9 @@ const servicesDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 const pokeapiDir = dirname(fileURLToPath(import.meta.url))
 
 describe('pokeapi keys (DATA-04, D-11)', () => {
-  it('uses namespaced versioned CACHE_KEY pokemon-safari:poke-cache:v1', () => {
-    expect(CACHE_VERSION).toBe(1)
-    expect(CACHE_KEY).toBe('pokemon-safari:poke-cache:v1')
+  it('uses namespaced versioned CACHE_KEY pokemon-safari:poke-cache:v2', () => {
+    expect(CACHE_VERSION).toBe(2)
+    expect(CACHE_KEY).toBe('pokemon-safari:poke-cache:v2')
   })
 
   it('reserves SAVE_KEY as pokemon-safari:save:v1 distinct from CACHE_KEY', () => {

@@ -1,13 +1,14 @@
 import { vi, type Mock } from 'vitest'
 
 /** Must match `CACHE_KEY` from `@/services/pokeapi/keys` (DATA-04 / D-11). */
-export const TEST_CACHE_KEY = 'pokemon-safari:poke-cache:v1'
+export const TEST_CACHE_KEY = 'pokemon-safari:poke-cache:v2'
 
 export type TestPokemonDto = {
   id: number
   name: string
   types: string[]
   sprites: { front_default: string | null; front_shiny: string | null }
+  flavorText: string | null
 }
 
 export type TestCacheEnvelope = {
@@ -29,17 +30,18 @@ export function makePokemonDto(
       front_default: `https://example.test/${id}.png`,
       front_shiny: `https://example.test/s${id}.png`,
     },
+    flavorText: null,
     ...overrides,
   }
 }
 
-/** Write a valid CacheEnvelopeV1 to CACHE_KEY only — never touches SAVE_KEY. */
+/** Write a valid CacheEnvelopeV2 to CACHE_KEY only — never touches SAVE_KEY. */
 export function seedPokeCache(
   pokemon: TestPokemonDto[] = Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
   overrides: Partial<TestCacheEnvelope> = {},
 ): TestCacheEnvelope {
   const envelope: TestCacheEnvelope = {
-    version: 1,
+    version: 2,
     fetchedAt: new Date().toISOString(),
     pokemon,
     ...overrides,
@@ -63,7 +65,7 @@ type StubFetchOptions = {
 }
 
 /**
- * Stub global fetch for PokéAPI pokemon/{id} URLs.
+ * Stub global fetch for PokéAPI pokemon/{id} and pokemon-species/{id} URLs.
  * Returns ok JSON shaped like PokéAPI responses by default.
  */
 export function stubPokeApiFetch(options: StubFetchOptions = {}): Mock {
@@ -82,6 +84,23 @@ export function stubPokeApiFetch(options: StubFetchOptions = {}): Mock {
       }
       if (failIds.has(id)) {
         return { ok: false, status: 500, json: async () => ({}) }
+      }
+      if (url.includes('/pokemon-species/')) {
+        return {
+          ok: true,
+          status: 200,
+          json: async () => ({
+            id,
+            name: `p${id}`,
+            flavor_text_entries: [
+              {
+                flavor_text: `Flavor for ${id}.`,
+                language: { name: 'en' },
+                version: { name: 'emerald' },
+              },
+            ],
+          }),
+        }
       }
       const body = bodyFor
         ? bodyFor(id)

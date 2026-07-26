@@ -44,7 +44,7 @@ beforeEach(() => {
 })
 
 describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
-  it('writes CacheEnvelope version 1 with 151 DTOs to CACHE_KEY only', async () => {
+  it('writes CacheEnvelope version 2 with 151 DTOs to CACHE_KEY only', async () => {
     stubPokeApiFetch()
     localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, marker: 'keep-me' }))
 
@@ -56,7 +56,7 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
       version: number
       pokemon: unknown[]
     }
-    expect(envelope.version).toBe(1)
+    expect(envelope.version).toBe(2)
     expect(envelope.pokemon).toHaveLength(151)
     expect(localStorage.getItem(SAVE_KEY)).toContain('keep-me')
   })
@@ -65,7 +65,7 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
     const fetchMock = stubPokeApiFetch()
     await ensureCache({ concurrency: 8, onProgress: () => {} })
     const callsAfterEnsure = fetchMock.mock.calls.length
-    expect(callsAfterEnsure).toBe(151)
+    expect(callsAfterEnsure).toBe(302)
 
     resetCacheMemoryForTests()
     hydrateFromStorage()
@@ -110,7 +110,7 @@ describe('version mismatch (D-10)', () => {
     seedPokeCache(
       Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
       // Force stale version in stored JSON
-      { version: 0 as 1 },
+      { version: 0 as 2 },
     )
     // Overwrite with explicit wrong version string in storage
     localStorage.setItem(
@@ -127,10 +127,10 @@ describe('version mismatch (D-10)', () => {
     const fetchMock = stubPokeApiFetch()
     await ensureCache({ concurrency: 8, onProgress: () => {} })
 
-    expect(fetchMock.mock.calls.length).toBe(151)
+    expect(fetchMock.mock.calls.length).toBe(302)
     expect(hasValidCache()).toBe(true)
     const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!) as { version: number }
-    expect(stored.version).toBe(1)
+    expect(stored.version).toBe(2)
   })
 })
 
