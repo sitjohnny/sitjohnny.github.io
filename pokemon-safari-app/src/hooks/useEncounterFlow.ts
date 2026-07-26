@@ -26,6 +26,8 @@ type EncounterFlowOptions = {
 type EncounterFlowApi = {
   advanceFromAppear: () => void
   submitAnswer: (raw: string) => void
+  dismissHandoff: () => void
+  dismissRecap: () => void
 }
 
 /** Active rng for overlay callbacks exported beside the hook. */
@@ -109,6 +111,23 @@ export function submitAnswer(raw: string): void {
   doSubmitAnswer(flowRngRef.current, raw)
 }
 
+/** Overlay: after Got it — recap only when the answer was wrong (D-14). */
+export function dismissHandoff(): void {
+  const { stage, session } = useEncounterStore.getState()
+  if (stage !== 'handoff') return
+  if (session?.education && session.education.correct === false) {
+    useEncounterStore.getState().toRecap()
+    return
+  }
+  useEncounterStore.getState().close()
+}
+
+/** Overlay: Continue on the Quick recap always returns to explore. */
+export function dismissRecap(): void {
+  if (useEncounterStore.getState().stage !== 'recap') return
+  useEncounterStore.getState().close()
+}
+
 /**
  * Single Phase 4 queue consumer: drain one candidate, restore the FIFO
  * remainder, then route the config-driven result into session UI state.
@@ -189,5 +208,7 @@ export function useEncounterFlow(
   return {
     advanceFromAppear: () => doAdvanceFromAppear(rng),
     submitAnswer: (raw: string) => doSubmitAnswer(rng, raw),
+    dismissHandoff,
+    dismissRecap,
   }
 }

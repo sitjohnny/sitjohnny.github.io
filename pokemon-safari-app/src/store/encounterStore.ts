@@ -28,6 +28,7 @@ type EncounterState = {
   fail: () => void
   showItemToast: () => void
   hideItemToast: () => void
+  toRecap: () => void
   close: () => void
   reset: () => void
 }
@@ -67,6 +68,7 @@ export const useEncounterStore = create<EncounterState>((set) => ({
   fail: () => set({ stage: 'error' }),
   showItemToast: () => set({ itemToastVisible: true }),
   hideItemToast: () => set({ itemToastVisible: false }),
+  toRecap: () => set({ stage: 'recap' }),
   close: () =>
     set((state) => ({
       stage: 'idle',

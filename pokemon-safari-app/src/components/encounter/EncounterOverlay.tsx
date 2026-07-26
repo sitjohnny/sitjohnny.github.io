@@ -2,14 +2,18 @@ import { useEffect, useRef } from 'react'
 import { AppearFlash } from '@/components/encounter/AppearFlash'
 import { EducationQuestion } from '@/components/encounter/EducationQuestion'
 import { HandoffStub } from '@/components/encounter/HandoffStub'
+import { RecapCard } from '@/components/encounter/RecapCard'
 import { EmptyState } from '@/components/EmptyState'
 import { PixelButton } from '@/components/PixelButton'
 import {
   advanceFromAppear,
+  dismissHandoff,
+  dismissRecap,
   submitAnswer,
 } from '@/hooks/useEncounterFlow'
 import { getPokemon } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
+import type { EncounterEducationOutcome } from '@/types/encounter'
 import type { PokemonDto } from '@/types/pokemon'
 
 const ERROR_HEADING = 'That encounter got stuck.'
@@ -23,6 +27,17 @@ function resolveSessionPokemon(speciesId: number): PokemonDto | null {
   }
 }
 
+function operandsFromEducation(education: EncounterEducationOutcome): {
+  a: number
+  b: number
+  product: number
+} {
+  const [aRaw, bRaw] = education.factKey.split('x')
+  const a = Number(aRaw)
+  const b = Number(bRaw)
+  return { a, b, product: education.expected }
+}
+
 export function EncounterOverlay() {
   const stage = useEncounterStore((state) => state.stage)
   const session = useEncounterStore((state) => state.session)
@@ -30,6 +45,8 @@ export function EncounterOverlay() {
   const feedback = useEncounterStore((state) => state.feedback)
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const pokemon = session ? resolveSessionPokemon(session.speciesId) : null
+  const labelledBy =
+    stage === 'recap' ? 'encounter-recap-heading' : 'encounter-stage-content'
 
   useEffect(() => {
     if (stage !== 'idle') {
@@ -50,6 +67,8 @@ export function EncounterOverlay() {
   const showError = stage === 'error' || !session || !pokemon
   const showQuestion =
     (stage === 'question' || stage === 'feedback') && question && pokemon
+  const education = session?.education
+  const showRecap = stage === 'recap' && education && pokemon
 
   return (
     <div
@@ -57,7 +76,7 @@ export function EncounterOverlay() {
       className="encounter-scrim absolute inset-0 z-20 flex flex-col items-center justify-center px-4 pb-[max(24px,env(safe-area-inset-bottom))] pt-[max(16px,env(safe-area-inset-top))]"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="encounter-stage-content"
+      aria-labelledby={labelledBy}
       tabIndex={-1}
     >
       <div id="encounter-stage-content" className="w-full max-w-sm">
@@ -89,7 +108,12 @@ export function EncounterOverlay() {
           <HandoffStub
             pokemon={pokemon}
             captureBonus={session.captureBonus}
-            onDismiss={() => useEncounterStore.getState().close()}
+            onDismiss={dismissHandoff}
+          />
+        ) : showRecap && education ? (
+          <RecapCard
+            {...operandsFromEducation(education)}
+            onContinue={dismissRecap}
           />
         ) : null}
       </div>
