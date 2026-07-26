@@ -57,6 +57,17 @@ export function useExploreLoop({
     let lastTime = 0
     let playerPx: Vec2 = tileToPx(useExploreStore.getState().tile)
 
+    // Remount with moving:true and no tween soft-locks tryStep until reload.
+    const boot = useExploreStore.getState()
+    if (boot.moving) {
+      boot.setPlayer({
+        x: boot.tile.x,
+        y: boot.tile.y,
+        facing: boot.facing,
+        moving: false,
+      })
+    }
+
     function measure() {
       const node = viewportRef.current
       if (!node) {
@@ -196,6 +207,11 @@ export function useExploreLoop({
     return () => {
       cancelAnimationFrame(frame)
       window.removeEventListener('resize', measure)
+      // Leaving /game mid-step must clear the move lock — tween dies with rAF.
+      const s = useExploreStore.getState()
+      if (s.moving) {
+        s.setPlayer({ x: s.tile.x, y: s.tile.y, facing: s.facing, moving: false })
+      }
     }
   }, [map, heldRef, worldRef, playerRef, viewportRef, camera])
 }

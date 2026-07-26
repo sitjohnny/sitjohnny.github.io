@@ -205,6 +205,36 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(useExploreStore.getState().tile).toEqual(before)
   })
 
+  it('clears the move lock on unmount so remount can walk again', async () => {
+    const spawn = forestMap.spawn
+    const { unmount } = renderExplore()
+
+    // Start a step, then leave /game before the tween finishes.
+    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    await flushFrames(1)
+    expect(useExploreStore.getState().moving).toBe(true)
+    fireEvent.keyUp(window, { code: 'ArrowDown' })
+    unmount()
+
+    expect(useExploreStore.getState().moving).toBe(false)
+
+    renderExplore()
+    const afterRemount = useExploreStore.getState().tile
+    fireEvent.keyDown(window, { code: 'ArrowRight' })
+    await flushFrames(4)
+    fireEvent.keyUp(window, { code: 'ArrowRight' })
+
+    expect(useExploreStore.getState().tile).toEqual({
+      x: afterRemount.x + 1,
+      y: afterRemount.y,
+    })
+    // Sanity: we actually left spawn via the interrupted down step or remount walk.
+    expect(
+      useExploreStore.getState().tile.x !== spawn.x ||
+        useExploreStore.getState().tile.y !== spawn.y,
+    ).toBe(true)
+  })
+
   it('queues exactly one encounter_candidate when stepping onto grass', async () => {
     // (10, 6) is ground; (10, 5) is grass in the northern patch.
     useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
