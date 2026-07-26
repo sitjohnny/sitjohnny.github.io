@@ -57,43 +57,30 @@
   }
 
   .player-sprite {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    box-shadow: 0 0 0 1px #1a3324;
     will-change: transform;
   }
 
-  .player-sprite .player-leg-left,
-  .player-sprite .player-leg-right {
+  /* Stacked Red walk frames: hide all, reveal only the img whose data-dir /
+     data-walk matches the root's data-facing / data-frame. The rAF loop is the
+     sole writer of data-frame, so the visible frame changes with no React
+     re-render (MAP-04). Feet fill the tile: 16×16 source scaled to TILE_PX. */
+  .player-sprite > img {
     position: absolute;
-    bottom: 4px;
-    width: 6px;
-    height: 10px;
-    background: #1a3324;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: none;
   }
 
-  .player-sprite .player-leg-left {
-    left: 10px;
-  }
-
-  .player-sprite .player-leg-right {
-    right: 10px;
-  }
-
-  .player-sprite[data-frame='0'] .player-leg-left {
-    transform: translateY(0);
-  }
-
-  .player-sprite[data-frame='0'] .player-leg-right {
-    transform: translateY(3px);
-  }
-
-  .player-sprite[data-frame='1'] .player-leg-left {
-    transform: translateY(3px);
-  }
-
-  .player-sprite[data-frame='1'] .player-leg-right {
-    transform: translateY(0);
+  .player-sprite[data-facing='up'][data-frame='0'] > img[data-dir='up'][data-walk='0'],
+  .player-sprite[data-facing='up'][data-frame='1'] > img[data-dir='up'][data-walk='1'],
+  .player-sprite[data-facing='down'][data-frame='0'] > img[data-dir='down'][data-walk='0'],
+  .player-sprite[data-facing='down'][data-frame='1'] > img[data-dir='down'][data-walk='1'],
+  .player-sprite[data-facing='left'][data-frame='0'] > img[data-dir='left'][data-walk='0'],
+  .player-sprite[data-facing='left'][data-frame='1'] > img[data-dir='left'][data-walk='1'],
+  .player-sprite[data-facing='right'][data-frame='0'] > img[data-dir='right'][data-walk='0'],
+  .player-sprite[data-facing='right'][data-frame='1'] > img[data-dir='right'][data-walk='1'] {
+    display: block;
   }
 }
 
@@ -126,14 +113,5 @@
 
   .home-brand-fade {
     animation: none;
-  }
-
-  .player-sprite[data-frame='0'] .player-leg-left,
-  .player-sprite[data-frame='0'] .player-leg-right,
-  .player-sprite[data-frame='1'] .player-leg-left,
-  .player-sprite[data-frame='1'] .player-leg-right,
-  .player-sprite .player-leg-left,
-  .player-sprite .player-leg-right {
-    transform: translateY(0) !important;
   }
 }
