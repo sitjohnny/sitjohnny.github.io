@@ -1,4 +1,4 @@
-@import "tailwindcss";
+@import 'tailwindcss';
 
 @theme {
   --color-dominant: #e3f2c9;
@@ -8,9 +8,12 @@
   --color-text: #1a3324;
   --color-on-secondary: #f5fbef;
   --color-muted: #6b8f6e;
-  --font-display: "Pixelify Sans", "Courier New", monospace;
-  --font-body: Fredoka, "Trebuchet MS", sans-serif;
-  --font-label: Fredoka, "Trebuchet MS", sans-serif;
+  --font-display: 'Pixelify Sans', 'Courier New', monospace;
+  /* Blockier pixel face for math lines — Pixelify Sans' rounded bowls make 2
+     and 5 hard to tell apart at a glance. Same 0.7em cap height, 28% wider. */
+  --font-numeral: Silkscreen, 'Courier New', monospace;
+  --font-body: Fredoka, 'Trebuchet MS', sans-serif;
+  --font-label: Fredoka, 'Trebuchet MS', sans-serif;
 }
 
 @layer base {
@@ -92,15 +95,24 @@
   .player-sprite[data-facing='up'][data-frame='0'] > img[data-dir='up'][data-walk='0'],
   .player-sprite[data-facing='up'][data-frame='1'] > img[data-dir='up'][data-walk='1'],
   .player-sprite[data-facing='up'][data-frame='2'] > img[data-dir='up'][data-walk='2'],
-  .player-sprite[data-facing='down'][data-frame='0'] > img[data-dir='down'][data-walk='0'],
-  .player-sprite[data-facing='down'][data-frame='1'] > img[data-dir='down'][data-walk='1'],
-  .player-sprite[data-facing='down'][data-frame='2'] > img[data-dir='down'][data-walk='2'],
-  .player-sprite[data-facing='left'][data-frame='0'] > img[data-dir='left'][data-walk='0'],
-  .player-sprite[data-facing='left'][data-frame='1'] > img[data-dir='left'][data-walk='1'],
-  .player-sprite[data-facing='left'][data-frame='2'] > img[data-dir='left'][data-walk='2'],
-  .player-sprite[data-facing='right'][data-frame='0'] > img[data-dir='right'][data-walk='0'],
-  .player-sprite[data-facing='right'][data-frame='1'] > img[data-dir='right'][data-walk='1'],
-  .player-sprite[data-facing='right'][data-frame='2'] > img[data-dir='right'][data-walk='2'] {
+  .player-sprite[data-facing='down'][data-frame='0']
+    > img[data-dir='down'][data-walk='0'],
+  .player-sprite[data-facing='down'][data-frame='1']
+    > img[data-dir='down'][data-walk='1'],
+  .player-sprite[data-facing='down'][data-frame='2']
+    > img[data-dir='down'][data-walk='2'],
+  .player-sprite[data-facing='left'][data-frame='0']
+    > img[data-dir='left'][data-walk='0'],
+  .player-sprite[data-facing='left'][data-frame='1']
+    > img[data-dir='left'][data-walk='1'],
+  .player-sprite[data-facing='left'][data-frame='2']
+    > img[data-dir='left'][data-walk='2'],
+  .player-sprite[data-facing='right'][data-frame='0']
+    > img[data-dir='right'][data-walk='0'],
+  .player-sprite[data-facing='right'][data-frame='1']
+    > img[data-dir='right'][data-walk='1'],
+  .player-sprite[data-facing='right'][data-frame='2']
+    > img[data-dir='right'][data-walk='2'] {
     display: block;
   }
 }

@@ -17,7 +17,7 @@ export function RecapCard({ a, b, product, onContinue }: RecapCardProps) {
       >
         {recapCopy.heading}
       </h2>
-      <p className="font-[family-name:var(--font-display)] text-[32px] font-bold leading-[1.2] text-text">
+      <p className="font-[family-name:var(--font-numeral)] text-[32px] font-normal leading-[1.2] tracking-[0.06em] text-text">
         {a} × {b} = {product}.
       </p>
       <p className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">

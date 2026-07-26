@@ -45,6 +45,23 @@ describe('EducationQuestion', () => {
     expect(screen.queryByRole('progressbar')).toBeNull()
   })
 
+  it('renders the prompt in the numeral font, not the display font', () => {
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={question}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const prompt = screen.getByText('What is 7 × 8?')
+    expect(prompt.className).toMatch(/var\(--font-numeral\)/)
+    expect(prompt.className).toMatch(/font-normal/)
+    expect(prompt.className).not.toMatch(/font-bold/)
+    expect(prompt.className).not.toMatch(/var\(--font-display\)/)
+  })
+
   it('accepts digits only through a labelled native numeric field', async () => {
     const user = userEvent.setup()
     render(

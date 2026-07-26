@@ -45,7 +45,7 @@ export function EducationQuestion({
   }
 
   return (
-    <div className="gba-dialog flex w-full flex-col items-center gap-6 px-8 py-6 text-center">
+    <div className="gba-dialog flex w-full flex-col items-center gap-6 px-6 py-6 text-center">
       <div className="flex flex-col items-center gap-2">
         <PokemonSprite pokemon={pokemon} size={96} alt={pokemon.name} />
         <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
@@ -53,7 +53,7 @@ export function EducationQuestion({
         </h2>
       </div>
 
-      <p className="font-[family-name:var(--font-display)] text-[32px] font-bold leading-[1.2] text-text">
+      <p className="font-[family-name:var(--font-numeral)] text-[24px] font-normal leading-[1.2] tracking-[0.06em] text-text min-[360px]:text-[28px]">
         {question.prompt}
       </p>
 
