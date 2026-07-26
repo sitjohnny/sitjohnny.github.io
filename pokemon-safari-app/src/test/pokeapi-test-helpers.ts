@@ -7,8 +7,16 @@ export type TestPokemonDto = {
   id: number
   name: string
   types: string[]
-  sprites: { front_default: string | null; front_shiny: string | null }
+  sprites: {
+    front_default: string | null
+    front_shiny: string | null
+    official_artwork: string | null
+  }
   flavorText: string | null
+  genus: string | null
+  height: number
+  weight: number
+  habitat: string | null
 }
 
 export type TestCacheEnvelope = {
@@ -29,8 +37,13 @@ export function makePokemonDto(
     sprites: {
       front_default: `https://example.test/${id}.png`,
       front_shiny: `https://example.test/s${id}.png`,
+      official_artwork: null,
     },
     flavorText: null,
+    genus: null,
+    height: 7,
+    weight: 69,
+    habitat: null,
     ...overrides,
   }
 }
@@ -108,6 +121,8 @@ export function stubPokeApiFetch(options: StubFetchOptions = {}): Mock {
             id,
             name: `p${id}`,
             types: [{ slot: 1, type: { name: 'normal' } }],
+            height: 7,
+            weight: 69,
             sprites: {
               front_default: `https://example.test/${id}.png`,
               front_shiny: `https://example.test/s${id}.png`,

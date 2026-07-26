@@ -4,9 +4,17 @@ export type PokemonDto = {
   id: number
   name: string
   types: string[]
-  sprites: { front_default: string | null; front_shiny: string | null }
+  sprites: {
+    front_default: string | null
+    front_shiny: string | null
+    official_artwork: string | null
+  }
   /** Pre-selected, pre-sanitized English lore (D-14–D-17). null → UI placeholder. */
   flavorText: string | null
+  genus: string | null
+  height: number
+  weight: number
+  habitat: string | null
 }
 
 export type CacheEnvelopeV2 = {

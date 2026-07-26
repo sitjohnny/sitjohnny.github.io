@@ -12,9 +12,14 @@ export type PokeApiPokemon = {
   id: number
   name: string
   types: { slot: number; type: { name: string } }[]
+  height: number
+  weight: number
   sprites: {
     front_default: string | null
     front_shiny: string | null
+    other?: {
+      'official-artwork'?: { front_default?: unknown } | null
+    } | null
   }
 }
 
@@ -46,6 +51,17 @@ function assertGen1Id(id: unknown): asserts id is number {
   }
 }
 
+function assertNonNegativeInt(value: unknown, field: string): asserts value is number {
+  if (
+    typeof value !== 'number' ||
+    !Number.isFinite(value) ||
+    !Number.isInteger(value) ||
+    value < 0
+  ) {
+    throw new Error(`Invalid Pokémon ${field}`)
+  }
+}
+
 /**
  * Shape PokéAPI JSON into a slim DTO with ASVS guards (T-02-02, T-02-04).
  * Sorts types by slot; sprite fields are https-only or null.
@@ -58,6 +74,8 @@ export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
   if (!Array.isArray(raw.types)) {
     throw new Error('Invalid Pokémon types')
   }
+  assertNonNegativeInt(raw.height, 'height')
+  assertNonNegativeInt(raw.weight, 'weight')
 
   const types = [...raw.types]
     .sort((a, b) => a.slot - b.slot)
@@ -70,6 +88,7 @@ export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
     })
 
   const sprites = raw.sprites ?? { front_default: null, front_shiny: null }
+  const officialArtwork = sprites.other?.['official-artwork']?.front_default
 
   return {
     id: raw.id,
@@ -78,9 +97,31 @@ export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
     sprites: {
       front_default: sanitizeSpriteUrl(sprites.front_default),
       front_shiny: sanitizeSpriteUrl(sprites.front_shiny),
+      official_artwork: sanitizeSpriteUrl(officialArtwork),
     },
     flavorText: null,
+    genus: null,
+    height: raw.height,
+    weight: raw.weight,
+    habitat: null,
   }
+}
+
+export function selectGenus(
+  genera: { genus?: unknown; language?: { name?: string } | null }[],
+): string | null {
+  const hit = genera.find(
+    (g) => g.language?.name === 'en' && typeof g.genus === 'string' && g.genus.length > 0,
+  )
+  return hit?.genus ?? null
+}
+
+export function selectHabitat(
+  habitat: { name?: string } | null | undefined,
+): string | null {
+  if (habitat == null) return null
+  const name = habitat.name
+  return typeof name === 'string' && name.length > 0 ? name : null
 }
 
 /** D-17: collapse control chars/whitespace, preserve official wording + capitalization. */
@@ -147,19 +188,42 @@ export async function fetchPokemon(id: number): Promise<PokemonDto> {
   return toPokemonDto(json)
 }
 
-/** Prefetch-time species lore — stores only the final string (never the raw array). */
-export async function fetchSpeciesFlavor(id: number): Promise<string | null> {
+export type SpeciesMeta = {
+  flavorText: string | null
+  genus: string | null
+  habitat: string | null
+}
+
+/** Prefetch-time species fields — stores only final strings (never raw arrays). */
+export async function fetchSpeciesMeta(id: number): Promise<SpeciesMeta> {
   assertGen1Id(id)
   const res = await fetch(`${POKEAPI_SPECIES_BASE}/${id}`)
   if (!res.ok) {
     throw new Error(`PokéAPI species failed for id ${id}: ${res.status}`)
   }
-  const json = (await res.json()) as { flavor_text_entries?: unknown }
-  return selectFlavorText(
-    Array.isArray(json.flavor_text_entries)
-      ? (json.flavor_text_entries as FlavorTextEntry[])
-      : [],
-  )
+  const json = (await res.json()) as {
+    flavor_text_entries?: unknown
+    genera?: unknown
+    habitat?: { name?: string } | null
+  }
+  return {
+    flavorText: selectFlavorText(
+      Array.isArray(json.flavor_text_entries)
+        ? (json.flavor_text_entries as FlavorTextEntry[])
+        : [],
+    ),
+    genus: selectGenus(
+      Array.isArray(json.genera)
+        ? (json.genera as { genus?: unknown; language?: { name?: string } | null }[])
+        : [],
+    ),
+    habitat: selectHabitat(json.habitat),
+  }
+}
+
+/** Prefetch-time species lore — stores only the final string (never the raw array). */
+export async function fetchSpeciesFlavor(id: number): Promise<string | null> {
+  return (await fetchSpeciesMeta(id)).flavorText
 }
 
 export type FetchGen1Options = {
