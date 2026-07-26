@@ -21,7 +21,7 @@ describe('pokeapi keys (DATA-04, D-11)', () => {
     const files = ['pokeapi/keys.ts', 'pokeapi/client.ts', 'pokeapi/cache.ts']
     for (const rel of files) {
       const path = join(servicesDir, rel)
-      let source = ''
+      let source: string
       try {
         source = readFileSync(path, 'utf8')
       } catch {
