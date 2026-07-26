@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { dexSaveDebounceMs, postEncounterPokemonImmunitySteps } from '@/data/rates'
 import { SAVE_KEY } from '@/services/pokeapi/keys'
-import { loadSave, persistSave, resetSaveForTests } from '@/services/save'
+import { persistSave, resetSaveForTests } from '@/services/save'
 import { useDexStore } from '@/store/dexStore'
 import { useExploreStore } from '@/store/exploreStore'
 
@@ -95,21 +95,19 @@ describe('useExploreStore persistence', () => {
     expect(envelope.data).not.toHaveProperty('pendingEncounters')
   })
 
-  it('hydrates tile and facing from an existing v2 save on re-init path', () => {
+  it('hydrates tile and facing from SAVE_KEY when explore store module loads', async () => {
     persistSave({
       dex: {},
       explore: { x: 9, y: 8, facing: 'up' },
     })
-    const loaded = loadSave()
-    useExploreStore.setState({
-      tile: { x: loaded.explore.x, y: loaded.explore.y },
-      facing: loaded.explore.facing,
-      moving: false,
-      pendingEncounters: [],
-      pokemonImmunitySteps: 0,
-    })
-    expect(useExploreStore.getState().tile).toEqual({ x: 9, y: 8 })
-    expect(useExploreStore.getState().facing).toBe('up')
+    vi.resetModules()
+    const { useExploreStore: freshExploreStore } = await import(
+      '@/store/exploreStore'
+    )
+    expect(freshExploreStore.getState().tile).toEqual({ x: 9, y: 8 })
+    expect(freshExploreStore.getState().facing).toBe('up')
+    const { useExploreStore: restored } = await import('@/store/exploreStore')
+    expect(restored).toBe(freshExploreStore)
   })
 
   it('moving-only updates do not schedule a save by themselves', () => {

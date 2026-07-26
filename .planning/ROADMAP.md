@@ -19,7 +19,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 4: Encounters** - Config-driven grass rolls (45/45/8/2) with per-biome encounter tables (completed 2026-07-26)
 - [x] **Phase 5: Capture Flow** - Timing bar → capture roll with retry, flee, and kid-friendly odds (completed 2026-07-26)
 - [x] **Phase 6: Pokédex** - 151-entry dex with silhouettes, seen/caught states, counts, and shiny flags (completed 2026-07-26)
-- [ ] **Phase 7: Persistence** - Versioned auto-save for dex and explore position/facing across sessions
+- [ ] **Phase 7: Persistence** - Versioned auto-save for dex and explore position/facing across sessions (in progress — superpowers plan)
 - [ ] **Phase 8: Audio, Feedback & Polish** - SFX with gesture unlock and mute, celebration moments, real-device kid playtest
 
 ## Phase Details
@@ -274,7 +274,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 4. Encounters                            | 6/6            | Complete    | 2026-07-26 |
 | 5. Capture Flow                          | 5/5 | Complete   | 2026-07-26 |
 | 6. Pokédex                               | 6/6 | Complete   | 2026-07-26 |
-| 7. Persistence                           | 0/TBD          | Not started | -          |
+| 7. Persistence                           | —              | In progress (superpowers plan) | - |
 | 8. Audio, Feedback & Polish              | 0/TBD          | Not started | -          |
 
 ---

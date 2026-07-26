@@ -112,6 +112,18 @@ describe("save service v2 (Phase 7 persistence)", () => {
     assertNeighborKeysUntouched();
   });
 
+  it("persistSave sanitizes invalid explore before writing", () => {
+    persistSave({
+      dex: SAMPLE_DEX,
+      explore: { x: 1.5, y: 0, facing: "north" as ExploreSave["facing"] },
+    });
+    expect(loadSave()).toEqual({
+      dex: SAMPLE_DEX,
+      explore: defaultExploreSave(),
+    });
+    assertNeighborKeysUntouched();
+  });
+
   it("corrupt explore field keeps dex and defaults explore", () => {
     localStorage.setItem(
       SAVE_KEY,

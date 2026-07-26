@@ -149,7 +149,7 @@ export function persistSave(data: {
     savedAt: new Date().toISOString(),
     data: {
       dex: data.dex,
-      explore: data.explore,
+      explore: sanitizeExplore(data.explore),
     },
   };
   try {
