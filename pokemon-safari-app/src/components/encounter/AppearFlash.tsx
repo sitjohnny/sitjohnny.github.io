@@ -8,6 +8,7 @@ import type { PokemonDto } from '@/types/pokemon'
 type AppearFlashProps = {
   pokemon: PokemonDto
   rarity: RarityBand
+  shiny?: boolean
   onComplete: () => void
 }
 
@@ -16,7 +17,12 @@ const RARITY_LABEL: Record<Exclude<RarityBand, 'common'>, string> = {
   legendary: 'Legendary!',
 }
 
-export function AppearFlash({ pokemon, rarity, onComplete }: AppearFlashProps) {
+export function AppearFlash({
+  pokemon,
+  rarity,
+  shiny = false,
+  onComplete,
+}: AppearFlashProps) {
   const reducedMotion = prefersReducedMotion()
 
   useEffect(() => {
@@ -32,7 +38,7 @@ export function AppearFlash({ pokemon, rarity, onComplete }: AppearFlashProps) {
       {!reducedMotion ? (
         <div className="encounter-flash pointer-events-none absolute inset-0 z-10 bg-white" />
       ) : null}
-      <PokemonSprite pokemon={pokemon} size={96} alt={pokemon.name} />
+      <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
       <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
         {pokemon.name}
       </h2>

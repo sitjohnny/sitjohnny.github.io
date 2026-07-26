@@ -18,6 +18,7 @@ type TimingBarProps = {
   attemptsUsed: number
   sweetSpot: number
   rarity: RarityBand
+  shiny?: boolean
   /** Mash lock during grade flash / shake (D-21). */
   locked?: boolean
 }
@@ -45,6 +46,7 @@ export function TimingBar({
   attemptsUsed,
   sweetSpot,
   rarity,
+  shiny = false,
   locked = false,
 }: TimingBarProps) {
   const posRef = useRef(0)
@@ -109,7 +111,7 @@ export function TimingBar({
       aria-label={TIMING_GROUP_LABEL}
       className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center"
     >
-      <PokemonSprite pokemon={pokemon} size={96} alt={pokemon.name} />
+      <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
       <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
         {pokemon.name}
       </h2>

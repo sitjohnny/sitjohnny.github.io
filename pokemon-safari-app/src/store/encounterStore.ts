@@ -21,12 +21,22 @@ type EncounterState = {
   feedback: { ok: boolean; message: string } | null
   open: (session: Omit<
     EncounterSession,
-    'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+    | 'attemptsUsed'
+    | 'sweetSpot'
+    | 'lastGrade'
+    | 'lastCaught'
+    | 'lastChance'
+    | 'shiny'
   > &
     Partial<
       Pick<
         EncounterSession,
-        'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+        | 'attemptsUsed'
+        | 'sweetSpot'
+        | 'lastGrade'
+        | 'lastCaught'
+        | 'lastChance'
+        | 'shiny'
       >
     >) => void
   setStage: (stage: EncounterStage) => void
@@ -66,12 +76,22 @@ function initialState() {
 function withCaptureDefaults(
   session: Omit<
     EncounterSession,
-    'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+    | 'attemptsUsed'
+    | 'sweetSpot'
+    | 'lastGrade'
+    | 'lastCaught'
+    | 'lastChance'
+    | 'shiny'
   > &
     Partial<
       Pick<
         EncounterSession,
-        'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance'
+        | 'attemptsUsed'
+        | 'sweetSpot'
+        | 'lastGrade'
+        | 'lastCaught'
+        | 'lastChance'
+        | 'shiny'
       >
     >,
 ): EncounterSession {
@@ -82,6 +102,7 @@ function withCaptureDefaults(
     lastCaught: null,
     lastChance: null,
     ...session,
+    shiny: session.shiny ?? false,
   }
 }
 

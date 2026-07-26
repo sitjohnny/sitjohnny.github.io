@@ -41,6 +41,8 @@ export type EncounterSession = {
   lastGrade: TimingGrade | null
   lastCaught: boolean | null
   lastChance: number | null
+  /** Rolled once at session open (D-09); cosmetic client rarity. */
+  shiny: boolean
 }
 
 export type EncounterResolution =

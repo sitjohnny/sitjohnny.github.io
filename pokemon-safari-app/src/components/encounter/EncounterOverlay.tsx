@@ -126,6 +126,7 @@ export function EncounterOverlay() {
           <AppearFlash
             pokemon={pokemon}
             rarity={session.rarity}
+            shiny={session.shiny}
             onComplete={advanceFromAppear}
           />
         ) : showQuestion ? (
@@ -142,6 +143,7 @@ export function EncounterOverlay() {
             attemptsUsed={session.attemptsUsed}
             sweetSpot={session.sweetSpot}
             rarity={session.rarity}
+            shiny={session.shiny}
           />
         ) : stage === 'shake' && grade ? (
           <ShakeSequence
@@ -154,7 +156,11 @@ export function EncounterOverlay() {
         ) : stage === 'failBeat' ? (
           <FailBeat />
         ) : stage === 'result' ? (
-          <CaughtCard pokemon={pokemon} onContinue={continueFromResult} />
+          <CaughtCard
+            pokemon={pokemon}
+            shiny={session.shiny}
+            onContinue={continueFromResult}
+          />
         ) : stage === 'flee' ? (
           <FleeCard pokemon={pokemon} onContinue={continueFromFlee} />
         ) : showRecap && education ? (
