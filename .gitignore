@@ -1,0 +1,8 @@
+# GSD research cache
+.planning/
+docs/superpowers/
+*.log
+
+# Git worktrees
+.worktrees/
+

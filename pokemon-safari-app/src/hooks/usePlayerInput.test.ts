@@ -1,0 +1,71 @@
+import { act, fireEvent, renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  KEY_DIRECTION,
+  primaryDirection,
+  usePlayerInput,
+} from '@/hooks/usePlayerInput'
+import { useEncounterStore } from '@/store/encounterStore'
+
+afterEach(() => {
+  useEncounterStore.getState().reset()
+})
+
+describe('KEY_DIRECTION allowlist (MAP-01, T-03-01)', () => {
+  it('maps arrow keys to the four directions', () => {
+    expect(KEY_DIRECTION.ArrowUp).toBe('up')
+    expect(KEY_DIRECTION.ArrowDown).toBe('down')
+    expect(KEY_DIRECTION.ArrowLeft).toBe('left')
+    expect(KEY_DIRECTION.ArrowRight).toBe('right')
+  })
+
+  it('maps WASD to the same four directions', () => {
+    expect(KEY_DIRECTION.KeyW).toBe('up')
+    expect(KEY_DIRECTION.KeyS).toBe('down')
+    expect(KEY_DIRECTION.KeyA).toBe('left')
+    expect(KEY_DIRECTION.KeyD).toBe('right')
+  })
+
+  it('omits every other key code so unknown input is ignored', () => {
+    for (const code of ['Space', 'Enter', 'KeyQ', 'Tab', 'Escape', 'Digit1']) {
+      expect(KEY_DIRECTION[code]).toBeUndefined()
+    }
+  })
+})
+
+describe('primaryDirection', () => {
+  it('returns null when nothing is held', () => {
+    expect(primaryDirection([])).toBeNull()
+  })
+
+  it('returns the only held direction', () => {
+    expect(primaryDirection(['up'])).toBe('up')
+  })
+
+  it('lets the last press win', () => {
+    expect(primaryDirection(['up', 'left'])).toBe('left')
+    expect(primaryDirection(['left', 'up'])).toBe('up')
+    expect(primaryDirection(['down', 'right', 'up'])).toBe('up')
+  })
+})
+
+describe('usePlayerInput encounter pause', () => {
+  it('drops walk keys without preventing answer input, then restores walking', () => {
+    const { result } = renderHook(() => usePlayerInput())
+    useEncounterStore.setState({ stage: 'appear' })
+    const blocked = new KeyboardEvent('keydown', {
+      code: 'ArrowDown',
+      cancelable: true,
+    })
+    const preventDefault = vi.spyOn(blocked, 'preventDefault')
+
+    act(() => window.dispatchEvent(blocked))
+
+    expect(result.current.heldRef.current).toEqual([])
+    expect(preventDefault).not.toHaveBeenCalled()
+
+    act(() => useEncounterStore.getState().close())
+    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    expect(result.current.heldRef.current).toEqual(['down'])
+  })
+})

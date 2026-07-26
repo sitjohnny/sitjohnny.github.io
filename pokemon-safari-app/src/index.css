@@ -1,0 +1,297 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-dominant: #e3f2c9;
+  --color-secondary: #2f7a4b;
+  --color-accent: #e8b923;
+  --color-destructive: #c45c4a;
+  --color-text: #1a3324;
+  --color-on-secondary: #f5fbef;
+  --color-muted: #6b8f6e;
+  --font-display: 'Pixelify Sans', 'Courier New', monospace;
+  /* Blockier pixel face for math lines — Pixelify Sans' rounded bowls make 2
+     and 5 hard to tell apart at a glance. Same 0.7em cap height, 28% wider. */
+  --font-numeral: Silkscreen, 'Courier New', monospace;
+  --font-body: Fredoka, 'Trebuchet MS', sans-serif;
+  --font-label: Fredoka, 'Trebuchet MS', sans-serif;
+}
+
+@layer base {
+  html,
+  body {
+    margin: 0;
+    min-height: 100%;
+    background-color: var(--color-dominant);
+    color: var(--color-text);
+    font-family: var(--font-body);
+    font-size: 16px;
+    font-weight: 400;
+    line-height: 1.5;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  .pixelated {
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  .pixel-border {
+    border: 4px solid var(--color-secondary);
+    border-radius: 4px;
+    box-shadow: 4px 4px 0 #1a3324;
+  }
+
+  .touch-target {
+    min-width: 48px;
+    min-height: 48px;
+  }
+
+  .encounter-scrim {
+    background-color: color-mix(in srgb, #1a3324 55%, transparent);
+  }
+
+  /* Dex tile treatments (D-02 / D-06 / D-07 / D-09) — silhouette the real cached
+     sprite so the alpha shape still reads without leaking color or identity. */
+  .sprite-silhouette {
+    filter: brightness(0);
+    opacity: 0.85;
+  }
+
+  .dex-tile-caught {
+    box-shadow: inset 0 -2px 0 var(--color-accent);
+  }
+
+  .dex-sparkle {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+  }
+
+  .gba-dialog {
+    background-color: #f5fbef;
+    border: 4px solid var(--color-secondary);
+    border-radius: 4px;
+    box-shadow: 4px 4px 0 #1a3324;
+  }
+
+  .encounter-flash {
+    animation: encounter-flash 240ms ease-out both;
+  }
+
+  .dpad-target {
+    min-width: 64px;
+    min-height: 64px;
+    touch-action: none;
+    user-select: none;
+  }
+
+  .player-sprite {
+    will-change: transform;
+  }
+
+  .timing-track {
+    position: relative;
+    height: 24px;
+    border: 4px solid var(--color-text);
+    border-radius: 4px;
+    overflow: hidden;
+    box-shadow: 4px 4px 0 #1a3324;
+  }
+
+  .timing-indicator {
+    position: absolute;
+    top: -4px;
+    left: 0;
+    width: 8px;
+    height: 32px;
+    background: var(--color-text);
+    border: 2px solid #f5fbef;
+    will-change: transform;
+    pointer-events: none;
+  }
+
+  .timing-band-miss {
+    background: color-mix(in srgb, #6b8f6e 35%, #f5fbef);
+  }
+
+  .timing-band-good {
+    background: color-mix(in srgb, #2f7a4b 45%, #e3f2c9);
+  }
+
+  .timing-band-great {
+    background: var(--color-secondary);
+  }
+
+  .timing-band-perfect {
+    background: var(--color-accent);
+  }
+
+  .boost-chip {
+    font-family: var(--font-label);
+    font-size: 14px;
+    font-weight: 400;
+    line-height: 1.4;
+    color: var(--color-muted);
+  }
+
+  .boost-chip[data-active='true'] {
+    border-left: 2px solid var(--color-accent);
+    padding-left: 12px;
+    color: var(--color-text);
+  }
+
+  .ball-rock {
+    transform-origin: 50% 100%;
+    animation-name: ball-rock;
+    animation-timing-function: ease-in-out;
+  }
+
+  .ball-sparkle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: var(--color-accent);
+    clip-path: polygon(
+      50% 0%,
+      61% 35%,
+      98% 35%,
+      68% 57%,
+      79% 91%,
+      50% 70%,
+      21% 91%,
+      32% 57%,
+      2% 35%,
+      39% 35%
+    );
+    animation: ball-sparkle-pop 400ms ease-out both;
+  }
+
+  .ball-sparkle--static {
+    animation: none;
+    opacity: 1;
+  }
+
+  .ball-sparkle[data-sparkle='0'] {
+    top: 2px;
+    left: 8px;
+  }
+  .ball-sparkle[data-sparkle='1'] {
+    top: 4px;
+    right: 6px;
+  }
+  .ball-sparkle[data-sparkle='2'] {
+    bottom: 10px;
+    left: 4px;
+  }
+  .ball-sparkle[data-sparkle='3'] {
+    bottom: 8px;
+    right: 8px;
+  }
+
+  /* Stacked Red walk poses: hide all, reveal only the img whose data-dir /
+     data-walk matches the root's data-facing / data-frame. The rAF loop is the
+     sole writer of data-frame, so the visible pose changes with no React
+     re-render (MAP-04). The 16×20 source is scaled 3× and foot-anchored so its
+     head can overhang the tile above. */
+  .player-sprite > img {
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: var(--player-sprite-h);
+    display: none;
+  }
+
+  .player-sprite[data-facing='up'][data-frame='0'] > img[data-dir='up'][data-walk='0'],
+  .player-sprite[data-facing='up'][data-frame='1'] > img[data-dir='up'][data-walk='1'],
+  .player-sprite[data-facing='up'][data-frame='2'] > img[data-dir='up'][data-walk='2'],
+  .player-sprite[data-facing='down'][data-frame='0']
+    > img[data-dir='down'][data-walk='0'],
+  .player-sprite[data-facing='down'][data-frame='1']
+    > img[data-dir='down'][data-walk='1'],
+  .player-sprite[data-facing='down'][data-frame='2']
+    > img[data-dir='down'][data-walk='2'],
+  .player-sprite[data-facing='left'][data-frame='0']
+    > img[data-dir='left'][data-walk='0'],
+  .player-sprite[data-facing='left'][data-frame='1']
+    > img[data-dir='left'][data-walk='1'],
+  .player-sprite[data-facing='left'][data-frame='2']
+    > img[data-dir='left'][data-walk='2'],
+  .player-sprite[data-facing='right'][data-frame='0']
+    > img[data-dir='right'][data-walk='0'],
+  .player-sprite[data-facing='right'][data-frame='1']
+    > img[data-dir='right'][data-walk='1'],
+  .player-sprite[data-facing='right'][data-frame='2']
+    > img[data-dir='right'][data-walk='2'] {
+    display: block;
+  }
+}
+
+@keyframes encounter-flash {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes ball-rock {
+  0% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-12deg);
+  }
+  75% {
+    transform: rotate(12deg);
+  }
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+@keyframes ball-sparkle-pop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.2);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .encounter-flash {
+    animation: none;
+  }
+
+  .ball-rock {
+    animation: none !important;
+  }
+  .ball-sparkle {
+    animation: none;
+    opacity: 1;
+  }
+}
