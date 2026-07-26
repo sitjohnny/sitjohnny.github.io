@@ -60,14 +60,14 @@ function QueueLater({ rng, event }: { rng: Rng; event: EncounterCandidateEvent }
   return null
 }
 
-async function openPokemonAppear(rng: Rng = sequenceRng(0, 0)) {
+async function openPokemonAppear(rng: Rng = sequenceRng(0, 0, 1)) {
   render(createElement(QueueLater, { rng, event: candidate() }))
   await waitFor(() => expect(useEncounterStore.getState().stage).toBe('appear'))
 }
 
 /** Reach timing after a correct answer hold (happy-path capture entry). */
 async function reachTimingAfterCorrect(
-  rng: Rng = sequenceRng(0, 0, 0),
+  rng: Rng = sequenceRng(0, 0, 1, 0),
 ): Promise<void> {
   await openPokemonAppear(rng)
   vi.useFakeTimers()
@@ -84,6 +84,12 @@ async function reachTimingAfterCorrect(
   expect(useEncounterStore.getState().stage).toBe('timing')
 }
 
+function resetDexForTests() {
+  useDexStore.setState({ dex: {}, saveSoftFail: false })
+  useDexStore.getState().flushNow()
+  localStorage.removeItem(SAVE_KEY)
+}
+
 describe('useEncounterFlow', () => {
   beforeEach(() => {
     useExploreStore.getState().reset()
@@ -91,6 +97,7 @@ describe('useEncounterFlow', () => {
     clearPokeCacheKey()
     resetCacheMemoryForTests()
     resetAdaptiveStatsForTests()
+    resetDexForTests()
     seedPokeCache()
     hydrateFromStorage()
     vi.useRealTimers()
@@ -103,6 +110,7 @@ describe('useEncounterFlow', () => {
     clearPokeCacheKey()
     resetCacheMemoryForTests()
     resetAdaptiveStatsForTests()
+    resetDexForTests()
     vi.useRealTimers()
   })
 
@@ -631,20 +639,6 @@ describe('useEncounterFlow', () => {
   })
 
   describe('dex bindings — seen on appear, catch on Gotcha, shiny roll (DEX-02)', () => {
-    function resetDexForTests() {
-      useDexStore.setState({ dex: {}, saveSoftFail: false })
-      useDexStore.getState().flushNow()
-      localStorage.removeItem(SAVE_KEY)
-    }
-
-    beforeEach(() => {
-      resetDexForTests()
-    })
-
-    afterEach(() => {
-      resetDexForTests()
-    })
-
     it('markSeen after open — species is seen with firstEncounteredAt', async () => {
       // grass + species + non-shiny third roll
       await openPokemonAppear(sequenceRng(0, 0, 1))

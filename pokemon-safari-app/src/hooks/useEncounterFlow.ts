@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import { feedbackCopy } from '@/data/educationConfig'
-import { educationCaptureBonus, encounterTimingMs } from '@/data/rates'
+import { educationCaptureBonus, encounterTimingMs, shinyRate } from '@/data/rates'
 import { computeCatchChance, rollCapture } from '@/game/capture'
 import {
   loadAdaptiveStats,
@@ -16,6 +16,7 @@ import { resolveCandidate } from '@/game/encounter'
 import { gradeAt } from '@/game/timing'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
 import { getPokemon } from '@/services/pokeapi/cache'
+import { useDexStore } from '@/store/dexStore'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
 import type { EncounterEducationOutcome } from '@/types/encounter'
@@ -190,6 +191,10 @@ export function onShakeComplete(): void {
   const session = state.session
   if (!session) return
   if (session.lastCaught) {
+    useDexStore.getState().recordCatch({
+      speciesId: session.speciesId,
+      shiny: session.shiny === true,
+    })
     useEncounterStore.getState().toResult()
     return
   }
@@ -281,13 +286,16 @@ export function useEncounterFlow(
 
     try {
       getPokemon(resolution.speciesId)
+      const shiny = rng.next() < shinyRate
       useEncounterStore.getState().open({
         speciesId: resolution.speciesId,
         rarity: resolution.rarity,
         biome: candidate.biome,
         education: null,
         captureBonus: 0,
+        shiny,
       })
+      useDexStore.getState().markSeen(resolution.speciesId)
     } catch {
       useEncounterStore.getState().fail()
     }
