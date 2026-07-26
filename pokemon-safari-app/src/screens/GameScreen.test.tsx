@@ -1,6 +1,8 @@
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { encounterTimingMs } from '@/data/rates'
 import { forestMap } from '@/data/maps/forest'
 import {
   hydrateFromStorage,
@@ -295,10 +297,11 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     ).toBe(true)
   })
 
-  it('shows a wild Pokémon, advances to handoff, and returns to the map', async () => {
+  it('shows a wild Pokémon, asks a question, then handoff, and returns to the map', async () => {
+    const user = userEvent.setup()
     // (10, 6) is ground; (10, 5) is grass in the northern patch.
     useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
-    setDefaultRngForTests(encounterRng(0, 0))
+    setDefaultRngForTests(encounterRng(0, 0, 0, 0.2, 0.3))
     renderExplore()
 
     fireEvent.keyDown(window, { code: 'ArrowUp' })
@@ -309,8 +312,26 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(dialog).toHaveTextContent('A wild p10 appeared!')
     expect(useExploreStore.getState().pendingEncounters).toEqual([])
 
+    const prompt = await screen.findByText(/What is \d × \d\?/)
+    expect(screen.getByLabelText('Your answer')).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: 'Ready to throw!' })).toBeNull()
+
+    const match = prompt.textContent?.match(/What is (\d) × (\d)\?/)
+    expect(match).not.toBeNull()
+    const a = Number(match![1])
+    const b = Number(match![2])
+    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
+
+    await waitFor(() => {
+      expect(screen.getByText(/catch boost/i)).toBeInTheDocument()
+    })
+
     expect(
-      await screen.findByRole('heading', { name: 'Ready to throw!' }),
+      await screen.findByRole('heading', {
+        name: 'Ready to throw!',
+        timeout: encounterTimingMs.feedbackHold + 1000,
+      }),
     ).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: 'Got it' }))
 

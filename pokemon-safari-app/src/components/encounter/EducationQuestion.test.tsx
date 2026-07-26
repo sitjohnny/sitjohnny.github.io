@@ -3,6 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EducationQuestion } from '@/components/encounter/EducationQuestion'
 import { feedbackCopy } from '@/data/educationConfig'
+import { educationCaptureBonus } from '@/data/rates'
 import { makePokemonDto } from '@/test/pokeapi-test-helpers'
 import type { EducationQuestion as EducationQuestionData } from '@/game/education/questionTypes'
 
@@ -14,6 +15,14 @@ const question: EducationQuestionData = {
   a: 7,
   b: 8,
   expected: 56,
+}
+
+function boostMessage(ok: boolean, lineIndex = 0): string {
+  const boost = Math.round(educationCaptureBonus.correct * 100)
+  if (ok) {
+    return `${feedbackCopy.correct[lineIndex]} ${feedbackCopy.correctSuffix.replace('{boost}', String(boost))}`
+  }
+  return `${feedbackCopy.incorrect[lineIndex]} ${feedbackCopy.incorrectSuffix}`
 }
 
 afterEach(cleanup)
@@ -31,6 +40,7 @@ describe('EducationQuestion', () => {
 
     expect(screen.getByText('What is 7 × 8?')).toBeInTheDocument()
     expect(screen.getByRole('img', { name: 'pikachu' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'pikachu' })).toBeInTheDocument()
     expect(screen.queryByText(/timer|countdown/i)).toBeNull()
     expect(screen.queryByRole('progressbar')).toBeNull()
   })
@@ -49,12 +59,29 @@ describe('EducationQuestion', () => {
     const input = screen.getByLabelText('Your answer')
     expect(input).toHaveAttribute('inputMode', 'numeric')
     expect(input).toHaveAttribute('pattern', '[0-9]*')
+    expect(input).toHaveAttribute('id', 'edu-answer')
     await user.type(input, 'abc')
     expect(input).toHaveValue('')
     expect(screen.getByRole('button', { name: 'Submit Answer' })).toBeDisabled()
     await user.type(input, '56')
     expect(input).toHaveValue('56')
     expect(screen.getByRole('button', { name: 'Submit Answer' })).toBeEnabled()
+  })
+
+  it('caps digit length at four characters', async () => {
+    const user = userEvent.setup()
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={question}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const input = screen.getByLabelText('Your answer')
+    await user.type(input, '12345')
+    expect(input).toHaveValue('1234')
   })
 
   it('submits once from the button and once from Enter', async () => {
@@ -90,7 +117,7 @@ describe('EducationQuestion', () => {
   })
 
   it('announces correct feedback and blocks another submit', () => {
-    const message = `${feedbackCopy.correct[0]} +15% catch boost`
+    const message = boostMessage(true)
     render(
       <EducationQuestion
         pokemon={pokemon}
@@ -105,7 +132,7 @@ describe('EducationQuestion', () => {
   })
 
   it('keeps the expected product hidden after a wrong answer', () => {
-    const message = `${feedbackCopy.incorrect[0]} ${feedbackCopy.incorrectSuffix}`
+    const message = boostMessage(false)
     const { container } = render(
       <EducationQuestion
         pokemon={pokemon}
