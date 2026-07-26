@@ -6,7 +6,6 @@ import type { TimingGrade } from '@/game/timing'
 type ShakeSequenceProps = {
   grade: TimingGrade
   caught: boolean
-  chance: number
   onComplete: () => void
 }
 
@@ -21,17 +20,12 @@ type ShakeSequenceProps = {
  * Presentational only: the catch outcome is pre-resolved in the flow layer
  * before shake (D-31); this component never touches the store or rolls capture.
  */
-export function ShakeSequence({
-  grade,
-  caught,
-  chance,
-  onComplete,
-}: ShakeSequenceProps) {
+export function ShakeSequence({ grade, caught, onComplete }: ShakeSequenceProps) {
   const [flashDone, setFlashDone] = useState(false)
 
   if (!flashDone) {
     return <GradeFlash grade={grade} onComplete={() => setFlashDone(true)} />
   }
 
-  return <BallShake caught={caught} chance={chance} onComplete={onComplete} />
+  return <BallShake caught={caught} onComplete={onComplete} />
 }

@@ -10,7 +10,7 @@ import { clearPokeCacheKey, seedPokeCache } from '@/test/pokeapi-test-helpers'
 
 const SEEDED_SPECIES = 1
 
-/** BallShake always plays 3 flavor shakes before resolve. */
+/** Max BallShake duration (3 flavor shakes + escape open/hold) so timers always resolve. */
 const BALL_SHAKE_TOTAL_MS =
   3 * encounterTimingMs.shakeOnce +
   2 * encounterTimingMs.shakeGap +
@@ -76,11 +76,14 @@ describe('EncounterOverlay — D-14 GradeFlash precedes BallShake on every throw
     useEncounterStore.getState().reset()
     clearPokeCacheKey()
     resetCacheMemoryForTests()
+    vi.restoreAllMocks()
     vi.useRealTimers()
   })
 
   it('mounts GradeFlash before BallShake on the first AND the second consecutive throw', async () => {
     vi.useFakeTimers()
+    // Escape shakes are 1–3 random; pin to 3 so BALL_SHAKE_TOTAL_MS matches exactly.
+    vi.spyOn(Math, 'random').mockReturnValue(0.99)
     const { container } = render(<EncounterOverlay />)
     openTimingSession()
 

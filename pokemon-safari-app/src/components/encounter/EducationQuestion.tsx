@@ -93,12 +93,7 @@ export function EducationQuestion({
         {feedback ? (
           <p
             aria-live="polite"
-            className={[
-              'font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text',
-              feedback.ok ? 'border-l-2 border-accent pl-3' : '',
-            ]
-              .filter(Boolean)
-              .join(' ')}
+            className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text"
           >
             {feedback.message}
           </p>

@@ -77,9 +77,7 @@ export function EncounterOverlay() {
 
     if (previousFocusRef.current === null) {
       previousFocusRef.current =
-        document.activeElement instanceof HTMLElement
-          ? document.activeElement
-          : null
+        document.activeElement instanceof HTMLElement ? document.activeElement : null
       dialogRef.current?.focus()
     }
   }, [stage])
@@ -150,7 +148,6 @@ export function EncounterOverlay() {
             key={`${session.attemptsUsed}:${grade}`}
             grade={grade}
             caught={session.lastCaught === true}
-            chance={session.lastChance ?? 0}
             onComplete={onBallShakeComplete}
           />
         ) : stage === 'failBeat' ? (
@@ -164,10 +161,7 @@ export function EncounterOverlay() {
         ) : stage === 'flee' ? (
           <FleeCard pokemon={pokemon} onContinue={continueFromFlee} />
         ) : showRecap && education ? (
-          <RecapCard
-            {...operandsFromEducation(education)}
-            onContinue={dismissRecap}
-          />
+          <RecapCard {...operandsFromEducation(education)} onContinue={dismissRecap} />
         ) : null}
       </div>
     </div>

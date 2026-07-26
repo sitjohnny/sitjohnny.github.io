@@ -148,6 +148,22 @@ describe('EducationQuestion', () => {
     expect(screen.getByRole('button', { name: 'Submit Answer' })).toBeDisabled()
   })
 
+  it('does not render a gold left border beside correct feedback', () => {
+    const message = boostMessage(true)
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={question}
+        feedback={{ ok: true, message }}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const feedback = screen.getByText(message)
+    expect(feedback.className).not.toMatch(/border-l/)
+    expect(feedback.className).not.toMatch(/border-accent/)
+  })
+
   it('keeps the expected product hidden after a wrong answer', () => {
     const message = boostMessage(false)
     const { container } = render(
