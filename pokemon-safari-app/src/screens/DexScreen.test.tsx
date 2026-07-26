@@ -4,21 +4,31 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { BottomNav } from '@/components/BottomNav'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
+import { SAVE_KEY } from '@/services/pokeapi/keys'
 import { DexScreen } from '@/screens/DexScreen'
 import { useUiStore } from '@/store'
+import { useDexStore } from '@/store/dexStore'
 import { clearPokeCacheKey, makePokemonDto, seedPokeCache } from '@/test/pokeapi-test-helpers'
+
+function resetDexForTests() {
+  useDexStore.setState({ dex: {}, saveSoftFail: false })
+  useDexStore.getState().flushNow()
+  localStorage.removeItem(SAVE_KEY)
+}
 
 afterEach(() => {
   cleanup()
   clearPokeCacheKey()
   resetCacheMemoryForTests()
   useUiStore.setState({ dexSheetOpen: false })
+  resetDexForTests()
 })
 
 beforeEach(() => {
   clearPokeCacheKey()
   resetCacheMemoryForTests()
   useUiStore.setState({ dexSheetOpen: false })
+  resetDexForTests()
   seedPokeCache(
     Array.from({ length: 151 }, (_, i) =>
       makePokemonDto(i + 1, {
@@ -102,5 +112,27 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
     const navClosed = document.querySelector('nav[aria-label="Main"]')
     expect(navClosed).not.toBeNull()
     expect(navClosed!.hasAttribute('inert')).toBe(false)
+  })
+
+  it('seeded catch lifts silhouette and increments Caught counter (DEX-01)', () => {
+    useDexStore.setState({
+      dex: {
+        '25': {
+          seen: true,
+          catchCount: 1,
+          firstEncounteredAt: '2026-01-01T00:00:00.000Z',
+          firstCapturedAt: '2026-01-01T00:00:00.000Z',
+          shinyOwned: false,
+        },
+      },
+      saveSoftFail: false,
+    })
+    renderDex()
+
+    expect(screen.getByText(/Seen 1\/151\s*·\s*Caught 1\/151/)).toBeInTheDocument()
+    const tile = screen.getByRole('button', { name: /#025 Pikachu/i })
+    const img = within(tile).getByRole('img')
+    expect(img.className).not.toMatch(/sprite-silhouette/)
+    expect(img).toHaveAttribute('src', 'https://example.test/25.png')
   })
 })

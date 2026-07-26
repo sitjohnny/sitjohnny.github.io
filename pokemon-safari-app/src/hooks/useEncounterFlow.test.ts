@@ -3,7 +3,7 @@ import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { captureCopy } from '@/data/educationConfig'
 import { biomeEncounterTables } from '@/data/encounterTables'
-import { educationCaptureBonus, encounterTimingMs } from '@/data/rates'
+import { educationCaptureBonus, encounterTimingMs, shinyRate } from '@/data/rates'
 import { allDoubleDigitFacts, allFacts } from '@/game/education/adaptiveLearning'
 import {
   loadAdaptiveStats,
@@ -20,6 +20,8 @@ import {
   useEncounterFlow,
 } from '@/hooks/useEncounterFlow'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
+import { SAVE_KEY } from '@/services/pokeapi/keys'
+import { useDexStore } from '@/store/dexStore'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
 import {
@@ -625,6 +627,99 @@ describe('useEncounterFlow', () => {
       expect(useEncounterStore.getState().session?.attemptsUsed).toBe(
         (attemptsBefore ?? 0) + 1,
       )
+    })
+  })
+
+  describe('dex bindings — seen on appear, catch on Gotcha, shiny roll (DEX-02)', () => {
+    function resetDexForTests() {
+      useDexStore.setState({ dex: {}, saveSoftFail: false })
+      useDexStore.getState().flushNow()
+      localStorage.removeItem(SAVE_KEY)
+    }
+
+    beforeEach(() => {
+      resetDexForTests()
+    })
+
+    afterEach(() => {
+      resetDexForTests()
+    })
+
+    it('markSeen after open — species is seen with firstEncounteredAt', async () => {
+      // grass + species + non-shiny third roll
+      await openPokemonAppear(sequenceRng(0, 0, 1))
+      const speciesId = biomeEncounterTables.forest.common[0]
+      const entry = useDexStore.getState().dex[String(speciesId)]
+      expect(entry?.seen).toBe(true)
+      expect(typeof entry?.firstEncounteredAt).toBe('string')
+      expect(entry?.firstEncounteredAt!.length).toBeGreaterThan(0)
+    })
+
+    it('flee leaves the species Seen (no unmark)', async () => {
+      await openPokemonAppear(sequenceRng(0, 0, 1))
+      const speciesId = biomeEncounterTables.forest.common[0]
+      expect(useDexStore.getState().dex[String(speciesId)]?.seen).toBe(true)
+
+      act(() => {
+        useEncounterStore.getState().toFlee()
+      })
+      act(() => {
+        continueFromFlee()
+      })
+      expect(useEncounterStore.getState().stage).toBe('idle')
+      expect(useDexStore.getState().dex[String(speciesId)]?.seen).toBe(true)
+      expect(useDexStore.getState().dex[String(speciesId)]?.catchCount ?? 0).toBe(0)
+    })
+
+    it('onShakeComplete with lastCaught calls recordCatch with session shiny', async () => {
+      await reachTimingAfterCorrect(sequenceRng(0, 0, 1, 0))
+      const speciesId = useEncounterStore.getState().session!.speciesId
+      expect(useEncounterStore.getState().session?.shiny).toBe(false)
+
+      act(() => {
+        useEncounterStore
+          .getState()
+          .registerThrow({ grade: 'perfect', caught: true, chance: 1 })
+      })
+      act(() => {
+        onShakeComplete()
+      })
+
+      expect(useEncounterStore.getState().stage).toBe('result')
+      const entry = useDexStore.getState().dex[String(speciesId)]
+      expect(entry?.catchCount).toBe(1)
+      expect(entry?.firstCapturedAt).toBeTruthy()
+      expect(entry?.shinyOwned).toBe(false)
+      expect(entry?.seen).toBe(true)
+    })
+
+    it('seeded Rng forces shiny true when roll < shinyRate', async () => {
+      expect(shinyRate).toBeGreaterThan(0)
+      // Third roll 0 < shinyRate → shiny
+      await openPokemonAppear(sequenceRng(0, 0, 0))
+      expect(useEncounterStore.getState().session?.shiny).toBe(true)
+    })
+
+    it('seeded Rng forces shiny false when roll >= shinyRate', async () => {
+      await openPokemonAppear(sequenceRng(0, 0, 1))
+      expect(useEncounterStore.getState().session?.shiny).toBe(false)
+    })
+
+    it('recordCatch ORs shinyOwned when session was shiny', async () => {
+      await reachTimingAfterCorrect(sequenceRng(0, 0, 0, 0))
+      const speciesId = useEncounterStore.getState().session!.speciesId
+      expect(useEncounterStore.getState().session?.shiny).toBe(true)
+
+      act(() => {
+        useEncounterStore
+          .getState()
+          .registerThrow({ grade: 'perfect', caught: true, chance: 1 })
+      })
+      act(() => {
+        onShakeComplete()
+      })
+
+      expect(useDexStore.getState().dex[String(speciesId)]?.shinyOwned).toBe(true)
     })
   })
 })
