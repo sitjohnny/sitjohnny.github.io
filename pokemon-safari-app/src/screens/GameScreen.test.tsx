@@ -111,6 +111,16 @@ function renderExploreWithNav() {
   )
 }
 
+/** AppShell-shaped: BottomNav stays mounted when GameScreen unmounts. */
+function renderAppShellLike({ showGame }: { showGame: boolean }) {
+  return (
+    <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/game']}>
+      {showGame ? <GameScreen /> : null}
+      <BottomNav />
+    </MemoryRouter>
+  )
+}
+
 async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>) {
   useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
   setDefaultRngForTests(encounterRng(0, 0, 0, 0.2, 0.3))
@@ -564,6 +574,26 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     const navClosed = document.querySelector('nav[aria-label="Main"]')
     expect(navClosed).not.toBeNull()
     expect(navClosed!.hasAttribute('inert')).toBe(false)
+  })
+
+  it('clears Main nav inert when GameScreen unmounts mid-encounter', async () => {
+    const user = userEvent.setup()
+    const { rerender } = render(renderAppShellLike({ showGame: true }))
+    await walkIntoPokemonEncounter(user)
+
+    const navOpen = document.querySelector('nav[aria-label="Main"]')
+    expect(navOpen).not.toBeNull()
+    expect(navOpen!.hasAttribute('inert')).toBe(true)
+    expect(useEncounterStore.getState().stage).not.toBe('idle')
+
+    // Leave /game without dismissing — unmount only GameScreen (AppShell shape).
+    rerender(renderAppShellLike({ showGame: false }))
+
+    expect(useEncounterStore.getState().stage).toBe('idle')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    const navAfter = document.querySelector('nav[aria-label="Main"]')
+    expect(navAfter).not.toBeNull()
+    expect(navAfter!.hasAttribute('inert')).toBe(false)
   })
 
   it('completes the wrong-answer loop to Quick recap under prefers-reduced-motion', async () => {

@@ -311,4 +311,18 @@ describe('useEncounterFlow', () => {
     expect(useEncounterStore.getState().stage).toBe('idle')
     expect(useEncounterStore.getState().question).toBeNull()
   })
+
+  it('closes to idle on unmount while preserving lastFactKey', async () => {
+    const { unmount } = render(createElement(Harness, { rng: sequenceRng(0, 0) }))
+    act(() => {
+      useEncounterStore.setState({ stage: 'question', lastFactKey: '7x8' })
+    })
+    expect(useEncounterStore.getState().stage).toBe('question')
+    expect(useEncounterStore.getState().lastFactKey).toBe('7x8')
+
+    unmount()
+
+    expect(useEncounterStore.getState().stage).toBe('idle')
+    expect(useEncounterStore.getState().lastFactKey).toBe('7x8')
+  })
 })

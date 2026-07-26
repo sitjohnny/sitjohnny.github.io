@@ -51,10 +51,10 @@ describe('BottomNav', () => {
     )
   })
 
-  it('sets inert on Main while an encounter is active so Tab cannot reach nav links', () => {
+  it('sets inert on Main while an encounter is active on /game so Tab cannot reach nav links', () => {
     useEncounterStore.setState({ stage: 'question' })
     const { container } = render(
-      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/']}>
+      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/game']}>
         <button type="button">Before nav</button>
         <BottomNav />
       </MemoryRouter>,
@@ -66,5 +66,18 @@ describe('BottomNav', () => {
     // IDL `inert` boolean, so the attribute presence is the testable contract.
     expect(nav.hasAttribute('inert')).toBe(true)
     expect(nav.querySelectorAll('a').length).toBe(5)
+  })
+
+  it('does not set inert on Main at Home even when encounter stage is non-idle', () => {
+    useEncounterStore.setState({ stage: 'question' })
+    const { container } = render(
+      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/']}>
+        <BottomNav />
+      </MemoryRouter>,
+    )
+    const nav = within(container).getByLabelText('Main')
+
+    expect(nav.hasAttribute('inert')).toBe(false)
+    expect(nav).not.toHaveAttribute('inert')
   })
 })
