@@ -32,7 +32,10 @@ export function GameScreen() {
   const quotaSoftFail = useUiStore((s) => s.quotaSoftFail)
   const setQuotaSoftFail = useUiStore((s) => s.setQuotaSoftFail)
   const ready = isCacheReady() || storeReady
-  // reloadKey forces a re-check of map integrity after recovery (T-03-11).
+  // reloadKey remounts ExploreSurface after recovery. For a static module map
+  // like forestMap, Try Again cannot heal a permanently invalid definition —
+  // isValidMap still reads the same constant. Remount helps once map data can
+  // change (fetch/rebuild); until then the copy correctly points users Home.
   const [reloadKey, setReloadKey] = useState(0)
   const mapOk = isValidMap(forestMap)
 
