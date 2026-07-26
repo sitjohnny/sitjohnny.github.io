@@ -25,6 +25,9 @@ export const encounterTimingMs = {
   feedbackHold: 1000,
   reducedFeedbackHold: 400,
   itemToast: 1800,
+  /** Hold after Capture so the frozen marker is readable before grade flash. */
+  timingFreezeHold: 500,
+  reducedTimingFreezeHold: 250,
   gradeFlash: 600,
   reducedGradeFlash: 300,
   failBeat: 800,
@@ -41,6 +44,9 @@ export const encounterTimingMs = {
 
 /** Kid-tunable shiny encounter rate (DEX-02 / Assumption A2) — consumed by 06-04. */
 export const shinyRate = 1 / 75
+
+/** Committed tile steps (any tile) with no Pokémon after an encounter ends. */
+export const postEncounterPokemonImmunitySteps = 3
 
 /** Debounced SAVE_KEY flush idle window in ms (D-19). */
 export const dexSaveDebounceMs = 800

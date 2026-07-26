@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { PixelButton } from '@/components/PixelButton'
 import { PokemonSprite } from '@/components/PokemonSprite'
 import { captureCopy } from '@/data/educationConfig'
+import { encounterTimingMs } from '@/data/rates'
 import { timingBar } from '@/data/timingBar'
 import { pingPong } from '@/game/timing'
 import { capture } from '@/hooks/useEncounterFlow'
@@ -54,6 +55,7 @@ export function TimingBar({
   const trackRef = useRef<HTMLDivElement | null>(null)
   const indicatorRef = useRef<HTMLDivElement | null>(null)
   const rafRef = useRef(0)
+  const holdTimerRef = useRef(0)
   const [frozen, setFrozen] = useState(false)
 
   const zones = timingBar.zones[rarity]
@@ -93,6 +95,7 @@ export function TimingBar({
     rafRef.current = requestAnimationFrame(tick)
     return () => {
       cancelAnimationFrame(rafRef.current)
+      window.clearTimeout(holdTimerRef.current)
     }
   }, [locked])
 
@@ -102,7 +105,12 @@ export function TimingBar({
     setFrozen(true)
     cancelAnimationFrame(rafRef.current)
     writeIndicator(posRef.current)
-    capture(posRef.current)
+    const hold = prefersReducedMotion()
+      ? encounterTimingMs.reducedTimingFreezeHold
+      : encounterTimingMs.timingFreezeHold
+    holdTimerRef.current = window.setTimeout(() => {
+      capture(posRef.current)
+    }, hold)
   }
 
   return (

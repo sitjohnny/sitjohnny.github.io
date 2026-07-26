@@ -100,7 +100,6 @@ function renderAppShellLike({ showGame }: { showGame: boolean }) {
   )
 }
 
-
 function setupGrassApproach() {
   const step = findStepOnto('grass')
   useExploreStore.setState({
@@ -233,6 +232,30 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
     expect(useExploreStore.getState().facing).toBe('right')
     expect(useExploreStore.getState().tile).toEqual({ x: spawn.x + 1, y: spawn.y })
+  })
+
+  it('updates sprite data-facing when turning after immunity is armed', async () => {
+    useExploreStore.getState().armPokemonImmunity()
+    renderExplore()
+    const player = document.querySelector<HTMLElement>('.player-sprite')
+    expect(player).not.toBeNull()
+    expect(player).toHaveAttribute('data-facing', 'down')
+
+    fireEvent.keyDown(window, { code: 'ArrowLeft' })
+    await flushFrames(2)
+    fireEvent.keyUp(window, { code: 'ArrowLeft' })
+    await flushFrames(20)
+
+    expect(useExploreStore.getState().facing).toBe('left')
+    expect(player).toHaveAttribute('data-facing', 'left')
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(2)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+    await flushFrames(20)
+
+    expect(useExploreStore.getState().facing).toBe('up')
+    expect(player).toHaveAttribute('data-facing', 'up')
   })
 
   it('walks when a D-pad arm is pressed and stops on pointer up', async () => {
@@ -664,9 +687,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     }
   })
 
-  it(
-    'shows fail beat then kind flee after three misses — no Run CTA (CATCH-04)',
-    async () => {
+  it('shows fail beat then kind flee after three misses — no Run CTA (CATCH-04)', async () => {
     const user = userEvent.setup()
     const step = setupGrassApproach()
     // outcome, species, pool, fact, feedback, then three always-miss catch rolls
@@ -722,14 +743,15 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(
       await screen.findByRole('heading', { name: 'It got away!' }, { timeout: 8000 }),
     ).toBeInTheDocument()
-    expect(screen.getByText(/That’s okay — you’ll find another!|That's okay — you'll find another!/)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        /That’s okay — you’ll find another!|That's okay — you'll find another!/,
+      ),
+    ).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: /^Run$/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /Try Again/i })).toBeNull()
 
     await user.click(screen.getByRole('button', { name: 'Continue' }))
     expect(screen.queryByRole('dialog')).toBeNull()
-  },
-    30_000,
-  )
+  }, 30_000)
 })
-

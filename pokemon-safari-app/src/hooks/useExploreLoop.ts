@@ -134,6 +134,12 @@ export function useExploreLoop({
       }
     }
 
+    function writeFacing(dir: Direction) {
+      if (playerRef.current) {
+        playerRef.current.dataset.facing = dir
+      }
+    }
+
     function tick(now: number) {
       const rawDt = lastTime === 0 ? 16 : now - lastTime
       const dtMs = Math.min(Math.max(rawDt, 0), 50)
@@ -189,7 +195,14 @@ export function useExploreLoop({
         const result = tryStep(state, primaryDirection(heldRef.current), world, now)
 
         if (!samePlayer(state, result.next)) {
-          store.setPlayer(result.next)
+          // Tick immunity only on tile commits (not turn-in-place). Fold into the
+          // same setPlayer write so facing subscribers see one atomic update —
+          // a follow-up immunity set in this rAF was desyncing data-facing.
+          const moved = result.next.x !== state.x || result.next.y !== state.y
+          store.setPlayer(result.next, { tickImmunity: moved })
+          if (result.next.facing !== state.facing) {
+            writeFacing(result.next.facing)
+          }
           if (result.tween) {
             world.ensureAround({ x: result.next.x, y: result.next.y })
           }

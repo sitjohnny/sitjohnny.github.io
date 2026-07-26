@@ -44,11 +44,29 @@ export function pickSpecies(
   return pool[index]!
 }
 
+export type ResolveCandidateOptions = {
+  /** When true, pokemon/rare/legendary weights are zeroed so only nothing/item remain. */
+  suppressPokemon?: boolean
+}
+
+function grassWeightsForResolve(suppressPokemon: boolean): typeof grassOutcomeWeights {
+  if (!suppressPokemon) {
+    return grassOutcomeWeights
+  }
+  return {
+    ...grassOutcomeWeights,
+    pokemon: 0,
+    rare: 0,
+    legendary: 0,
+  }
+}
+
 export function resolveCandidate(
   rng: Rng,
   event: EncounterCandidateEvent,
+  options: ResolveCandidateOptions = {},
 ): EncounterResolution {
-  const outcome = rollGrass(rng)
+  const outcome = rollGrass(rng, grassWeightsForResolve(options.suppressPokemon === true))
   if (outcome === 'nothing') return { kind: 'nothing' }
   if (outcome === 'item') return { kind: 'item' }
   const rarity = rarityForOutcome(outcome)

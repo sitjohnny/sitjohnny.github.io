@@ -7,10 +7,7 @@ import {
   persistAdaptiveStats,
   recordAttempt,
 } from '@/game/education/adaptiveStore'
-import {
-  captureBonusFor,
-  validateAnswer,
-} from '@/game/education/answerValidator'
+import { captureBonusFor, validateAnswer } from '@/game/education/answerValidator'
 import { multiplicationProvider } from '@/game/education/questionGenerator'
 import { resolveCandidate } from '@/game/encounter'
 import { gradeAt } from '@/game/timing'
@@ -105,9 +102,7 @@ function doSubmitAnswer(rng: Rng, raw: string): void {
   }
 
   useEncounterStore.getState().applyAnswer({ outcome, captureBonus, message })
-  persistAdaptiveStats(
-    recordAttempt(loadAdaptiveStats(), question.factKey, result.ok),
-  )
+  persistAdaptiveStats(recordAttempt(loadAdaptiveStats(), question.factKey, result.ok))
 
   clearFeedbackTimer()
   const hold = prefersReducedMotion()
@@ -224,9 +219,7 @@ export const resolveAfterShake = onShakeComplete
  * Single Phase 4/5 queue consumer: drain one candidate, restore the FIFO
  * remainder, then route the config-driven result into session UI state.
  */
-export function useEncounterFlow(
-  options: EncounterFlowOptions = {},
-): EncounterFlowApi {
+export function useEncounterFlow(options: EncounterFlowOptions = {}): EncounterFlowApi {
   const rng = options.rng ?? getDefaultRng()
   flowRngRef.current = rng
   const pendingEncounters = useExploreStore((state) => state.pendingEncounters)
@@ -238,6 +231,9 @@ export function useEncounterFlow(
     const unsub = useEncounterStore.subscribe((state, prev) => {
       if (prev.stage !== 'idle' && state.stage === 'idle') {
         clearEncounterTimers()
+        if (prev.session != null) {
+          useExploreStore.getState().armPokemonImmunity()
+        }
       }
     })
     return () => {
@@ -251,10 +247,7 @@ export function useEncounterFlow(
   }, [])
 
   useEffect(() => {
-    if (
-      pendingEncounters.length === 0 ||
-      useEncounterStore.getState().stage !== 'idle'
-    ) {
+    if (pendingEncounters.length === 0 || useEncounterStore.getState().stage !== 'idle') {
       return
     }
 
@@ -267,7 +260,8 @@ export function useEncounterFlow(
       useExploreStore.getState().pushEncounters(rest)
     }
 
-    const resolution = resolveCandidate(rng, candidate)
+    const suppressPokemon = useExploreStore.getState().pokemonImmunitySteps > 0
+    const resolution = resolveCandidate(rng, candidate, { suppressPokemon })
     if (resolution.kind === 'nothing') {
       return
     }

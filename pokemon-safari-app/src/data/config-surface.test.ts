@@ -77,6 +77,8 @@ describe('DATA-03 config surface', () => {
       'feedbackHold',
       'reducedFeedbackHold',
       'itemToast',
+      'timingFreezeHold',
+      'reducedTimingFreezeHold',
       'gradeFlash',
       'reducedGradeFlash',
       'failBeat',

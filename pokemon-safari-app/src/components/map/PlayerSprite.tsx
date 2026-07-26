@@ -1,4 +1,5 @@
 import type { CSSProperties, RefObject } from 'react'
+import { memo } from 'react'
 import { PLAYER_SPRITE_H_PX, TILE_PX } from '@/data/exploreConfig'
 import type { Direction } from '@/types/map'
 import redDown0 from '@/assets/player/red-down-0.png'
@@ -51,8 +52,14 @@ const FRAMES: readonly Frame[] = [
  * imperatively through `spriteRef` / `data-frame` by the frame loop; this
  * component only re-renders when the `facing` prop changes so CSS can reveal
  * the matching facing stack.
+ *
+ * Memoized so parent re-renders (encounter queue, toasts) do not reset
+ * `data-frame="0"` from JSX and wipe the in-flight walk pose (MAP-04).
  */
-export function PlayerSprite({ spriteRef, facing }: PlayerSpriteProps) {
+export const PlayerSprite = memo(function PlayerSprite({
+  spriteRef,
+  facing,
+}: PlayerSpriteProps) {
   return (
     <div
       ref={spriteRef}
@@ -82,4 +89,4 @@ export function PlayerSprite({ spriteRef, facing }: PlayerSpriteProps) {
       ))}
     </div>
   )
-}
+})

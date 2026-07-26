@@ -1,4 +1,5 @@
 import { create } from 'zustand'
+import { postEncounterPokemonImmunitySteps } from '@/data/rates'
 import { WORLD_SPAWN } from '@/data/worldConfig'
 import {
   drainEncounters as drainEncounterQueue,
@@ -19,9 +20,12 @@ type ExploreState = {
   facing: Direction
   moving: boolean
   pendingEncounters: EncounterCandidateEvent[]
-  setPlayer: (next: PlayerState) => void
+  pokemonImmunitySteps: number
+  setPlayer: (next: PlayerState, options?: { tickImmunity?: boolean }) => void
   pushEncounters: (events: EncounterCandidateEvent[]) => void
   drainEncounters: () => EncounterCandidateEvent[]
+  armPokemonImmunity: () => void
+  tickPokemonImmunity: () => void
   reset: () => void
 }
 
@@ -31,17 +35,22 @@ function initialState() {
     facing: 'down' as Direction,
     moving: false,
     pendingEncounters: [] as EncounterCandidateEvent[],
+    pokemonImmunitySteps: 0,
   }
 }
 
 export const useExploreStore = create<ExploreState>((set, get) => ({
   ...initialState(),
-  setPlayer: (next) =>
-    set({
+  setPlayer: (next, options) =>
+    set((state) => ({
       tile: { x: next.x, y: next.y },
       facing: next.facing,
       moving: next.moving,
-    }),
+      pokemonImmunitySteps:
+        options?.tickImmunity === true && state.pokemonImmunitySteps > 0
+          ? state.pokemonImmunitySteps - 1
+          : state.pokemonImmunitySteps,
+    })),
   pushEncounters: (events) => {
     if (events.length === 0) {
       return
@@ -60,6 +69,15 @@ export const useExploreStore = create<ExploreState>((set, get) => ({
       set({ pendingEncounters: remaining })
     }
     return taken
+  },
+  armPokemonImmunity: () =>
+    set({ pokemonImmunitySteps: postEncounterPokemonImmunitySteps }),
+  tickPokemonImmunity: () => {
+    const remaining = get().pokemonImmunitySteps
+    if (remaining <= 0) {
+      return
+    }
+    set({ pokemonImmunitySteps: remaining - 1 })
   },
   reset: () => set(initialState()),
 }))

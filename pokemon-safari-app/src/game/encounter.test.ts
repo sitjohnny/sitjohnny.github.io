@@ -11,7 +11,13 @@ import { createRng, type Rng } from '@/utils/rng'
 import type { EncounterCandidateEvent } from '@/types/map'
 import type { GrassOutcome } from '@/types/encounter'
 
-const OUTCOMES = ['pokemon', 'nothing', 'item', 'rare', 'legendary'] as const satisfies readonly GrassOutcome[]
+const OUTCOMES = [
+  'pokemon',
+  'nothing',
+  'item',
+  'rare',
+  'legendary',
+] as const satisfies readonly GrassOutcome[]
 
 function weightTotal(): number {
   return OUTCOMES.reduce((sum, key) => sum + grassOutcomeWeights[key], 0)
@@ -81,7 +87,10 @@ describe('threshold', () => {
     for (let i = 0; i < edges.length - 1; i++) {
       const edge = edges[i]!.edge
       probes.push({ value: Math.max(0, edge - 1e-9), expected: edges[i]!.outcome })
-      probes.push({ value: Math.min(0.999999999, edge + 1e-9), expected: edges[i + 1]!.outcome })
+      probes.push({
+        value: Math.min(0.999999999, edge + 1e-9),
+        expected: edges[i + 1]!.outcome,
+      })
     }
     probes.push({ value: 0.999999999, expected: edges[edges.length - 1]!.outcome })
 
@@ -125,7 +134,9 @@ describe('resolve', () => {
     const starts = [0, ...edges.slice(0, -1).map((e) => e.edge)]
 
     const nothingValue = mid(starts[1]!, edges[1]!.edge)
-    expect(resolveCandidate(stubRng([nothingValue]), candidate())).toEqual({ kind: 'nothing' })
+    expect(resolveCandidate(stubRng([nothingValue]), candidate())).toEqual({
+      kind: 'nothing',
+    })
 
     const itemValue = mid(starts[2]!, edges[2]!.edge)
     expect(resolveCandidate(stubRng([itemValue]), candidate())).toEqual({ kind: 'item' })
@@ -153,6 +164,28 @@ describe('resolve', () => {
       expect(legendary.rarity).toBe('legendary')
       expect(biomeEncounterTables.forest.legendary).toContain(legendary.speciesId)
     }
+  })
+
+  it('suppressPokemon zeros pokemon bands so rolls become nothing or item only', () => {
+    // Low rolls land in nothing (first non-zero weight under suppressed table).
+    expect(
+      resolveCandidate(stubRng([0]), candidate(), { suppressPokemon: true }),
+    ).toEqual({ kind: 'nothing' })
+    expect(
+      resolveCandidate(stubRng([0.2]), candidate(), { suppressPokemon: true }),
+    ).toEqual({ kind: 'nothing' })
+
+    // Item share is 20/45 after pokemon/rare/legendary are zeroed.
+    const suppressedItemRoll = 25 / 45 + 1e-9
+    expect(
+      resolveCandidate(stubRng([suppressedItemRoll]), candidate(), {
+        suppressPokemon: true,
+      }),
+    ).toEqual({ kind: 'item' })
+
+    // Without suppress, a zero roll is still a common pokemon.
+    const pokemon = resolveCandidate(stubRng([0, 0]), candidate())
+    expect(pokemon.kind).toBe('pokemon')
   })
 
   it('resolveCandidate is pure for equal stub sequences and never touches localStorage', () => {

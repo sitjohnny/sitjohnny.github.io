@@ -3,7 +3,12 @@ import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { captureCopy } from '@/data/educationConfig'
 import { biomeEncounterTables } from '@/data/encounterTables'
-import { educationCaptureBonus, encounterTimingMs, shinyRate } from '@/data/rates'
+import {
+  educationCaptureBonus,
+  encounterTimingMs,
+  postEncounterPokemonImmunitySteps,
+  shinyRate,
+} from '@/data/rates'
 import { allDoubleDigitFacts, allFacts } from '@/game/education/adaptiveLearning'
 import {
   loadAdaptiveStats,
@@ -160,6 +165,37 @@ describe('useEncounterFlow', () => {
     expect(useEncounterStore.getState().stage).toBe('idle')
   })
 
+  it('does not arm pokemon immunity after an item toast', async () => {
+    render(createElement(QueueLater, { rng: sequenceRng(0.75), event: candidate() }))
+
+    await waitFor(() => expect(useEncounterStore.getState().itemToastVisible).toBe(true))
+    expect(useExploreStore.getState().pokemonImmunitySteps).toBe(0)
+  })
+
+  it('arms pokemon immunity when a session closes and suppresses pokemon rolls', async () => {
+    await openPokemonAppear(sequenceRng(0, 0, 1, 0))
+    act(() => {
+      useEncounterStore.getState().close()
+    })
+    expect(useExploreStore.getState().pokemonImmunitySteps).toBe(
+      postEncounterPokemonImmunitySteps,
+    )
+    expect(useEncounterStore.getState().stage).toBe('idle')
+
+    act(() => {
+      useExploreStore.getState().pushEncounters([candidate(2)])
+    })
+
+    await waitFor(() =>
+      expect(useExploreStore.getState().pendingEncounters).toHaveLength(0),
+    )
+    expect(useEncounterStore.getState()).toMatchObject({
+      stage: 'idle',
+      session: null,
+      itemToastVisible: false,
+    })
+  })
+
   it('consumes exactly one candidate and re-queues the remainder in FIFO order', async () => {
     useExploreStore.getState().pushEncounters([candidate(1), candidate(2), candidate(3)])
     render(createElement(Harness, { rng: sequenceRng(0, 0) }))
@@ -314,6 +350,10 @@ describe('useEncounterFlow', () => {
       })
       act(() => {
         useEncounterStore.getState().close()
+      })
+      // Immediate re-encounter loop is for fact uniqueness — clear step immunity.
+      act(() => {
+        useExploreStore.setState({ pokemonImmunitySteps: 0 })
       })
       expect(useEncounterStore.getState().lastFactKey).toBe(asked.factKey)
       expect(useEncounterStore.getState().stage).toBe('idle')

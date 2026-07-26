@@ -1,7 +1,8 @@
 import userEvent from '@testing-library/user-event'
-import { cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { captureCopy } from '@/data/educationConfig'
+import { encounterTimingMs } from '@/data/rates'
 import { makePokemonDto } from '@/test/pokeapi-test-helpers'
 import { flushFrames } from '@/test/setup'
 
@@ -36,17 +37,29 @@ function renderBar(
   )
 }
 
+async function advanceFreezeHold(): Promise<void> {
+  await act(async () => {
+    await vi.advanceTimersByTimeAsync(encounterTimingMs.timingFreezeHold)
+  })
+}
+
 beforeEach(() => {
   capture.mockClear()
+  vi.useFakeTimers({ shouldAdvanceTime: true })
 })
 
-afterEach(cleanup)
+afterEach(() => {
+  cleanup()
+  vi.useRealTimers()
+})
 
 describe('TimingBar', () => {
   it('renders Capture with an accessible timing group name', () => {
     renderBar()
 
-    expect(screen.getByRole('button', { name: captureCopy.captureCta })).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: captureCopy.captureCta }),
+    ).toBeInTheDocument()
     expect(
       screen.getByRole('group', {
         name: /timing|capture/i,
@@ -54,12 +67,17 @@ describe('TimingBar', () => {
     ).toBeInTheDocument()
   })
 
-  it('fires Capture once with a position in [0, 1]', async () => {
-    const user = userEvent.setup()
+  it('freezes the marker then fires Capture once with a position in [0, 1]', async () => {
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderBar()
     await flushFrames(2)
 
     await user.click(screen.getByRole('button', { name: captureCopy.captureCta }))
+
+    expect(capture).not.toHaveBeenCalled()
+    expect(screen.getByRole('button', { name: captureCopy.captureCta })).toBeDisabled()
+
+    await advanceFreezeHold()
 
     expect(capture).toHaveBeenCalledTimes(1)
     const position = capture.mock.calls[0]?.[0]
@@ -69,12 +87,14 @@ describe('TimingBar', () => {
   })
 
   it('fires Capture once from Space and once from Enter on the focused button', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     const { unmount } = renderBar()
     const button = screen.getByRole('button', { name: captureCopy.captureCta })
     button.focus()
 
     await user.keyboard('{Enter}')
+    expect(capture).not.toHaveBeenCalled()
+    await advanceFreezeHold()
     expect(capture).toHaveBeenCalledTimes(1)
 
     capture.mockClear()
@@ -83,11 +103,12 @@ describe('TimingBar', () => {
     const again = screen.getByRole('button', { name: captureCopy.captureCta })
     again.focus()
     await user.keyboard(' ')
+    await advanceFreezeHold()
     expect(capture).toHaveBeenCalledTimes(1)
   })
 
   it('does not capture when the track is clicked', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderBar()
 
     const track = screen.getByTestId('timing-track')
@@ -97,12 +118,13 @@ describe('TimingBar', () => {
   })
 
   it('disables Capture and ignores clicks when locked', async () => {
-    const user = userEvent.setup()
+    const user = userEvent.setup({ advanceTimers: vi.advanceTimersByTime })
     renderBar({ locked: true })
 
     const button = screen.getByRole('button', { name: captureCopy.captureCta })
     expect(button).toBeDisabled()
     await user.click(button)
+    await advanceFreezeHold()
     expect(capture).not.toHaveBeenCalled()
   })
 
@@ -110,7 +132,9 @@ describe('TimingBar', () => {
     const { container } = renderBar()
 
     expect(container.querySelector('.timing-track')).not.toBeNull()
-    expect(container.querySelectorAll('[data-timing-band]').length).toBeGreaterThanOrEqual(3)
+    expect(
+      container.querySelectorAll('[data-timing-band]').length,
+    ).toBeGreaterThanOrEqual(3)
 
     const track = screen.getByTestId('timing-track')
     expect(track.textContent).not.toMatch(/Perfect|Great|Good|Miss/)
