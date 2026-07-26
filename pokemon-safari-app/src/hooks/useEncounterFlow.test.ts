@@ -254,7 +254,16 @@ describe('useEncounterFlow', () => {
   })
 
   it('never repeats lastFactKey on the next encounter', async () => {
-    const rng = sequenceRng(0, 0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9)
+    // Keep every grass roll in the pokemon band; vary only selection draws.
+    let draw = 0
+    const rng: Rng = {
+      next: () => {
+        draw += 1
+        // Outcome + species index stay at 0; later draws feed fact/copy picks.
+        if (draw % 4 === 1 || draw % 4 === 2) return 0
+        return ((draw * 17) % 100) / 100
+      },
+    }
     render(createElement(Harness, { rng }))
 
     const seen: string[] = []
@@ -279,6 +288,7 @@ describe('useEncounterFlow', () => {
         useEncounterStore.getState().close()
       })
       expect(useEncounterStore.getState().lastFactKey).toBe(asked.factKey)
+      expect(useEncounterStore.getState().stage).toBe('idle')
     }
   })
 

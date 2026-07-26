@@ -15,6 +15,7 @@ export function HandoffStub({
   onDismiss,
 }: HandoffStubProps) {
   const bonusPercent = Math.round(captureBonus * 100)
+  const hasBoost = captureBonus > 0
 
   return (
     <div className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center">
@@ -25,7 +26,14 @@ export function HandoffStub({
       <p className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
         {handoffCopy.body}
       </p>
-      <p className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
+      <p
+        className={[
+          'font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted',
+          hasBoost ? 'border-l-2 border-accent pl-3' : '',
+        ]
+          .filter(Boolean)
+          .join(' ')}
+      >
         Catch boost: +{bonusPercent}%
       </p>
       <PixelButton variant="primary" className="w-full" onClick={onDismiss}>

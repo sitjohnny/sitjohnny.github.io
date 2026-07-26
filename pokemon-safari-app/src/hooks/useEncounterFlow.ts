@@ -1,29 +1,140 @@
 import { useEffect, useRef } from 'react'
-import { encounterTimingMs } from '@/data/rates'
+import { feedbackCopy } from '@/data/educationConfig'
+import { educationCaptureBonus, encounterTimingMs } from '@/data/rates'
+import {
+  loadAdaptiveStats,
+  persistAdaptiveStats,
+  recordAttempt,
+} from '@/game/education/adaptiveStore'
+import {
+  captureBonusFor,
+  validateAnswer,
+} from '@/game/education/answerValidator'
+import { multiplicationProvider } from '@/game/education/questionGenerator'
 import { resolveCandidate } from '@/game/encounter'
+import { prefersReducedMotion } from '@/hooks/useMapCamera'
 import { getPokemon } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
+import type { EncounterEducationOutcome } from '@/types/encounter'
 import { getDefaultRng, type Rng } from '@/utils/rng'
 
 type EncounterFlowOptions = {
   rng?: Rng
 }
 
+type EncounterFlowApi = {
+  advanceFromAppear: () => void
+  submitAnswer: (raw: string) => void
+}
+
+/** Active rng for overlay callbacks exported beside the hook. */
+const flowRngRef: { current: Rng } = { current: getDefaultRng() }
+const feedbackTimerRef: {
+  current: ReturnType<typeof setTimeout> | null
+} = { current: null }
+
+function clearFeedbackTimer() {
+  if (feedbackTimerRef.current !== null) {
+    clearTimeout(feedbackTimerRef.current)
+    feedbackTimerRef.current = null
+  }
+}
+
+function buildFeedbackMessage(ok: boolean, rng: Rng): string {
+  const pool = ok ? feedbackCopy.correct : feedbackCopy.incorrect
+  const index = Math.min(pool.length - 1, Math.floor(rng.next() * pool.length))
+  const line = pool[index] ?? pool[0]
+  if (ok) {
+    const boost = Math.round(educationCaptureBonus.correct * 100)
+    return `${line} ${feedbackCopy.correctSuffix.replace('{boost}', String(boost))}`
+  }
+  return `${line} ${feedbackCopy.incorrectSuffix}`
+}
+
+function doAdvanceFromAppear(rng: Rng): void {
+  const state = useEncounterStore.getState()
+  if (state.stage !== 'appear') return
+  const question = multiplicationProvider.nextQuestion(
+    rng,
+    loadAdaptiveStats(),
+    state.lastFactKey,
+  )
+  useEncounterStore.getState().askQuestion(question)
+}
+
+function doSubmitAnswer(rng: Rng, raw: string): void {
+  const state = useEncounterStore.getState()
+  if (state.feedback !== null) return
+  if (state.stage !== 'question' && state.stage !== 'feedback') return
+  const question = state.question
+  if (!question) return
+
+  const result = validateAnswer(question, raw)
+  if (result.parsed === null) return
+
+  const captureBonus = captureBonusFor(result)
+  const message = buildFeedbackMessage(result.ok, rng)
+  const outcome: EncounterEducationOutcome = {
+    factKey: question.factKey,
+    prompt: question.prompt,
+    expected: question.expected,
+    correct: result.ok,
+  }
+
+  useEncounterStore.getState().applyAnswer({ outcome, captureBonus, message })
+  persistAdaptiveStats(
+    recordAttempt(loadAdaptiveStats(), question.factKey, result.ok),
+  )
+
+  clearFeedbackTimer()
+  const hold = prefersReducedMotion()
+    ? encounterTimingMs.reducedFeedbackHold
+    : encounterTimingMs.feedbackHold
+  feedbackTimerRef.current = setTimeout(() => {
+    feedbackTimerRef.current = null
+    if (useEncounterStore.getState().stage === 'feedback') {
+      useEncounterStore.getState().setStage('handoff')
+    }
+  }, hold)
+}
+
+/** Overlay / tests: advance appear → adaptive question (D-06 sole trigger). */
+export function advanceFromAppear(): void {
+  doAdvanceFromAppear(flowRngRef.current)
+}
+
+/** Overlay / tests: validate, persist, and schedule handoff. */
+export function submitAnswer(raw: string): void {
+  doSubmitAnswer(flowRngRef.current, raw)
+}
+
 /**
  * Single Phase 4 queue consumer: drain one candidate, restore the FIFO
  * remainder, then route the config-driven result into session UI state.
  */
-export function useEncounterFlow(options: EncounterFlowOptions = {}): void {
+export function useEncounterFlow(
+  options: EncounterFlowOptions = {},
+): EncounterFlowApi {
   const rng = options.rng ?? getDefaultRng()
+  flowRngRef.current = rng
   const pendingEncounters = useExploreStore((state) => state.pendingEncounters)
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
+    // Zustand subscribe runs synchronously on set — clear the feedback hold
+    // inside close() before a stale timer can advance to handoff (T-04-15).
+    const unsub = useEncounterStore.subscribe((state, prev) => {
+      if (prev.stage !== 'idle' && state.stage === 'idle') {
+        clearFeedbackTimer()
+      }
+    })
     return () => {
+      unsub()
       if (toastTimer.current !== null) {
         clearTimeout(toastTimer.current)
       }
+      clearFeedbackTimer()
     }
   }, [])
 
@@ -74,4 +185,9 @@ export function useEncounterFlow(options: EncounterFlowOptions = {}): void {
       useEncounterStore.getState().fail()
     }
   }, [pendingEncounters, rng])
+
+  return {
+    advanceFromAppear: () => doAdvanceFromAppear(rng),
+    submitAnswer: (raw: string) => doSubmitAnswer(rng, raw),
+  }
 }

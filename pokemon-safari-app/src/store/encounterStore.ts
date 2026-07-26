@@ -1,5 +1,10 @@
 import { create } from 'zustand'
-import type { EncounterSession, EncounterStage } from '@/types/encounter'
+import type { EducationQuestion } from '@/game/education/questionTypes'
+import type {
+  EncounterEducationOutcome,
+  EncounterSession,
+  EncounterStage,
+} from '@/types/encounter'
 
 /**
  * Ephemeral encounter-session state. Phase 5 extends the session payload;
@@ -10,8 +15,16 @@ type EncounterState = {
   session: EncounterSession | null
   itemToastVisible: boolean
   lastFactKey: string | null
+  question: EducationQuestion | null
+  feedback: { ok: boolean; message: string } | null
   open: (session: EncounterSession) => void
   setStage: (stage: EncounterStage) => void
+  askQuestion: (question: EducationQuestion) => void
+  applyAnswer: (args: {
+    outcome: EncounterEducationOutcome
+    captureBonus: number
+    message: string
+  }) => void
   fail: () => void
   showItemToast: () => void
   hideItemToast: () => void
@@ -25,17 +38,44 @@ function initialState() {
     session: null as EncounterSession | null,
     itemToastVisible: false,
     lastFactKey: null as string | null,
+    question: null as EducationQuestion | null,
+    feedback: null as { ok: boolean; message: string } | null,
   }
 }
 
 export const useEncounterStore = create<EncounterState>((set) => ({
   ...initialState(),
-  open: (session) => set({ stage: 'appear', session }),
+  open: (session) =>
+    set({ stage: 'appear', session, question: null, feedback: null }),
   setStage: (stage) => set({ stage }),
+  askQuestion: (question) =>
+    set({ question, feedback: null, stage: 'question' }),
+  applyAnswer: ({ outcome, captureBonus, message }) =>
+    set((state) => {
+      if (!state.session) return state
+      return {
+        session: {
+          ...state.session,
+          education: outcome,
+          captureBonus,
+        },
+        lastFactKey: outcome.factKey,
+        feedback: { ok: outcome.correct, message },
+        stage: 'feedback',
+      }
+    }),
   fail: () => set({ stage: 'error' }),
   showItemToast: () => set({ itemToastVisible: true }),
   hideItemToast: () => set({ itemToastVisible: false }),
-  close: () => set({ stage: 'idle', session: null }),
+  close: () =>
+    set((state) => ({
+      stage: 'idle',
+      session: null,
+      question: null,
+      feedback: null,
+      lastFactKey: state.lastFactKey,
+      itemToastVisible: state.itemToastVisible,
+    })),
   reset: () => set(initialState()),
 }))
 

@@ -1,8 +1,13 @@
 import { useEffect, useRef } from 'react'
 import { AppearFlash } from '@/components/encounter/AppearFlash'
+import { EducationQuestion } from '@/components/encounter/EducationQuestion'
 import { HandoffStub } from '@/components/encounter/HandoffStub'
 import { EmptyState } from '@/components/EmptyState'
 import { PixelButton } from '@/components/PixelButton'
+import {
+  advanceFromAppear,
+  submitAnswer,
+} from '@/hooks/useEncounterFlow'
 import { getPokemon } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
 import type { PokemonDto } from '@/types/pokemon'
@@ -21,6 +26,8 @@ function resolveSessionPokemon(speciesId: number): PokemonDto | null {
 export function EncounterOverlay() {
   const stage = useEncounterStore((state) => state.stage)
   const session = useEncounterStore((state) => state.session)
+  const question = useEncounterStore((state) => state.question)
+  const feedback = useEncounterStore((state) => state.feedback)
   const dialogRef = useRef<HTMLDivElement | null>(null)
   const pokemon = session ? resolveSessionPokemon(session.speciesId) : null
 
@@ -41,6 +48,8 @@ export function EncounterOverlay() {
   }
 
   const showError = stage === 'error' || !session || !pokemon
+  const showQuestion =
+    (stage === 'question' || stage === 'feedback') && question && pokemon
 
   return (
     <div
@@ -67,7 +76,14 @@ export function EncounterOverlay() {
           <AppearFlash
             pokemon={pokemon}
             rarity={session.rarity}
-            onComplete={() => useEncounterStore.getState().setStage('handoff')}
+            onComplete={advanceFromAppear}
+          />
+        ) : showQuestion ? (
+          <EducationQuestion
+            pokemon={pokemon}
+            question={question}
+            feedback={feedback}
+            onSubmit={submitAnswer}
           />
         ) : stage === 'handoff' ? (
           <HandoffStub
