@@ -1,5 +1,15 @@
-import { describe, expect, it } from 'vitest'
-import { KEY_DIRECTION, primaryDirection } from '@/hooks/usePlayerInput'
+import { act, fireEvent, renderHook } from '@testing-library/react'
+import { afterEach, describe, expect, it, vi } from 'vitest'
+import {
+  KEY_DIRECTION,
+  primaryDirection,
+  usePlayerInput,
+} from '@/hooks/usePlayerInput'
+import { useEncounterStore } from '@/store/encounterStore'
+
+afterEach(() => {
+  useEncounterStore.getState().reset()
+})
 
 describe('KEY_DIRECTION allowlist (MAP-01, T-03-01)', () => {
   it('maps arrow keys to the four directions', () => {
@@ -36,5 +46,26 @@ describe('primaryDirection', () => {
     expect(primaryDirection(['up', 'left'])).toBe('left')
     expect(primaryDirection(['left', 'up'])).toBe('up')
     expect(primaryDirection(['down', 'right', 'up'])).toBe('up')
+  })
+})
+
+describe('usePlayerInput encounter pause', () => {
+  it('drops walk keys without preventing answer input, then restores walking', () => {
+    const { result } = renderHook(() => usePlayerInput())
+    useEncounterStore.setState({ stage: 'appear' })
+    const blocked = new KeyboardEvent('keydown', {
+      code: 'ArrowDown',
+      cancelable: true,
+    })
+    const preventDefault = vi.spyOn(blocked, 'preventDefault')
+
+    act(() => window.dispatchEvent(blocked))
+
+    expect(result.current.heldRef.current).toEqual([])
+    expect(preventDefault).not.toHaveBeenCalled()
+
+    act(() => useEncounterStore.getState().close())
+    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    expect(result.current.heldRef.current).toEqual(['down'])
   })
 })

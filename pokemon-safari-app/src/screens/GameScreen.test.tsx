@@ -2,14 +2,30 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { forestMap } from '@/data/maps/forest'
-import { resetCacheMemoryForTests } from '@/services/pokeapi/cache'
+import {
+  hydrateFromStorage,
+  resetCacheMemoryForTests,
+} from '@/services/pokeapi/cache'
 import { GameScreen } from '@/screens/GameScreen'
 import { HomeScreen } from '@/screens/HomeScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
 import { useUiStore } from '@/store'
+import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
-import { clearPokeCacheKey } from '@/test/pokeapi-test-helpers'
+import {
+  clearPokeCacheKey,
+  makePokemonDto,
+  seedPokeCache,
+} from '@/test/pokeapi-test-helpers'
 import { flushFrames } from '@/test/setup'
+import { setDefaultRngForTests } from '@/utils/rng'
+
+function encounterRng(...values: number[]) {
+  let index = 0
+  return {
+    next: () => values[Math.min(index++, values.length - 1)] ?? 0,
+  }
+}
 
 const forestMock = vi.hoisted(() => ({ corrupt: false }))
 
@@ -87,10 +103,15 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   beforeEach(() => {
     useUiStore.setState({ cacheReady: true })
     useExploreStore.getState().reset()
+    useEncounterStore.getState().reset()
+    seedPokeCache()
+    hydrateFromStorage()
   })
 
   afterEach(() => {
     useExploreStore.getState().reset()
+    useEncounterStore.getState().reset()
+    setDefaultRngForTests(null)
   })
 
   it('renders the Forest label and the Walk controls D-pad instead of the Phase 1 placeholder', () => {
@@ -274,32 +295,92 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     ).toBe(true)
   })
 
-  it('queues exactly one encounter_candidate when stepping onto grass', async () => {
+  it('shows a wild Pokémon, advances to handoff, and returns to the map', async () => {
     // (10, 6) is ground; (10, 5) is grass in the northern patch.
     useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
-    const { container } = renderExplore()
+    setDefaultRngForTests(encounterRng(0, 0))
+    renderExplore()
 
     fireEvent.keyDown(window, { code: 'ArrowUp' })
     await flushFrames(8)
     fireEvent.keyUp(window, { code: 'ArrowUp' })
 
-    const pending = useExploreStore.getState().pendingEncounters
-    expect(pending).toHaveLength(1)
-    expect(pending[0]).toMatchObject({
-      type: 'encounter_candidate',
-      biome: 'forest',
-      x: 10,
-      y: 5,
-    })
+    const dialog = await screen.findByRole('dialog')
+    expect(dialog).toHaveTextContent('A wild p10 appeared!')
+    expect(useExploreStore.getState().pendingEncounters).toEqual([])
 
-    // Phase 4 boundary: grass is visually inert — no encounter UI.
+    expect(
+      await screen.findByRole('heading', { name: 'Ready to throw!' }),
+    ).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: 'Got it' }))
+
     expect(screen.queryByRole('dialog')).toBeNull()
-    expect(screen.queryByRole('alert')).toBeNull()
-    expect(container.textContent ?? '').not.toMatch(
-      /wild|encounter|caught|appeared|poké ball/i,
-    )
-    expect(screen.getByText('Forest')).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+  })
+
+  it('keeps a nothing roll silent', async () => {
+    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    setDefaultRngForTests(encounterRng(0.5))
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('status')).toBeNull()
+  })
+
+  it('shows a non-blocking item toast and keeps the D-pad present', async () => {
+    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    setDefaultRngForTests(encounterRng(0.75))
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+
+    expect(await screen.findByRole('status')).toHaveTextContent('Found an item!')
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+  })
+
+  it('freezes keyboard movement and hides the D-pad while the dialog is open', async () => {
+    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    setDefaultRngForTests(encounterRng(0, 0))
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+    await screen.findByRole('dialog')
+    const frozenTile = useExploreStore.getState().tile
+
+    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowDown' })
+
+    expect(useExploreStore.getState().tile).toEqual(frozenTile)
+    expect(screen.queryByRole('group', { name: 'Walk controls' })).toBeNull()
+  })
+
+  it('shows recovery UI when the rolled species is absent from cache', async () => {
+    seedPokeCache(
+      Array.from({ length: 150 }, (_, index) => makePokemonDto(index + 2)),
+    )
+    hydrateFromStorage()
+    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    setDefaultRngForTests(encounterRng(0, 0))
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+
+    expect(
+      await screen.findByRole('heading', { name: 'That encounter got stuck.' }),
+    ).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: 'Try Again' })).toBeInTheDocument()
   })
 
   it('emits nothing when stepping onto ground', async () => {
@@ -333,15 +414,16 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(useExploreStore.getState().pendingEncounters).toHaveLength(32)
   })
 
-  it('drainEncounters is the Phase 4 read point (FIFO, idempotent)', async () => {
-    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
-    renderExplore()
-
-    fireEvent.keyDown(window, { code: 'ArrowUp' })
-    await flushFrames(8)
-    fireEvent.keyUp(window, { code: 'ArrowUp' })
-
-    expect(useExploreStore.getState().pendingEncounters).toHaveLength(1)
+  it('drainEncounters remains FIFO and idempotent at the store boundary', () => {
+    useExploreStore.getState().pushEncounters([
+      {
+        type: 'encounter_candidate',
+        biome: 'forest',
+        x: 10,
+        y: 5,
+        at: 1,
+      },
+    ])
     const first = useExploreStore.getState().drainEncounters()
     expect(first).toHaveLength(1)
     expect(first[0]).toMatchObject({ type: 'encounter_candidate', x: 10, y: 5 })
