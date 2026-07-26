@@ -108,6 +108,14 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(screen.queryByRole('heading', { name: /^game$/i })).toBeNull()
   })
 
+  it('renders pixelated tile images on the explore surface (MAP-02 visual swap)', () => {
+    renderExplore()
+
+    expect(screen.getByText('Forest')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+    expect(document.querySelectorAll('img.pixelated').length).toBeGreaterThan(0)
+  })
+
   it('walks one tile down on an arrow key and stops once the key is released', async () => {
     renderExplore()
     const spawn = forestMap.spawn
