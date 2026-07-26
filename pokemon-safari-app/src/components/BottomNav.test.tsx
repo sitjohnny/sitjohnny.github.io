@@ -21,14 +21,14 @@ function renderNav() {
 }
 
 describe('BottomNav', () => {
-  it('exposes five accessible links labeled Home, Game, Dex, Pack, Settings', () => {
+  it('exposes four accessible links labeled Home, Game, Dex, Settings', () => {
     const { container } = renderNav()
     const view = within(container)
 
     expect(view.getByRole('link', { name: 'Home' })).toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Game' })).toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Dex' })).toBeInTheDocument()
-    expect(view.getByRole('link', { name: 'Pack' })).toBeInTheDocument()
+    expect(view.queryByRole('link', { name: 'Pack' })).not.toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
 
@@ -67,7 +67,7 @@ describe('BottomNav', () => {
     // jsdom records the attribute but does not implement focus skipping or the
     // IDL `inert` boolean, so the attribute presence is the testable contract.
     expect(nav.hasAttribute('inert')).toBe(true)
-    expect(nav.querySelectorAll('a').length).toBe(5)
+    expect(nav.querySelectorAll('a').length).toBe(4)
   })
 
   it('does not set inert on Main at Home even when encounter stage is non-idle', () => {

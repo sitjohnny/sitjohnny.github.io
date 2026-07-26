@@ -14,7 +14,6 @@ import { BootScreen } from '@/screens/BootScreen'
 import { DexScreen } from '@/screens/DexScreen'
 import { GameScreen } from '@/screens/GameScreen'
 import { HomeScreen } from '@/screens/HomeScreen'
-import { PackScreen } from '@/screens/PackScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
 import { useUiStore } from '@/store'
 
@@ -78,7 +77,6 @@ export function createAppRouter() {
           { path: 'boot', element: <BootScreen /> },
           { path: 'game', element: <GameScreen /> },
           { path: 'dex', element: <DexScreen /> },
-          { path: 'pack', element: <PackScreen /> },
           { path: 'settings', element: <SettingsScreen /> },
         ],
       },

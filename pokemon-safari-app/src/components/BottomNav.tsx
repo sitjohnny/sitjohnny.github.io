@@ -6,7 +6,6 @@ const NAV_ITEMS = [
   { to: '/', label: 'Home', end: true, icon: HomeIcon },
   { to: '/game', label: 'Game', end: false, icon: GameIcon },
   { to: '/dex', label: 'Dex', end: false, icon: DexIcon },
-  { to: '/pack', label: 'Pack', end: false, icon: PackIcon },
   { to: '/settings', label: 'Settings', end: false, icon: SettingsIcon },
 ] as const
 
@@ -110,23 +109,6 @@ function DexIcon() {
     >
       <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 0-3 3V4z" />
       <path d="M8 4v16" />
-    </svg>
-  )
-}
-
-function PackIcon() {
-  return (
-    <svg aria-hidden="true"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="square"
-    >
-      <path d="M6 8h12l1 12H5L6 8z" />
-      <path d="M9 8V6a3 3 0 0 1 6 0v2" />
     </svg>
   )
 }

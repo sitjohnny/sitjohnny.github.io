@@ -35,15 +35,12 @@ describe('App route smoke', () => {
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
   })
 
-  it('reaches Dex, Pack, and Settings via BottomNav', async () => {
+  it('reaches Dex and Settings via BottomNav', async () => {
     const user = userEvent.setup()
     render(<App />)
 
     await user.click(screen.getByRole('link', { name: 'Dex' }))
     expect(screen.getByRole('heading', { name: /pokédex/i })).toBeInTheDocument()
-
-    await user.click(screen.getByRole('link', { name: 'Pack' }))
-    expect(screen.getByRole('heading', { name: /^pack$/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('link', { name: 'Settings' }))
     expect(screen.getByRole('heading', { name: /^settings$/i })).toBeInTheDocument()

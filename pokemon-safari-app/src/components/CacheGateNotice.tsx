@@ -3,7 +3,7 @@ import { EmptyState } from '@/components/EmptyState'
 
 /**
  * Game-only cache gate (D-02). Shown instead of the explore surface until the
- * Gen 1 cache is ready; Home, Dex, Pack, and Settings stay reachable.
+ * Gen 1 cache is ready; Home, Dex, and Settings stay reachable.
  */
 export function CacheGateNotice() {
   return (
