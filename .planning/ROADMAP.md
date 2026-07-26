@@ -168,27 +168,27 @@ Plans:
 4. Player can retry a failed capture, and after three fails the Pokémon flees with kind, non-punishing feedback
 5. A child can reliably catch common Pokémon while legendaries remain a genuine chase
 
-**Plans:** 4/4 plans complete
+**Plans:** 5/5 plans complete
 Plans:
 **Wave 1**
 
 - [x] 05-01-PLAN.md — Wave 0 tests + pure capture/timing math + config (CATCH-02/03/05)
 
-**Wave 2** *(blocked on Wave 1 completion)*
+**Wave 2** _(blocked on Wave 1 completion)_
 
 - [x] 05-02-PLAN.md — Happy-path catch: timing → roll → shake → Gotcha (CATCH-02/03)
 
-**Wave 3** *(blocked on Wave 2 completion)*
+**Wave 3** _(blocked on Wave 2 completion)_
 
 - [x] 05-03-PLAN.md — Timing-bar ping-pong, rarity bands, Capture lock (CATCH-02)
 
-**Wave 4** *(blocked on Wave 3 completion)*
+**Wave 4** _(blocked on Wave 3 completion)_
 
 - [x] 05-04-PLAN.md — Retry, flee after 3 fails, recap routing (CATCH-04/05)
 
 **Wave 5** _(gap closure — VERIFICATION D-14 blocker)_
 
-- [ ] 05-05-PLAN.md — Fix GradeFlash→BallShake order across repeated throws via keyed ShakeSequence; registerThrow stage guard (CATCH-02/04)
+- [x] 05-05-PLAN.md — Fix GradeFlash→BallShake order across repeated throws via keyed ShakeSequence; registerThrow stage guard (CATCH-02/04)
 
 **UI hint**: yes
 
@@ -250,8 +250,8 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 1. App Shell, Subpath & Site Integration | 3/3            | Complete    | 2026-07-25 |
 | 2. Pokémon Data Layer                    | 4/4            | Complete    | 2026-07-25 |
 | 3. Exploration                           | 6/6            | UAT pending | -          |
-| 4. Encounters                            | 6/6 | Complete   | 2026-07-26 |
-| 5. Capture Flow                          | 4/4 | Complete   | 2026-07-26 |
+| 4. Encounters                            | 6/6            | Complete    | 2026-07-26 |
+| 5. Capture Flow                          | 5/5 | Complete   | 2026-07-26 |
 | 6. Pokédex                               | 0/TBD          | Not started | -          |
 | 7. Persistence, Unlocks, Items & Daily   | 0/TBD          | Not started | -          |
 | 8. Audio, Feedback & Polish              | 0/TBD          | Not started | -          |

@@ -3,15 +3,15 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 05-04-PLAN.md
-last_updated: "2026-07-26T14:28:05.440Z"
-last_activity: 2026-07-26 -- Completed 05-04-PLAN.md
+stopped_at: Completed 05-05-PLAN.md
+last_updated: "2026-07-26T14:42:43.167Z"
+last_activity: 2026-07-26 -- Phase 05 execution started
 progress:
   total_phases: 8
   completed_phases: 5
-  total_plans: 23
-  completed_plans: 23
-  percent: 100
+  total_plans: 24
+  completed_plans: 24
+  percent: 63
 ---
 
 # Project State
@@ -25,10 +25,10 @@ See: .planning/PROJECT.md (updated 2026-07-25)
 
 ## Current Position
 
-Phase: 05 (capture-flow) — VERIFYING
-Plan: 4 of 4
-Status: Ready to execute
-Last activity: 2026-07-26 -- Completed 05-04-PLAN.md
+Phase: 05 (capture-flow) — COMPLETE
+Plan: 5 of 5
+Status: All plans executed (gap closure 05-05 done)
+Last activity: 2026-07-26 -- Completed 05-05-PLAN.md (D-14 gap closure)
 
 Progress: [██████████] 100%
 
@@ -80,6 +80,7 @@ Progress: [██████████] 100%
 | Phase 05 P02 | 5min | 2 tasks | 11 files |
 | Phase 05 P03 | 3min | 2 tasks | 5 files |
 | Phase 05 P04 | 4min | 2 tasks | 11 files |
+| Phase 05 P05 | 10min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -166,6 +167,8 @@ Recent decisions affecting current work:
 - [Phase 05]: failBeat is a dedicated EncounterStage with config-timed hold — no Try Again gate
 - [Phase 05]: onShakeComplete replaces resolveAfterShake; registerThrow remains sole attemptsUsed writer
 - [Phase 05]: FleeCard copy from captureCopy; GameScreen miss stubs use rng.next()===1 so 100% chance still fails
+- [Phase 05]: GradeFlash->BallShake handoff owned by keyed ShakeSequence child (remount per throw) — immune to gradeFlashDone leak (D-14/WR-01)
+- [Phase 05]: registerThrow guarded to stage==='timing' so stray calls cannot inflate attemptsUsed (WR-03/T-05-04)
 
 ### Pending Todos
 
@@ -187,6 +190,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26T14:12:37.806Z
+Last session: 2026-07-26T14:42:05.247Z
 Stopped at: Completed 05-04-PLAN.md
 Resume file: None
