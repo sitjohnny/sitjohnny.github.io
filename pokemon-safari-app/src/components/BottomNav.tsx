@@ -1,4 +1,4 @@
-import { NavLink } from 'react-router-dom'
+import { NavLink, useLocation } from 'react-router-dom'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useUiStore } from '@/store'
 
@@ -13,11 +13,14 @@ const NAV_ITEMS = [
 export function BottomNav() {
   const setLastRoute = useUiStore((s) => s.setLastRoute)
   const encounterActive = useEncounterStore((s) => s.stage !== 'idle')
+  const { pathname } = useLocation()
+  const isGameRoute = pathname === '/game'
+  const navInert = isGameRoute && encounterActive
 
   return (
     <nav
       aria-label="Main"
-      inert={encounterActive ? true : undefined}
+      inert={navInert ? true : undefined}
       className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-[480px] bg-secondary pb-[env(safe-area-inset-bottom)] text-on-secondary"
     >
       <ul className="flex items-stretch justify-around gap-1 px-1 pt-1">

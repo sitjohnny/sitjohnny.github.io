@@ -154,6 +154,7 @@ export function useEncounterFlow(
         clearTimeout(toastTimer.current)
       }
       clearFeedbackTimer()
+      useEncounterStore.getState().close()
     }
   }, [])
 
