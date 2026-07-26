@@ -21,21 +21,20 @@ function renderNav() {
 }
 
 describe('BottomNav', () => {
-  it('exposes four accessible links labeled Home, Game, Dex, Settings', () => {
+  it('exposes three accessible links labeled Game, Dex, Settings', () => {
     const { container } = renderNav()
     const view = within(container)
 
-    expect(view.getByRole('link', { name: 'Home' })).toBeInTheDocument()
+    expect(view.queryByRole('link', { name: 'Home' })).not.toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Game' })).toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Dex' })).toBeInTheDocument()
-    expect(view.queryByRole('link', { name: 'Pack' })).not.toBeInTheDocument()
     expect(view.getByRole('link', { name: 'Settings' })).toBeInTheDocument()
   })
 
   it('applies touch-target class on nav controls', () => {
     const { container } = renderNav()
-    const home = within(container).getByRole('link', { name: 'Home' })
-    expect(home.className).toMatch(/touch-target/)
+    const game = within(container).getByRole('link', { name: 'Game' })
+    expect(game.className).toMatch(/touch-target/)
   })
 
   it('leaves the Main nav without inert and focusable while the encounter is idle', async () => {
@@ -49,7 +48,7 @@ describe('BottomNav', () => {
 
     await user.tab()
     expect(document.activeElement).toBe(
-      within(container).getByRole('link', { name: 'Home' }),
+      within(container).getByRole('link', { name: 'Game' }),
     )
   })
 
@@ -67,20 +66,18 @@ describe('BottomNav', () => {
     // jsdom records the attribute but does not implement focus skipping or the
     // IDL `inert` boolean, so the attribute presence is the testable contract.
     expect(nav.hasAttribute('inert')).toBe(true)
-    expect(nav.querySelectorAll('a').length).toBe(4)
+    expect(nav.querySelectorAll('a').length).toBe(3)
   })
 
-  it('does not set inert on Main at Home even when encounter stage is non-idle', () => {
+  it('does not set inert on Main at Settings even when encounter stage is non-idle', () => {
     useEncounterStore.setState({ stage: 'question' })
     const { container } = render(
-      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/']}>
+      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/settings']}>
         <BottomNav />
       </MemoryRouter>,
     )
     const nav = within(container).getByLabelText('Main')
-
     expect(nav.hasAttribute('inert')).toBe(false)
-    expect(nav).not.toHaveAttribute('inert')
   })
 
   it('sets inert on Main when dexSheetOpen is true on /dex', () => {

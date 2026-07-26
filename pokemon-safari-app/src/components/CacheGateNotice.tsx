@@ -3,14 +3,14 @@ import { EmptyState } from '@/components/EmptyState'
 
 /**
  * Game-only cache gate (D-02). Shown instead of the explore surface until the
- * Gen 1 cache is ready; Home, Dex, and Settings stay reachable.
+ * Gen 1 cache is ready; Dex and Settings stay reachable.
  */
 export function CacheGateNotice() {
   return (
     <section className="flex flex-1 flex-col items-center justify-center gap-6 px-4 py-8">
       <EmptyState
         heading="Safari is still packing…"
-        body="Pokémon data is still loading. Tap below to watch progress, or visit Home and Settings anytime."
+        body="Pokémon data is still loading. Tap below to watch progress, or visit Settings anytime."
       />
       <Link
         to="/boot"

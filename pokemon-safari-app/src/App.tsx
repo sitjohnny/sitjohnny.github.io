@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   createHashRouter,
+  Navigate,
   RouterProvider,
   type RouterProviderProps,
 } from 'react-router-dom'
@@ -13,7 +14,6 @@ import {
 import { BootScreen } from '@/screens/BootScreen'
 import { DexScreen } from '@/screens/DexScreen'
 import { GameScreen } from '@/screens/GameScreen'
-import { HomeScreen } from '@/screens/HomeScreen'
 import { SettingsScreen } from '@/screens/SettingsScreen'
 import { useUiStore } from '@/store'
 
@@ -73,7 +73,7 @@ export function createAppRouter() {
         path: '/',
         element: <AppShell />,
         children: [
-          { index: true, element: <HomeScreen /> },
+          { index: true, element: <Navigate to="game" replace /> },
           { path: 'boot', element: <BootScreen /> },
           { path: 'game', element: <GameScreen /> },
           { path: 'dex', element: <DexScreen /> },

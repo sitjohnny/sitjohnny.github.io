@@ -12,7 +12,7 @@ afterEach(() => {
 })
 
 beforeEach(() => {
-  // Warm cache so smoke tests land on Home (skip Boot — D-03); cold-open covered elsewhere.
+  // Warm cache so smoke tests skip Boot (D-03) and land on Game via index redirect.
   seedPokeCache()
   hydrateFromStorage()
   window.history.replaceState(null, '', '/')
@@ -21,17 +21,9 @@ beforeEach(() => {
 })
 
 describe('App route smoke', () => {
-  it('shows Home brand text Pokémon Safari', () => {
+  it('lands on Game with Forest and walk controls', async () => {
     render(<App />)
-    expect(screen.getByText('Pokémon Safari')).toBeInTheDocument()
-  })
-
-  it('navigates toward Game via Start Safari', async () => {
-    const user = userEvent.setup()
-    render(<App />)
-
-    await user.click(screen.getByRole('link', { name: /start safari/i }))
-    expect(screen.getByText('Forest')).toBeInTheDocument()
+    expect(await screen.findByText('Forest')).toBeInTheDocument()
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
   })
 

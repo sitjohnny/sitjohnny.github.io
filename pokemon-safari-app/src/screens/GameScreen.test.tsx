@@ -8,8 +8,6 @@ import { WORLD_SPAWN } from '@/data/worldConfig'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { findStepOnto } from '@/test/world-step-helpers'
 import { GameScreen } from '@/screens/GameScreen'
-import { HomeScreen } from '@/screens/HomeScreen'
-import { SettingsScreen } from '@/screens/SettingsScreen'
 import { useUiStore } from '@/store'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
@@ -57,20 +55,6 @@ describe('GameScreen cache gate (D-02)', () => {
     expect(cta).toHaveAttribute('href', expect.stringContaining('/boot'))
   })
 
-  it('Home and Settings remain reachable outside the Game-only gate', () => {
-    render(
-      <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/']}>
-        <Routes>
-          <Route path="/" element={<HomeScreen />} />
-          <Route path="/settings" element={<SettingsScreen />} />
-          <Route path="/game" element={<GameScreen />} />
-        </Routes>
-      </MemoryRouter>,
-    )
-
-    expect(screen.getByText('Pokémon Safari')).toBeInTheDocument()
-    expect(screen.queryByText('Safari is still packing…')).not.toBeInTheDocument()
-  })
 })
 
 function renderExplore() {

@@ -272,22 +272,6 @@
   }
 }
 
-.home-meadow {
-  background: linear-gradient(180deg, #e3f2c9 0%, #c8e6a0 100%);
-}
-
-@keyframes home-brand-fade {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-.home-brand-fade {
-  animation: home-brand-fade 200ms ease-out both;
-}
 
 @media (prefers-reduced-motion: reduce) {
   *,
@@ -297,10 +281,6 @@
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
-  }
-
-  .home-brand-fade {
-    animation: none;
   }
 
   .encounter-flash {

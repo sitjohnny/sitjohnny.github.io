@@ -3,7 +3,6 @@ import { useEncounterStore } from '@/store/encounterStore'
 import { useUiStore } from '@/store'
 
 const NAV_ITEMS = [
-  { to: '/', label: 'Home', end: true, icon: HomeIcon },
   { to: '/game', label: 'Game', end: false, icon: GameIcon },
   { to: '/dex', label: 'Dex', end: false, icon: DexIcon },
   { to: '/settings', label: 'Settings', end: false, icon: SettingsIcon },
@@ -58,23 +57,6 @@ export function BottomNav() {
         ))}
       </ul>
     </nav>
-  )
-}
-
-function HomeIcon() {
-  return (
-    <svg aria-hidden="true"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="square"
-    >
-      <path d="M3 10.5 12 3l9 7.5" />
-      <path d="M5 9.5V21h14V9.5" />
-    </svg>
   )
 }
 
