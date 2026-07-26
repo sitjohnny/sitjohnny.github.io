@@ -23,4 +23,11 @@ export type CacheEnvelopeV2 = {
   pokemon: PokemonDto[]
 }
 
-export type CacheEnvelope = CacheEnvelopeV2
+/** Current poke-cache envelope (species meta + full DTO validation at CACHE_VERSION 3). */
+export type CacheEnvelopeV3 = {
+  version: 3
+  fetchedAt: string
+  pokemon: PokemonDto[]
+}
+
+export type CacheEnvelope = CacheEnvelopeV3

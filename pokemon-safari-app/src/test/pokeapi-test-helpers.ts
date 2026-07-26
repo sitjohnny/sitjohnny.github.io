@@ -50,7 +50,7 @@ export function makePokemonDto(
   }
 }
 
-/** Write a valid CacheEnvelopeV2 to CACHE_KEY only — never touches SAVE_KEY. */
+/** Write a valid CacheEnvelope (v3) to CACHE_KEY only — never touches SAVE_KEY. */
 export function seedPokeCache(
   pokemon: TestPokemonDto[] = Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
   overrides: Partial<TestCacheEnvelope> = {},
