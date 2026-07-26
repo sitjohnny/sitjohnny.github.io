@@ -14,7 +14,8 @@ const SEEDED_SPECIES = 1
 const BALL_SHAKE_TOTAL_MS =
   2 * encounterTimingMs.shakeOnce +
   1 * encounterTimingMs.shakeGap +
-  encounterTimingMs.shakeResolve
+  encounterTimingMs.shakeOpen +
+  encounterTimingMs.shakeEscapeHold
 
 /** Drive the store to a live timing-stage session for the seeded species. */
 function openTimingSession(): void {

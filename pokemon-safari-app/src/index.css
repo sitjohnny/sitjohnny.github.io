@@ -129,15 +129,6 @@
     color: var(--color-text);
   }
 
-  .ball-shake__sprite {
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    width: 64px;
-    height: 64px;
-    object-fit: contain;
-    display: block;
-  }
-
   .ball-rock {
     transform-origin: 50% 100%;
     animation-name: ball-rock;

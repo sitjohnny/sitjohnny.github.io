@@ -12,11 +12,7 @@ type BallShakeProps = {
   onComplete: () => void
 }
 
-type Phase =
-  | 'shaking'
-  | 'resolve-caught'
-  | 'resolve-mid-open'
-  | 'resolve-full-open'
+type Phase = 'shaking' | 'resolve-caught' | 'resolve-mid-open' | 'resolve-full-open'
 
 function shakeCountFor(chance: number): 1 | 2 | 3 {
   if (chance >= 0.75) return 3
@@ -39,9 +35,10 @@ export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
   const shakes = shakeCountFor(chance)
   const [phase, setPhase] = useState<Phase>('shaking')
   /** While shaking (and not reduced), true only during each `shakeOnce` window. */
-  const [rocking, setRocking] = useState(() => !prefersReducedMotion())
+  const [rocking, setRocking] = useState(() => !reducedMotion)
 
   useEffect(() => {
+    setPhase('shaking')
     let cancelled = false
     const timers: number[] = []
 
@@ -91,7 +88,7 @@ export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
         schedule(once, () => {
           remaining -= 1
           if (remaining <= 0) beginResolve()
-          else runShakeCycle()
+          else schedule(gap, runShakeCycle)
         })
         return
       }
@@ -123,7 +120,7 @@ export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
       <div
         aria-hidden="true"
         className={[
-          'ball-shake relative flex h-16 w-16 items-center justify-center',
+          'relative flex h-16 w-16 items-center justify-center',
           rocking ? 'ball-rock' : '',
         ]
           .filter(Boolean)
@@ -142,17 +139,14 @@ export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
           src={spriteFor(phase)}
           alt=""
           draggable={false}
-          className="ball-shake__sprite h-16 w-16"
+          className="pixelated h-16 w-16"
         />
         {phase === 'resolve-caught'
           ? [0, 1, 2, 3].map((i) => (
               <span
                 key={i}
                 data-sparkle={i}
-                className={[
-                  'ball-sparkle',
-                  reducedMotion ? 'ball-sparkle--static' : '',
-                ]
+                className={['ball-sparkle', reducedMotion ? 'ball-sparkle--static' : '']
                   .filter(Boolean)
                   .join(' ')}
               />
