@@ -2,6 +2,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { cleanup, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { BottomNav } from '@/components/BottomNav'
 import { encounterTimingMs } from '@/data/rates'
 import { forestMap } from '@/data/maps/forest'
 import {
@@ -99,6 +100,30 @@ function renderExplore() {
       <GameScreen />
     </MemoryRouter>,
   )
+}
+
+function renderExploreWithNav() {
+  return render(
+    <MemoryRouter basename="/pokemon-safari" initialEntries={['/pokemon-safari/game']}>
+      <GameScreen />
+      <BottomNav />
+    </MemoryRouter>,
+  )
+}
+
+async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>) {
+  useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+  setDefaultRngForTests(encounterRng(0, 0, 0, 0.2, 0.3))
+
+  fireEvent.keyDown(window, { code: 'ArrowUp' })
+  await flushFrames(8)
+  fireEvent.keyUp(window, { code: 'ArrowUp' })
+
+  await screen.findByRole('dialog')
+  const prompt = await screen.findByText(/What is \d × \d\?/)
+  const match = prompt.textContent?.match(/What is (\d) × (\d)\?/)
+  expect(match).not.toBeNull()
+  return { a: Number(match![1]), b: Number(match![2]), user }
 }
 
 describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
@@ -457,6 +482,126 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
     expect(screen.queryByText(/Map didn’t load/)).toBeNull()
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+  })
+
+  it('shows Quick recap after a wrong answer and Continue returns to the map', async () => {
+    const user = userEvent.setup()
+    renderExplore()
+    const { a, b } = await walkIntoPokemonEncounter(user)
+
+    await user.type(screen.getByLabelText('Your answer'), String(a * b + 1))
+    await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Ready to throw!',
+        timeout: encounterTimingMs.feedbackHold + 1000,
+      }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Got it' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'Quick recap' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(`${a} × ${b} = ${a * b}.`)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+
+    const tile = useExploreStore.getState().tile
+    fireEvent.keyDown(window, { code: 'ArrowDown' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowDown' })
+    expect(useExploreStore.getState().tile).not.toEqual(tile)
+  })
+
+  it('skips Quick recap after a correct answer and returns straight to the map', async () => {
+    const user = userEvent.setup()
+    renderExplore()
+    const { a, b } = await walkIntoPokemonEncounter(user)
+
+    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
+
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Ready to throw!',
+        timeout: encounterTimingMs.feedbackHold + 1000,
+      }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Got it' }))
+
+    expect(screen.queryByRole('heading', { name: 'Quick recap' })).toBeNull()
+    expect(screen.queryByText(/Quick recap/)).toBeNull()
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+  })
+
+  it('marks Main nav inert while the encounter is open and clears it after close', async () => {
+    const user = userEvent.setup()
+    renderExploreWithNav()
+    const { a, b } = await walkIntoPokemonEncounter(user)
+
+    const navOpen = document.querySelector('nav[aria-label="Main"]')
+    expect(navOpen).not.toBeNull()
+    expect(navOpen!.hasAttribute('inert')).toBe(true)
+
+    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
+    expect(
+      await screen.findByRole('heading', {
+        name: 'Ready to throw!',
+        timeout: encounterTimingMs.feedbackHold + 1000,
+      }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Got it' }))
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).toBeNull()
+    })
+    const navClosed = document.querySelector('nav[aria-label="Main"]')
+    expect(navClosed).not.toBeNull()
+    expect(navClosed!.hasAttribute('inert')).toBe(false)
+  })
+
+  it('completes the wrong-answer loop to Quick recap under prefers-reduced-motion', async () => {
+    const originalMatchMedia = window.matchMedia
+    window.matchMedia = ((query: string) => ({
+      matches: query.includes('prefers-reduced-motion'),
+      media: query,
+      onchange: null,
+      addListener: () => {},
+      removeListener: () => {},
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      dispatchEvent: () => false,
+    })) as typeof window.matchMedia
+
+    try {
+      const user = userEvent.setup()
+      renderExplore()
+      const { a, b } = await walkIntoPokemonEncounter(user)
+
+      await user.type(screen.getByLabelText('Your answer'), String(a * b + 1))
+      await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
+
+      expect(
+        await screen.findByRole('heading', {
+          name: 'Ready to throw!',
+          timeout: encounterTimingMs.feedbackHold + 1000,
+        }),
+      ).toBeInTheDocument()
+      await user.click(screen.getByRole('button', { name: 'Got it' }))
+
+      expect(
+        await screen.findByRole('heading', { name: 'Quick recap' }),
+      ).toBeInTheDocument()
+      expect(screen.getByText(`${a} × ${b} = ${a * b}.`)).toBeInTheDocument()
+    } finally {
+      window.matchMedia = originalMatchMedia
+    }
   })
 })
 
