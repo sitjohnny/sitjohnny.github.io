@@ -663,5 +663,68 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       window.matchMedia = originalMatchMedia
     }
   })
+
+  it('shows fail beat then kind flee after three misses — no Run CTA (CATCH-04)', async () => {
+    const user = userEvent.setup()
+    const step = setupGrassApproach()
+    // outcome, species, pool, fact, feedback, then three always-miss catch rolls
+    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 0.999, 0.999, 0.999))
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: arrowFor(step.dir) })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: arrowFor(step.dir) })
+
+    const prompt = await screen.findByText(/What is \d+ × \d+\?/)
+    const match = prompt.textContent?.match(/What is (\d+) × (\d+)\?/)
+    expect(match).not.toBeNull()
+    const a = Number(match![1])
+    const b = Number(match![2])
+    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'Capture',
+        timeout: encounterTimingMs.feedbackHold + 1000,
+      }),
+    ).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Capture' }))
+
+    expect(
+      await screen.findByText('Oh! It broke free!', {}, { timeout: 8000 }),
+    ).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Run$/i })).toBeNull()
+
+    expect(
+      await screen.findByRole('button', {
+        name: 'Capture',
+        timeout: encounterTimingMs.failBeat + 2000,
+      }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Capture' }))
+
+    expect(
+      await screen.findByText('Oh! It broke free!', {}, { timeout: 8000 }),
+    ).toBeInTheDocument()
+    expect(
+      await screen.findByRole('button', {
+        name: 'Capture',
+        timeout: encounterTimingMs.failBeat + 2000,
+      }),
+    ).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Capture' }))
+
+    expect(
+      await screen.findByRole('heading', { name: 'It got away!' }, { timeout: 8000 }),
+    ).toBeInTheDocument()
+    expect(screen.getByText(/That’s okay — you’ll find another!|That's okay — you'll find another!/)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Run$/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /Try Again/i })).toBeNull()
+
+    await user.click(screen.getByRole('button', { name: 'Continue' }))
+    expect(screen.queryByRole('dialog')).toBeNull()
+  })
 })
 

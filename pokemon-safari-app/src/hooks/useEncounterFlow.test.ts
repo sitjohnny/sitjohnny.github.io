@@ -1,6 +1,7 @@
 import { createElement, useEffect } from 'react'
 import { act, cleanup, render, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { captureCopy } from '@/data/educationConfig'
 import { biomeEncounterTables } from '@/data/encounterTables'
 import { educationCaptureBonus, encounterTimingMs } from '@/data/rates'
 import { allDoubleDigitFacts, allFacts } from '@/game/education/adaptiveLearning'
@@ -12,10 +13,15 @@ import {
 import {
   advanceFromAppear,
   capture,
+  continueFromFlee,
   continueFromResult,
+  resolveAfterShake,
   submitAnswer,
   useEncounterFlow,
 } from '@/hooks/useEncounterFlow'
+
+/** Task 2 renames resolveAfterShake → onShakeComplete; alias keeps RED assertions on the live stub. */
+const onShakeComplete = resolveAfterShake
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
@@ -416,10 +422,172 @@ describe('useEncounterFlow', () => {
     expect(useEncounterStore.getState().stage).toBe('recap')
   })
 
-  // 05-04 will unskip — retry/flee vertical slice
-  describe.skip('retry and flee (05-04)', () => {
-    it('three fails advance to flee', () => {
-      expect(true).toBe(false)
+  describe('retry and flee (05-04)', () => {
+    /** Force a failed throw without relying on catch rng (registerThrow is the single writer). */
+    function failThrow(): void {
+      useEncounterStore.getState().registerThrow({
+        grade: 'miss',
+        caught: false,
+        chance: 0.1,
+      })
+    }
+
+    it('three consecutive fails reach flee with attemptsUsed === 3', async () => {
+      await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+      vi.useFakeTimers()
+
+      for (let n = 1; n <= 3; n += 1) {
+        act(() => {
+          failThrow()
+        })
+        expect(useEncounterStore.getState().stage).toBe('shake')
+        act(() => {
+          onShakeComplete()
+        })
+        if (n < 3) {
+          // Fail beat holds before remounting timing (D-26) — not immediate startTiming.
+          expect(useEncounterStore.getState().stage).not.toBe('timing')
+          expect(useEncounterStore.getState().stage).not.toBe('flee')
+          act(() => {
+            vi.advanceTimersByTime(encounterTimingMs.failBeat)
+          })
+          expect(useEncounterStore.getState().stage).toBe('timing')
+          expect(useEncounterStore.getState().session?.attemptsUsed).toBe(n)
+        }
+      }
+
+      expect(useEncounterStore.getState().stage).toBe('flee')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(3)
+      expect(captureCopy.fleeHeading).toBe('It got away!')
+      expect(captureCopy.fleeBody).toMatch(/you’ll find another|you'll find another/)
+    })
+
+    it('after first fail remounts timing with a different sweetSpot (D-12)', async () => {
+      await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+      vi.useFakeTimers()
+      const priorSpot = useEncounterStore.getState().session!.sweetSpot
+
+      act(() => {
+        failThrow()
+      })
+      act(() => {
+        onShakeComplete()
+      })
+      act(() => {
+        vi.advanceTimersByTime(encounterTimingMs.failBeat)
+      })
+
+      const after = useEncounterStore.getState()
+      expect(after.stage).toBe('timing')
+      expect(after.session?.attemptsUsed).toBe(1)
+      expect(after.session?.sweetSpot).not.toBe(priorSpot)
+      expect(captureCopy.failBeat).toBe('Oh! It broke free!')
+    })
+
+    it('continueFromFlee routes to recap when education was wrong (D-29)', async () => {
+      await openPokemonAppear(sequenceRng(0, 0, 0))
+      vi.useFakeTimers()
+      act(() => {
+        advanceFromAppear()
+      })
+      const asked = useEncounterStore.getState().question!
+      act(() => {
+        submitAnswer(String(asked.expected + 1))
+      })
+      act(() => {
+        vi.advanceTimersByTime(encounterTimingMs.feedbackHold)
+      })
+      expect(useEncounterStore.getState().stage).toBe('timing')
+
+      for (let n = 0; n < 3; n += 1) {
+        act(() => {
+          failThrow()
+        })
+        act(() => {
+          onShakeComplete()
+        })
+        if (n < 2) {
+          act(() => {
+            vi.advanceTimersByTime(encounterTimingMs.failBeat)
+          })
+        }
+      }
+      expect(useEncounterStore.getState().stage).toBe('flee')
+
+      act(() => {
+        continueFromFlee()
+      })
+      expect(useEncounterStore.getState().stage).toBe('recap')
+    })
+
+    it('continueFromFlee closes when education was correct (D-29)', async () => {
+      await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+      vi.useFakeTimers()
+
+      for (let n = 0; n < 3; n += 1) {
+        act(() => {
+          failThrow()
+        })
+        act(() => {
+          onShakeComplete()
+        })
+        if (n < 2) {
+          act(() => {
+            vi.advanceTimersByTime(encounterTimingMs.failBeat)
+          })
+        }
+      }
+      expect(useEncounterStore.getState().stage).toBe('flee')
+
+      act(() => {
+        continueFromFlee()
+      })
+      expect(useEncounterStore.getState().stage).toBe('idle')
+    })
+
+    it('capture is a no-op during shake and flee', async () => {
+      await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+      act(() => {
+        failThrow()
+      })
+      expect(useEncounterStore.getState().stage).toBe('shake')
+      const duringShake = useEncounterStore.getState().session
+      act(() => {
+        capture(0.5)
+      })
+      expect(useEncounterStore.getState().stage).toBe('shake')
+      expect(useEncounterStore.getState().session).toEqual(duringShake)
+
+      vi.useFakeTimers()
+      act(() => {
+        onShakeComplete()
+      })
+      // First fail → fail beat → timing; push two more fails to flee
+      act(() => {
+        vi.advanceTimersByTime(encounterTimingMs.failBeat)
+      })
+      act(() => {
+        failThrow()
+      })
+      act(() => {
+        onShakeComplete()
+      })
+      act(() => {
+        vi.advanceTimersByTime(encounterTimingMs.failBeat)
+      })
+      act(() => {
+        failThrow()
+      })
+      act(() => {
+        onShakeComplete()
+      })
+      expect(useEncounterStore.getState().stage).toBe('flee')
+      const duringFlee = useEncounterStore.getState().session
+      act(() => {
+        capture(0.5)
+      })
+      expect(useEncounterStore.getState().stage).toBe('flee')
+      expect(useEncounterStore.getState().session).toEqual(duringFlee)
     })
   })
 })
