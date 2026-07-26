@@ -185,4 +185,79 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
 
     expect(useExploreStore.getState().tile).toEqual(before)
   })
+
+  it('queues exactly one encounter_candidate when stepping onto grass', async () => {
+    // (10, 6) is ground; (10, 5) is grass in the northern patch.
+    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    const { container } = renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+
+    const pending = useExploreStore.getState().pendingEncounters
+    expect(pending).toHaveLength(1)
+    expect(pending[0]).toMatchObject({
+      type: 'encounter_candidate',
+      biome: 'forest',
+      x: 10,
+      y: 5,
+    })
+
+    // Phase 4 boundary: grass is visually inert — no encounter UI.
+    expect(screen.queryByRole('dialog')).toBeNull()
+    expect(screen.queryByRole('alert')).toBeNull()
+    expect(container.textContent ?? '').not.toMatch(
+      /wild|encounter|caught|appeared|poké ball/i,
+    )
+    expect(screen.getByText('Forest')).toBeInTheDocument()
+    expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
+  })
+
+  it('emits nothing when stepping onto ground', async () => {
+    // Spawn (10, 7) → walk up onto (10, 6) ground.
+    useExploreStore.setState({
+      tile: { ...forestMap.spawn },
+      facing: 'up',
+      moving: false,
+      pendingEncounters: [],
+    })
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+
+    expect(useExploreStore.getState().tile).toEqual({ x: 10, y: 6 })
+    expect(useExploreStore.getState().pendingEncounters).toEqual([])
+  })
+
+  it('never lets pendingEncounters grow past 32', () => {
+    const events = Array.from({ length: 40 }, (_, i) => ({
+      type: 'encounter_candidate' as const,
+      biome: 'forest' as const,
+      x: i,
+      y: 0,
+      at: i,
+    }))
+    useExploreStore.getState().pushEncounters(events)
+    expect(useExploreStore.getState().pendingEncounters.length).toBeLessThanOrEqual(32)
+    expect(useExploreStore.getState().pendingEncounters).toHaveLength(32)
+  })
+
+  it('drainEncounters is the Phase 4 read point (FIFO, idempotent)', async () => {
+    useExploreStore.setState({ tile: { x: 10, y: 6 }, facing: 'up', moving: false })
+    renderExplore()
+
+    fireEvent.keyDown(window, { code: 'ArrowUp' })
+    await flushFrames(8)
+    fireEvent.keyUp(window, { code: 'ArrowUp' })
+
+    expect(useExploreStore.getState().pendingEncounters).toHaveLength(1)
+    const first = useExploreStore.getState().drainEncounters()
+    expect(first).toHaveLength(1)
+    expect(first[0]).toMatchObject({ type: 'encounter_candidate', x: 10, y: 5 })
+    expect(useExploreStore.getState().pendingEncounters).toEqual([])
+    expect(useExploreStore.getState().drainEncounters()).toEqual([])
+  })
 })
