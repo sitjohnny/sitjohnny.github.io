@@ -44,7 +44,7 @@ beforeEach(() => {
 })
 
 describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
-  it('writes CacheEnvelope version 2 with 151 DTOs to CACHE_KEY only', async () => {
+  it('writes CacheEnvelope version 3 with 151 DTOs to CACHE_KEY only', async () => {
     stubPokeApiFetch()
     localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, marker: 'keep-me' }))
 
@@ -56,7 +56,7 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
       version: number
       pokemon: unknown[]
     }
-    expect(envelope.version).toBe(2)
+    expect(envelope.version).toBe(3)
     expect(envelope.pokemon).toHaveLength(151)
     expect(localStorage.getItem(SAVE_KEY)).toContain('keep-me')
   })
@@ -110,7 +110,7 @@ describe('version mismatch (D-10)', () => {
     seedPokeCache(
       Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
       // Force stale version in stored JSON
-      { version: 0 as 2 },
+      { version: 0 as 3 },
     )
     // Overwrite with explicit wrong version string in storage
     localStorage.setItem(
@@ -130,7 +130,39 @@ describe('version mismatch (D-10)', () => {
     expect(fetchMock.mock.calls.length).toBe(302)
     expect(hasValidCache()).toBe(true)
     const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!) as { version: number }
-    expect(stored.version).toBe(2)
+    expect(stored.version).toBe(3)
+  })
+})
+
+describe('cache v3 DTO shape (species meta)', () => {
+  it('v2 envelope in localStorage fails hasValidCache after hydrate; ensureCache stores v3 fields', async () => {
+    localStorage.setItem(
+      'pokemon-safari:poke-cache:v2',
+      JSON.stringify({
+        version: 2,
+        fetchedAt: new Date().toISOString(),
+        pokemon: Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
+      }),
+    )
+    hydrateFromStorage()
+    expect(hasValidCache()).toBe(false)
+
+    stubPokeApiFetch()
+    await ensureCache({ concurrency: 8, onProgress: () => {} })
+
+    const envelope = JSON.parse(localStorage.getItem(CACHE_KEY)!) as {
+      version: number
+      pokemon: Array<Record<string, unknown>>
+    }
+    expect(envelope.version).toBe(3)
+    const sample = envelope.pokemon[24]!
+    expect(sample.genus).toBe('Genus 25')
+    expect(sample.height).toBe(7)
+    expect(sample.weight).toBe(69)
+    expect(sample.habitat).toBe('grassland')
+    expect(sample.sprites).toMatchObject({
+      official_artwork: 'https://example.test/art/25.png',
+    })
   })
 })
 

@@ -1,5 +1,5 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
-import { fetchPokemon, fetchSpeciesFlavor, mapPool, sanitizeSpriteUrl } from './client'
+import { fetchPokemon, fetchSpeciesMeta, mapPool, sanitizeSpriteUrl } from './client'
 import { CACHE_KEY, CACHE_VERSION, GEN1_COUNT } from './keys'
 
 const DEFAULT_CONCURRENCY = 8
@@ -71,6 +71,26 @@ function fromStoredDto(raw: unknown): PokemonDto {
   if (!(flavorText === null || typeof flavorText === 'string')) {
     throw new Error('Invalid Pokémon flavorText')
   }
+  const officialArtworkRaw = sprites.official_artwork
+  if (!(officialArtworkRaw === undefined || officialArtworkRaw === null || typeof officialArtworkRaw === 'string')) {
+    throw new Error('Invalid Pokémon sprites.official_artwork')
+  }
+  const genus = obj.genus
+  if (!(genus === null || typeof genus === 'string')) {
+    throw new Error('Invalid Pokémon genus')
+  }
+  const height = obj.height
+  if (typeof height !== 'number' || !Number.isFinite(height)) {
+    throw new Error('Invalid Pokémon height')
+  }
+  const weight = obj.weight
+  if (typeof weight !== 'number' || !Number.isFinite(weight)) {
+    throw new Error('Invalid Pokémon weight')
+  }
+  const habitat = obj.habitat
+  if (!(habitat === null || typeof habitat === 'string')) {
+    throw new Error('Invalid Pokémon habitat')
+  }
   return {
     id,
     name: obj.name,
@@ -78,8 +98,15 @@ function fromStoredDto(raw: unknown): PokemonDto {
     sprites: {
       front_default: sanitizeSpriteUrl(sprites.front_default),
       front_shiny: sanitizeSpriteUrl(sprites.front_shiny),
+      official_artwork: sanitizeSpriteUrl(
+        officialArtworkRaw === undefined ? null : officialArtworkRaw,
+      ),
     },
     flavorText,
+    genus,
+    height,
+    weight,
+    habitat,
   }
 }
 
@@ -224,8 +251,8 @@ export async function ensureCache(
       concurrency,
       async (id) => {
         const dto = await fetchPokemon(id)
-        const flavorText = await fetchSpeciesFlavor(id)
-        const full = { ...dto, flavorText }
+        const meta = await fetchSpeciesMeta(id)
+        const full = { ...dto, ...meta }
         memory.set(full.id, full)
         return full
       },

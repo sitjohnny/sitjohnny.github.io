@@ -1,7 +1,9 @@
 import { vi, type Mock } from 'vitest'
 
+import { CACHE_KEY, CACHE_VERSION } from '@/services/pokeapi/keys'
+
 /** Must match `CACHE_KEY` from `@/services/pokeapi/keys` (DATA-04 / D-11). */
-export const TEST_CACHE_KEY = 'pokemon-safari:poke-cache:v2'
+export const TEST_CACHE_KEY = CACHE_KEY
 
 export type TestPokemonDto = {
   id: number
@@ -54,7 +56,7 @@ export function seedPokeCache(
   overrides: Partial<TestCacheEnvelope> = {},
 ): TestCacheEnvelope {
   const envelope: TestCacheEnvelope = {
-    version: 2,
+    version: CACHE_VERSION,
     fetchedAt: new Date().toISOString(),
     pokemon,
     ...overrides,
@@ -112,6 +114,8 @@ export function stubPokeApiFetch(options: StubFetchOptions = {}): Mock {
                 version: { name: 'emerald' },
               },
             ],
+            genera: [{ genus: `Genus ${id}`, language: { name: 'en' } }],
+            habitat: { name: 'grassland' },
           }),
         }
       }
@@ -126,6 +130,11 @@ export function stubPokeApiFetch(options: StubFetchOptions = {}): Mock {
             sprites: {
               front_default: `https://example.test/${id}.png`,
               front_shiny: `https://example.test/s${id}.png`,
+              other: {
+                'official-artwork': {
+                  front_default: `https://example.test/art/${id}.png`,
+                },
+              },
             },
           }
       return {
