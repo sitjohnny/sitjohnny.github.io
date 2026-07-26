@@ -21,7 +21,7 @@ import { biomeUnlockThresholds } from '@/data/unlocks'
 import { dailyRewardAmounts } from '@/data/dailyRewards'
 import { captureModifiers } from '@/data/captureModifiers'
 import { timingBar } from '@/data/timingBar'
-import { primaryTypeColor, typeColors } from '@/data/typeColors'
+import { primaryTypeAccentStyle, primaryTypeColor, typeColors } from '@/data/typeColors'
 
 const srcRoot = join(dirname(fileURLToPath(import.meta.url)), '..')
 
@@ -235,6 +235,11 @@ describe('DATA-03 config surface', () => {
     expect(primaryTypeColor(['fire', 'flying'])).toBe(typeColors.fire)
     expect(primaryTypeColor([])).toBe('#787878')
     expect(primaryTypeColor(['unknown'])).toBe('#787878')
+    expect(primaryTypeAccentStyle(['water'])).toEqual({
+      borderLeftWidth: 4,
+      borderLeftStyle: 'solid',
+      borderLeftColor: typeColors.water,
+    })
   })
 
   it('exports shinyRate and dexSaveDebounceMs for Phase 6 dex (DATA-03)', () => {

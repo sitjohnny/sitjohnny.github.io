@@ -3,6 +3,7 @@ import { act, cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { captureCopy } from '@/data/educationConfig'
 import { encounterTimingMs } from '@/data/rates'
+import { typeColors } from '@/data/typeColors'
 import { makePokemonDto } from '@/test/pokeapi-test-helpers'
 import { flushFrames } from '@/test/setup'
 
@@ -147,5 +148,35 @@ describe('TimingBar', () => {
     expect(screen.getByText(/Throw 1 of 3/)).toBeInTheDocument()
     expect(screen.getByText(/Math boost: \+15%/)).toBeInTheDocument()
     expect(document.querySelector('.boost-chip')).not.toBeNull()
+  })
+
+  it('shows artwork, type badges, and primary type accent', () => {
+    const typed = makePokemonDto(25, {
+      name: 'pikachu',
+      types: ['electric'],
+      sprites: {
+        front_default: 'https://example.test/25.png',
+        front_shiny: 'https://example.test/s25.png',
+        official_artwork: 'https://example.test/art/25.png',
+      },
+    })
+    render(
+      <TimingBar
+        pokemon={typed}
+        captureBonus={0}
+        attemptsUsed={0}
+        sweetSpot={0.5}
+        rarity="common"
+      />,
+    )
+
+    expect(screen.getByRole('img', { name: 'pikachu' })).toHaveAttribute(
+      'src',
+      'https://example.test/art/25.png',
+    )
+    expect(screen.getByText('Electric')).toBeInTheDocument()
+    const dialog = screen.getByRole('group', { name: /timing/i })
+    expect(dialog).toHaveAttribute('data-primary-type', 'electric')
+    expect(dialog).toHaveStyle({ borderLeftColor: typeColors.electric })
   })
 })

@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react'
+
 /** Classic Gen 1 type palette (DATA-03) — UI must not hardcode these elsewhere. */
 export const typeColors: Record<string, string> = {
   normal: '#A8A878',
@@ -23,4 +25,23 @@ export function primaryTypeColor(types: string[]): string {
   const primary = types[0]
   if (!primary) return FALLBACK_TYPE_COLOR
   return typeColors[primary] ?? FALLBACK_TYPE_COLOR
+}
+
+/** Left accent for encounter gba-dialog shells (Task 7). */
+export function primaryTypeAccentStyle(types: string[]): CSSProperties {
+  return {
+    borderLeftWidth: 4,
+    borderLeftStyle: 'solid',
+    borderLeftColor: primaryTypeColor(types),
+  }
+}
+
+export function encounterDialogAccentProps(types: string[]): {
+  'data-primary-type': string
+  style: CSSProperties
+} {
+  return {
+    'data-primary-type': types[0] ?? '',
+    style: primaryTypeAccentStyle(types),
+  }
 }

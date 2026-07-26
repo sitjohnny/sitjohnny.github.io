@@ -1,6 +1,7 @@
 import { PixelButton } from '@/components/PixelButton'
-import { PokemonSprite } from '@/components/PokemonSprite'
+import { EncounterPokemonShowcase } from '@/components/encounter/EncounterPokemonShowcase'
 import { captureCopy } from '@/data/educationConfig'
+import { encounterDialogAccentProps } from '@/data/typeColors'
 import type { PokemonDto } from '@/types/pokemon'
 
 type FleeCardProps = {
@@ -14,9 +15,14 @@ type FleeCardProps = {
  * Heading/body come from captureCopy (DATA-03).
  */
 export function FleeCard({ pokemon, shiny = false, onContinue }: FleeCardProps) {
+  const accentProps = encounterDialogAccentProps(pokemon.types)
+
   return (
-    <div className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center">
-      <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
+    <div
+      className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center"
+      {...accentProps}
+    >
+      <EncounterPokemonShowcase pokemon={pokemon} shiny={shiny} />
       <h2
         id="encounter-flee-heading"
         className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text"

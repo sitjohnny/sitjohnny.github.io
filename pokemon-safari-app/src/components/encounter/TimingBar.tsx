@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { PixelButton } from '@/components/PixelButton'
-import { PokemonSprite } from '@/components/PokemonSprite'
+import { EncounterPokemonShowcase } from '@/components/encounter/EncounterPokemonShowcase'
 import { captureCopy } from '@/data/educationConfig'
 import { encounterTimingMs } from '@/data/rates'
+import { encounterDialogAccentProps } from '@/data/typeColors'
 import { timingBar } from '@/data/timingBar'
 import { pingPong } from '@/game/timing'
 import { capture } from '@/hooks/useEncounterFlow'
@@ -64,6 +65,7 @@ export function TimingBar({
   const throwLabel = captureCopy.throwOf.replace('{n}', String(attemptsUsed + 1))
   const boostLabel = captureCopy.mathBoost.replace('{n}', String(bonusPercent))
   const canCapture = !locked && !frozen
+  const accentProps = encounterDialogAccentProps(pokemon.types)
 
   function writeIndicator(pos: number): void {
     const track = trackRef.current
@@ -118,8 +120,9 @@ export function TimingBar({
       role="group"
       aria-label={TIMING_GROUP_LABEL}
       className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center"
+      {...accentProps}
     >
-      <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
+      <EncounterPokemonShowcase pokemon={pokemon} shiny={shiny} />
       <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
         {pokemon.name}
       </h2>

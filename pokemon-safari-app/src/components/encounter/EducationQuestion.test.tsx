@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EducationQuestion } from '@/components/encounter/EducationQuestion'
 import { feedbackCopy } from '@/data/educationConfig'
 import { educationCaptureBonus } from '@/data/rates'
+import { typeColors } from '@/data/typeColors'
 import { makePokemonDto } from '@/test/pokeapi-test-helpers'
 import type { EducationQuestion as EducationQuestionData } from '@/game/education/questionTypes'
 
@@ -195,5 +196,34 @@ describe('EducationQuestion', () => {
     expect(screen.getByText(message).closest('[aria-live="polite"]')).not.toBeNull()
     expect(container.textContent).not.toContain('56')
     expect(container.textContent).not.toContain('=')
+  })
+
+  it('shows artwork, type badges, and primary type accent', () => {
+    const electric = makePokemonDto(25, {
+      name: 'pikachu',
+      types: ['electric'],
+      sprites: {
+        front_default: 'https://example.test/25.png',
+        front_shiny: 'https://example.test/s25.png',
+        official_artwork: 'https://example.test/art/25.png',
+      },
+    })
+    render(
+      <EducationQuestion
+        pokemon={electric}
+        question={question}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    expect(screen.getByRole('img', { name: 'pikachu' })).toHaveAttribute(
+      'src',
+      'https://example.test/art/25.png',
+    )
+    expect(screen.getByText('Electric')).toBeInTheDocument()
+    const dialog = screen.getByRole('heading', { name: 'pikachu' }).closest('.gba-dialog')
+    expect(dialog).toHaveAttribute('data-primary-type', 'electric')
+    expect(dialog).toHaveStyle({ borderLeftColor: typeColors.electric })
   })
 })

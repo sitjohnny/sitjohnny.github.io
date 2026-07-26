@@ -1,6 +1,7 @@
 import { useEffect } from 'react'
-import { PokemonSprite } from '@/components/PokemonSprite'
+import { EncounterPokemonShowcase } from '@/components/encounter/EncounterPokemonShowcase'
 import { encounterTimingMs } from '@/data/rates'
+import { encounterDialogAccentProps, primaryTypeColor } from '@/data/typeColors'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
 import type { RarityBand } from '@/types/encounter'
 import type { PokemonDto } from '@/types/pokemon'
@@ -24,6 +25,8 @@ export function AppearFlash({
   onComplete,
 }: AppearFlashProps) {
   const reducedMotion = prefersReducedMotion()
+  const accentColor = primaryTypeColor(pokemon.types)
+  const accentProps = encounterDialogAccentProps(pokemon.types)
 
   useEffect(() => {
     const delay = reducedMotion
@@ -34,11 +37,17 @@ export function AppearFlash({
   }, [onComplete, reducedMotion])
 
   return (
-    <div className="gba-dialog relative flex w-full flex-col items-center gap-2 overflow-hidden p-6 text-center">
+    <div
+      className="gba-dialog relative flex w-full flex-col items-center gap-2 overflow-hidden p-6 text-center"
+      {...accentProps}
+    >
       {!reducedMotion ? (
-        <div className="encounter-flash pointer-events-none absolute inset-0 z-10 bg-white" />
+        <div
+          className="encounter-flash pointer-events-none absolute inset-0 z-10"
+          style={{ backgroundColor: `${accentColor}33` }}
+        />
       ) : null}
-      <PokemonSprite pokemon={pokemon} size={96} shiny={shiny} alt={pokemon.name} />
+      <EncounterPokemonShowcase pokemon={pokemon} shiny={shiny} />
       <h2 className="font-[family-name:var(--font-display)] text-[22px] font-bold leading-[1.2] text-text">
         {pokemon.name}
       </h2>
