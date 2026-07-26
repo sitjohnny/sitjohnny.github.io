@@ -1,6 +1,9 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { encounterTimingMs } from '@/data/rates'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
+import ballClosed from '@/assets/encounter/ball-closed.png'
+import ballMidOpen from '@/assets/encounter/ball-mid-open.png'
+import ballFullOpen from '@/assets/encounter/ball-full-open.png'
 
 type BallShakeProps = {
   caught: boolean
@@ -9,50 +12,152 @@ type BallShakeProps = {
   onComplete: () => void
 }
 
+type Phase =
+  | 'shaking'
+  | 'resolve-caught'
+  | 'resolve-mid-open'
+  | 'resolve-full-open'
+
 function shakeCountFor(chance: number): 1 | 2 | 3 {
   if (chance >= 0.75) return 3
   if (chance >= 0.4) return 2
   return 1
 }
 
+function spriteFor(phase: Phase): string {
+  if (phase === 'resolve-mid-open') return ballMidOpen
+  if (phase === 'resolve-full-open') return ballFullOpen
+  return ballClosed
+}
+
 /**
  * Flavor shakes to a pre-resolved caught flag (D-30 / D-31). Never rolls capture.
- * Fail ending opens the ball briefly before onComplete → fail beat (D-33).
+ * Fail ending opens the ball (mid → full hold) before onComplete → fail beat.
  */
 export function BallShake({ caught, chance, onComplete }: BallShakeProps) {
   const reducedMotion = prefersReducedMotion()
   const shakes = shakeCountFor(chance)
+  const [phase, setPhase] = useState<Phase>('shaking')
+  /** While shaking (and not reduced), true only during each `shakeOnce` window. */
+  const [rocking, setRocking] = useState(() => !prefersReducedMotion())
 
   useEffect(() => {
+    let cancelled = false
+    const timers: number[] = []
+
     const once = reducedMotion
       ? encounterTimingMs.reducedShakeOnce
       : encounterTimingMs.shakeOnce
     const gap = reducedMotion
       ? encounterTimingMs.reducedShakeGap
       : encounterTimingMs.shakeGap
-    const resolve = reducedMotion
-      ? encounterTimingMs.reducedShakeResolve
-      : encounterTimingMs.shakeResolve
-    const total = shakes * once + Math.max(0, shakes - 1) * gap + resolve
-    const timer = setTimeout(onComplete, total)
-    return () => clearTimeout(timer)
+
+    const schedule = (delay: number, fn: () => void) => {
+      const id = window.setTimeout(() => {
+        if (!cancelled) fn()
+      }, delay)
+      timers.push(id)
+    }
+
+    const beginResolve = () => {
+      setRocking(false)
+      if (caught) {
+        setPhase('resolve-caught')
+        schedule(
+          reducedMotion
+            ? encounterTimingMs.reducedShakeResolve
+            : encounterTimingMs.shakeResolve,
+          onComplete,
+        )
+        return
+      }
+      if (reducedMotion) {
+        setPhase('resolve-full-open')
+        schedule(encounterTimingMs.reducedShakeResolve, onComplete)
+        return
+      }
+      setPhase('resolve-mid-open')
+      schedule(encounterTimingMs.shakeOpen, () => {
+        setPhase('resolve-full-open')
+        schedule(encounterTimingMs.shakeEscapeHold, onComplete)
+      })
+    }
+
+    // Distinct rocks with neutral gaps: rock for `once`, idle `gap`, repeat.
+    let remaining = shakes
+    const runShakeCycle = () => {
+      if (reducedMotion) {
+        setRocking(false)
+        schedule(once, () => {
+          remaining -= 1
+          if (remaining <= 0) beginResolve()
+          else runShakeCycle()
+        })
+        return
+      }
+      setRocking(true)
+      schedule(once, () => {
+        setRocking(false)
+        remaining -= 1
+        if (remaining <= 0) {
+          beginResolve()
+          return
+        }
+        schedule(gap, runShakeCycle)
+      })
+    }
+    runShakeCycle()
+
+    return () => {
+      cancelled = true
+      for (const id of timers) window.clearTimeout(id)
+    }
   }, [caught, onComplete, reducedMotion, shakes])
+
+  const onceMs = reducedMotion
+    ? encounterTimingMs.reducedShakeOnce
+    : encounterTimingMs.shakeOnce
 
   return (
     <div className="gba-dialog flex w-full flex-col items-center justify-center gap-4 p-6 text-center">
       <div
         aria-hidden="true"
         className={[
-          'pixel-border flex h-16 w-16 items-center justify-center bg-accent text-text',
-          caught ? '' : 'ball-broke-free opacity-90',
+          'ball-shake relative flex h-16 w-16 items-center justify-center',
+          rocking ? 'ball-rock' : '',
         ]
           .filter(Boolean)
           .join(' ')}
         data-shakes={shakes}
         data-caught={caught ? 'true' : 'false'}
         data-ending={caught ? 'caught' : 'broke-free'}
+        data-phase={phase}
+        style={
+          rocking
+            ? { animationDuration: `${onceMs}ms`, animationIterationCount: 1 }
+            : undefined
+        }
       >
-        {caught ? '●' : '○'}
+        <img
+          src={spriteFor(phase)}
+          alt=""
+          draggable={false}
+          className="ball-shake__sprite h-16 w-16"
+        />
+        {phase === 'resolve-caught'
+          ? [0, 1, 2, 3].map((i) => (
+              <span
+                key={i}
+                data-sparkle={i}
+                className={[
+                  'ball-sparkle',
+                  reducedMotion ? 'ball-sparkle--static' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+              />
+            ))
+          : null}
       </div>
       <p aria-live="polite" className="sr-only">
         {caught ? 'Caught' : 'Broke free'}
