@@ -44,12 +44,26 @@ export function EncounterOverlay() {
   const question = useEncounterStore((state) => state.question)
   const feedback = useEncounterStore((state) => state.feedback)
   const dialogRef = useRef<HTMLDivElement | null>(null)
+  const previousFocusRef = useRef<HTMLElement | null>(null)
   const pokemon = session ? resolveSessionPokemon(session.speciesId) : null
   const labelledBy =
     stage === 'recap' ? 'encounter-recap-heading' : 'encounter-stage-content'
 
   useEffect(() => {
-    if (stage !== 'idle') {
+    if (stage === 'idle') {
+      const previous = previousFocusRef.current
+      previousFocusRef.current = null
+      if (previous?.isConnected) {
+        previous.focus()
+      }
+      return
+    }
+
+    if (previousFocusRef.current === null) {
+      previousFocusRef.current =
+        document.activeElement instanceof HTMLElement
+          ? document.activeElement
+          : null
       dialogRef.current?.focus()
     }
   }, [stage])

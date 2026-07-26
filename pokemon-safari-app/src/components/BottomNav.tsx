@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useEncounterStore } from '@/store/encounterStore'
 import { useUiStore } from '@/store'
 
 const NAV_ITEMS = [
@@ -11,10 +12,12 @@ const NAV_ITEMS = [
 
 export function BottomNav() {
   const setLastRoute = useUiStore((s) => s.setLastRoute)
+  const encounterActive = useEncounterStore((s) => s.stage !== 'idle')
 
   return (
     <nav
       aria-label="Main"
+      inert={encounterActive ? true : undefined}
       className="fixed inset-x-0 bottom-0 z-10 mx-auto max-w-[480px] bg-secondary pb-[env(safe-area-inset-bottom)] text-on-secondary"
     >
       <ul className="flex items-stretch justify-around gap-1 px-1 pt-1">
@@ -37,8 +40,7 @@ export function BottomNav() {
                   <span className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4]">
                     {label}
                   </span>
-                  <span
-                    aria-hidden="true"
+                  <span aria-hidden="true"
                     className={[
                       'absolute bottom-0 left-1/2 h-1 w-6 -translate-x-1/2 rounded-sm bg-accent transition-transform duration-150 ease-out motion-reduce:transition-none',
                       isActive ? 'scale-x-100' : 'scale-x-0',
@@ -56,8 +58,7 @@ export function BottomNav() {
 
 function HomeIcon() {
   return (
-    <svg
-      aria-hidden="true"
+    <svg aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -74,8 +75,7 @@ function HomeIcon() {
 
 function GameIcon() {
   return (
-    <svg
-      aria-hidden="true"
+    <svg aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -93,8 +93,7 @@ function GameIcon() {
 
 function DexIcon() {
   return (
-    <svg
-      aria-hidden="true"
+    <svg aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -111,8 +110,7 @@ function DexIcon() {
 
 function PackIcon() {
   return (
-    <svg
-      aria-hidden="true"
+    <svg aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
@@ -129,8 +127,7 @@ function PackIcon() {
 
 function SettingsIcon() {
   return (
-    <svg
-      aria-hidden="true"
+    <svg aria-hidden="true"
       width="24"
       height="24"
       viewBox="0 0 24 24"
