@@ -2,6 +2,7 @@ import { useEffect } from 'react'
 import { captureCopy } from '@/data/educationConfig'
 import { encounterTimingMs } from '@/data/rates'
 import type { TimingGrade } from '@/game/timing'
+import { timingBoostLabel } from '@/game/timingBoostCopy'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
 
 type GradeFlashProps = {
@@ -32,6 +33,9 @@ export function GradeFlash({ grade, onComplete }: GradeFlashProps) {
         className="font-[family-name:var(--font-display)] text-[32px] font-bold leading-[1.2] text-text"
       >
         {captureCopy.grades[grade]}
+      </p>
+      <p className="font-[family-name:var(--font-label)] text-[16px] font-medium leading-[1.3] text-muted">
+        {timingBoostLabel(grade)}
       </p>
     </div>
   )
