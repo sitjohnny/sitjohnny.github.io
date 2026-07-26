@@ -2,16 +2,16 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Plans ready — execute next
-stopped_at: Phase 5 UI-SPEC approved
-last_updated: "2026-07-26T13:49:44.384Z"
-last_activity: 2026-07-26 -- Phase 05 plans created (4 plans / 4 waves)
+status: executing
+stopped_at: Completed 05-04-PLAN.md
+last_updated: "2026-07-26T14:28:05.440Z"
+last_activity: 2026-07-26 -- Completed 05-04-PLAN.md
 progress:
   total_phases: 8
-  completed_phases: 4
+  completed_phases: 5
   total_plans: 23
-  completed_plans: 19
-  percent: 50
+  completed_plans: 23
+  percent: 100
 ---
 
 # Project State
@@ -21,16 +21,16 @@ progress:
 See: .planning/PROJECT.md (updated 2026-07-25)
 
 **Core value:** A forgiving, rewarding explore → encounter → capture loop that a ~7-year-old can succeed at on phone or desktop, with progress that persists across sessions.
-**Current focus:** Phase 05 — Capture Flow
+**Current focus:** Phase 05 — capture-flow
 
 ## Current Position
 
-Phase: 05 — Capture Flow
-Plan: 0 of 4
-Status: Plans ready — execute next
-Last activity: 2026-07-26 -- Phase 05 plans created (4 plans / 4 waves)
+Phase: 05 (capture-flow) — VERIFYING
+Plan: 4 of 4
+Status: Ready to execute
+Last activity: 2026-07-26 -- Completed 05-04-PLAN.md
 
-Progress: [░░░░░░░░░░] 0%
+Progress: [██████████] 100%
 
 ## Performance Metrics
 
@@ -76,6 +76,10 @@ Progress: [░░░░░░░░░░] 0%
 | Phase 04 P04 | 5min | 3 tasks | 8 files |
 | Phase 04 P05 | 5min | 3 tasks | 9 files |
 | Phase 04 P06 | 2min | 2 tasks | 6 files |
+| Phase 05 P01 | 3min | 2 tasks | 9 files |
+| Phase 05 P02 | 5min | 2 tasks | 11 files |
+| Phase 05 P03 | 3min | 2 tasks | 5 files |
+| Phase 05 P04 | 4min | 2 tasks | 11 files |
 
 ## Accumulated Context
 
@@ -150,6 +154,18 @@ Recent decisions affecting current work:
 - [Phase 04]: jsdom inert Tab assertion uses attribute contract — browsers honor focus skip
 - [Phase 04]: Unmount uses close() not reset() so adaptive no-repeat lastFactKey survives route leave
 - [Phase 04]: inert predicate uses pathname === '/game' under basename — no hardcoded /pokemon-safari prefix
+- [Phase 05]: Catch formula is rarity + education + timing + ball + berry, clamped [0,1] (D-22)
+- [Phase 05]: Phase 5 defaults ball poke / berry false while keeping config slots (D-23)
+- [Phase 05]: gradeAt uses ZONE_EPS so sweetSpot ± half-width float noise still hits inclusive boundaries
+- [Phase 05]: Feedback hold advances via startTiming() — handoff stage removed
+- [Phase 05]: TimingBar MVP uses sweetSpot as frozen Capture position; 05-03 owns ping-pong
+- [Phase 05]: Minimal FleePlaceholder shell so third-fail path does not hang GameScreen
+- [Phase 05]: Indicator position is a single posRef written via rAF; Capture freezes then calls capture(posRef)
+- [Phase 05]: Band geometry uses sweetSpot ± zone half-widths from timingBar.zones[rarity]
+- [Phase 05]: Keyboard Space remounts after freeze in tests — Capture disables after one press (D-20/D-21)
+- [Phase 05]: failBeat is a dedicated EncounterStage with config-timed hold — no Try Again gate
+- [Phase 05]: onShakeComplete replaces resolveAfterShake; registerThrow remains sole attemptsUsed writer
+- [Phase 05]: FleeCard copy from captureCopy; GameScreen miss stubs use rng.next()===1 so 100% chance still fails
 
 ### Pending Todos
 
@@ -171,6 +187,6 @@ Items acknowledged and carried forward from previous milestone close:
 
 ## Session Continuity
 
-Last session: 2026-07-26T13:32:53.826Z
-Stopped at: Phase 5 UI-SPEC approved
-Resume file: .planning/phases/05-capture-flow/05-UI-SPEC.md
+Last session: 2026-07-26T14:12:37.806Z
+Stopped at: Completed 05-04-PLAN.md
+Resume file: None

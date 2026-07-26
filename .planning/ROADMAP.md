@@ -17,7 +17,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 - [x] **Phase 2: Pokémon Data Layer** - Gen 1 prefetch, versioned localStorage cache, boot progress screen, crisp sprite rendering (completed 2026-07-25)
 - [ ] **Phase 3: Exploration** - Walkable Forest tile map with D-pad + keyboard input and camera follow (plans 6/6 executed — UAT pending)
 - [x] **Phase 4: Encounters** - Config-driven grass rolls (45/25/20/8/2) with per-biome encounter tables (completed 2026-07-26)
-- [ ] **Phase 5: Capture Flow** - Timing bar → capture roll with retry, flee, and kid-friendly odds
+- [x] **Phase 5: Capture Flow** - Timing bar → capture roll with retry, flee, and kid-friendly odds (completed 2026-07-26)
 - [ ] **Phase 6: Pokédex** - 151-entry dex with silhouettes, seen/caught states, counts, and shiny flags
 - [ ] **Phase 7: Persistence, Unlocks, Items & Daily** - Versioned auto-save, biome unlocks at 10/30 catches, inventory, daily reward
 - [ ] **Phase 8: Audio, Feedback & Polish** - SFX with gesture unlock and mute, celebration moments, real-device kid playtest
@@ -168,23 +168,27 @@ Plans:
 4. Player can retry a failed capture, and after three fails the Pokémon flees with kind, non-punishing feedback
 5. A child can reliably catch common Pokémon while legendaries remain a genuine chase
 
-**Plans:** 4 plans
+**Plans:** 4/4 plans complete
 Plans:
 **Wave 1**
 
-- [ ] 05-01-PLAN.md — Wave 0 tests + pure capture/timing math + config (CATCH-02/03/05)
+- [x] 05-01-PLAN.md — Wave 0 tests + pure capture/timing math + config (CATCH-02/03/05)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 05-02-PLAN.md — Happy-path catch: timing → roll → shake → Gotcha (CATCH-02/03)
+- [x] 05-02-PLAN.md — Happy-path catch: timing → roll → shake → Gotcha (CATCH-02/03)
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 05-03-PLAN.md — Timing-bar ping-pong, rarity bands, Capture lock (CATCH-02)
+- [x] 05-03-PLAN.md — Timing-bar ping-pong, rarity bands, Capture lock (CATCH-02)
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 05-04-PLAN.md — Retry, flee after 3 fails, recap routing (CATCH-04/05)
+- [x] 05-04-PLAN.md — Retry, flee after 3 fails, recap routing (CATCH-04/05)
+
+**Wave 5** _(gap closure — VERIFICATION D-14 blocker)_
+
+- [ ] 05-05-PLAN.md — Fix GradeFlash→BallShake order across repeated throws via keyed ShakeSequence; registerThrow stage guard (CATCH-02/04)
 
 **UI hint**: yes
 
@@ -247,7 +251,7 @@ Phases execute in numeric order: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8
 | 2. Pokémon Data Layer                    | 4/4            | Complete    | 2026-07-25 |
 | 3. Exploration                           | 6/6            | UAT pending | -          |
 | 4. Encounters                            | 6/6 | Complete   | 2026-07-26 |
-| 5. Capture Flow                          | 0/4            | Planned    | -          |
+| 5. Capture Flow                          | 4/4 | Complete   | 2026-07-26 |
 | 6. Pokédex                               | 0/TBD          | Not started | -          |
 | 7. Persistence, Unlocks, Items & Daily   | 0/TBD          | Not started | -          |
 | 8. Audio, Feedback & Polish              | 0/TBD          | Not started | -          |
