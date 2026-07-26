@@ -50,9 +50,9 @@ export function DexScreen() {
   }, [])
 
   return (
-    <section className="relative flex flex-1 flex-col">
+    <section className="relative flex min-h-0 flex-1 flex-col">
       <DexHeader seen={seen} caught={caught} />
-      <div className="flex-1 overflow-y-auto px-4 pb-[max(48px,env(safe-area-inset-bottom))] pt-6">
+      <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(48px,env(safe-area-inset-bottom))] pt-6">
         <DexGrid dex={dex} onSelect={openSheet} />
       </div>
       {saveSoftFail ? (
