@@ -586,5 +586,45 @@ describe('useEncounterFlow', () => {
       expect(useEncounterStore.getState().stage).toBe('flee')
       expect(useEncounterStore.getState().session).toEqual(duringFlee)
     })
+
+    it('registerThrow is a no-op outside the timing stage (WR-03 / T-05-04)', async () => {
+      await reachTimingAfterCorrect(sequenceRng(0, 0, 0))
+      vi.useFakeTimers()
+
+      // Reach a non-timing stage (failBeat) through a real failed throw.
+      act(() => {
+        failThrow()
+      })
+      act(() => {
+        onShakeComplete()
+      })
+      expect(useEncounterStore.getState().stage).toBe('failBeat')
+      const attemptsBefore = useEncounterStore.getState().session?.attemptsUsed
+
+      // A stray registerThrow while not in timing must not fire — no attempts
+      // inflation and no forced shake (single-writer / mash-lock, D-21).
+      act(() => {
+        useEncounterStore
+          .getState()
+          .registerThrow({ grade: 'good', caught: true, chance: 0.9 })
+      })
+      expect(useEncounterStore.getState().stage).toBe('failBeat')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(attemptsBefore)
+
+      // The legitimate timing → shake transition still works after the guard.
+      act(() => {
+        vi.advanceTimersByTime(encounterTimingMs.failBeat)
+      })
+      expect(useEncounterStore.getState().stage).toBe('timing')
+      act(() => {
+        useEncounterStore
+          .getState()
+          .registerThrow({ grade: 'good', caught: false, chance: 0.5 })
+      })
+      expect(useEncounterStore.getState().stage).toBe('shake')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(
+        (attemptsBefore ?? 0) + 1,
+      )
+    })
   })
 })
