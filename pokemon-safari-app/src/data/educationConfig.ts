@@ -97,3 +97,15 @@ export const captureCopy = {
   fleeHeading: 'It got away!',
   fleeBody: 'That’s okay — you’ll find another!',
 } as const
+
+export const spellingMixProbability = 0.5 as const
+/** Share of spelling draws that use the challenge tier (remainder = early). */
+export const spellingChallengeProbability = 0.7 as const
+/** Fraction of letters a Hint reveals (inclusive range); rolled per hint use. */
+export const spellingHintReveal = { minRatio: 0.25, maxRatio: 0.33 } as const
+export const spellingCopy = {
+  prompt: 'What is this?',
+  loading: 'Loading picture…',
+  hint: 'Hint',
+  attribution: 'Photo by {name} / Pexels',
+} as const

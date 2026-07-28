@@ -18,7 +18,16 @@ import {
   adaptiveWeights,
   masteryThreshold,
   feedbackCopy,
+  spellingMixProbability,
+  spellingChallengeProbability,
+  spellingHintReveal,
+  spellingCopy,
 } from '@/data/educationConfig'
+import {
+  spellingWords,
+  allSpellingFactKeys,
+  spellingWordsByTier,
+} from '@/data/spellingWords'
 import { biomeUnlockThresholds } from '@/data/unlocks'
 import { dailyRewardAmounts } from '@/data/dailyRewards'
 import { captureModifiers } from '@/data/captureModifiers'
@@ -281,6 +290,37 @@ describe('DATA-03 config surface', () => {
     expect(pocketHabitats.meadow).toEqual(['grassland'])
     expect(pocketHabitats.wetland).toEqual(['waters-edge'])
     expect(pocketHabitats.canopy).toEqual(['forest', 'rare'])
+  })
+
+  it('exports spelling mix, tier probability, hint ratios, and copy', () => {
+    expect(spellingMixProbability).toBe(0.5)
+    expect(spellingChallengeProbability).toBe(0.7)
+    expect(spellingHintReveal).toEqual({ minRatio: 0.25, maxRatio: 0.33 })
+    expect(spellingCopy.prompt.length).toBeGreaterThan(0)
+    expect(spellingCopy.loading.length).toBeGreaterThan(0)
+    expect(spellingCopy.hint.length).toBeGreaterThan(0)
+    expect(spellingCopy.attribution).toContain('{name}')
+  })
+
+  it('spelling word bank has 75 well-formed entries with tier depth', () => {
+    expect(spellingWords).toHaveLength(75)
+    const early = spellingWordsByTier('early')
+    const challenge = spellingWordsByTier('challenge')
+    expect(early.length).toBeGreaterThanOrEqual(20)
+    expect(challenge.length).toBeGreaterThanOrEqual(50)
+    expect(early.length + challenge.length).toBe(75)
+
+    const keys = new Set<string>()
+    for (const w of spellingWords) {
+      expect(w.word).toMatch(/^[a-z]+$/)
+      expect(w.factKey).toBe(`spell:${w.word}`)
+      expect(w.imageUrl.startsWith('https://images.pexels.com/')).toBe(true)
+      expect(w.pexelsUrl.startsWith('https://www.pexels.com/')).toBe(true)
+      expect(w.photographer.length).toBeGreaterThan(0)
+      expect(keys.has(w.factKey)).toBe(false)
+      keys.add(w.factKey)
+    }
+    expect(allSpellingFactKeys()).toHaveLength(75)
   })
 
   it('exports shinyRate and dexSaveDebounceMs for Phase 6 dex (DATA-03)', () => {
