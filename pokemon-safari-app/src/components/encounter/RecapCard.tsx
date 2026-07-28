@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react'
 import { PixelButton } from '@/components/PixelButton'
 import { recapCopy, spellingCopy } from '@/data/educationConfig'
 
@@ -9,6 +10,8 @@ type RecapCardProps = {
   pexelsUrl?: string | null
 }
 
+type ImageStatus = 'loading' | 'ready' | 'error'
+
 export function RecapCard({
   equation,
   onContinue,
@@ -16,10 +19,28 @@ export function RecapCard({
   photographer,
 }: RecapCardProps) {
   const showImage = Boolean(imageUrl)
+  const [imageStatus, setImageStatus] = useState<ImageStatus>(() =>
+    showImage ? 'loading' : 'ready',
+  )
+
+  useEffect(() => {
+    setImageStatus(showImage ? 'loading' : 'ready')
+  }, [imageUrl, showImage])
+
+  function handleImageLoad() {
+    setImageStatus('ready')
+  }
+
+  function handleImageError() {
+    setImageStatus('error')
+  }
+
   const attribution =
-    showImage && photographer
+    imageStatus === 'ready' && photographer
       ? spellingCopy.attribution.replace('{name}', photographer)
       : null
+
+  const showImageBlock = showImage && imageStatus !== 'error'
 
   return (
     <div className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center">
@@ -29,13 +50,20 @@ export function RecapCard({
       >
         {recapCopy.heading}
       </h2>
-      {showImage ? (
+      {showImageBlock ? (
         <div className="flex w-full flex-col items-center gap-2">
           <img
             src={imageUrl!}
             alt="Quick recap spelling picture"
+            onLoad={handleImageLoad}
+            onError={handleImageError}
             className="max-h-40 w-full max-w-xs object-cover"
           />
+          {imageStatus === 'loading' ? (
+            <p className="font-[family-name:var(--font-body)] text-[14px] text-muted">
+              {spellingCopy.loading}
+            </p>
+          ) : null}
           {attribution ? (
             <p className="font-[family-name:var(--font-label)] text-[12px] text-muted">
               {attribution}

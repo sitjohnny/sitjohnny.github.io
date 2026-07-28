@@ -1,8 +1,8 @@
 import userEvent from '@testing-library/user-event'
-import { act, cleanup, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { RecapCard } from '@/components/encounter/RecapCard'
-import { recapCopy } from '@/data/educationConfig'
+import { recapCopy, spellingCopy } from '@/data/educationConfig'
 import { encounterTimingMs } from '@/data/rates'
 
 afterEach(cleanup)
@@ -27,6 +27,37 @@ describe('RecapCard', () => {
       />,
     )
     expect(screen.getByRole('img', { name: /recap/i })).toBeInTheDocument()
+    expect(screen.getByText('elephant.')).toBeInTheDocument()
+  })
+
+  it('shows attribution only after recap image loads', () => {
+    render(
+      <RecapCard
+        equation="elephant"
+        imageUrl="https://images.pexels.com/photos/66898/pexels-photo-66898.jpeg"
+        photographer="Pixabay"
+        onContinue={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText(/Photo by Pixabay/i)).not.toBeInTheDocument()
+    expect(screen.getByText(spellingCopy.loading)).toBeInTheDocument()
+    fireEvent.load(screen.getByRole('img', { name: /recap/i }))
+    expect(screen.queryByText(spellingCopy.loading)).not.toBeInTheDocument()
+    expect(screen.getByText(/Photo by Pixabay/i)).toBeInTheDocument()
+  })
+
+  it('hides image and attribution when recap image errors', () => {
+    render(
+      <RecapCard
+        equation="elephant"
+        imageUrl="https://images.pexels.com/photos/66898/pexels-photo-66898.jpeg"
+        photographer="Pixabay"
+        onContinue={vi.fn()}
+      />,
+    )
+    fireEvent.error(screen.getByRole('img', { name: /recap/i }))
+    expect(screen.queryByRole('img', { name: /recap/i })).not.toBeInTheDocument()
+    expect(screen.queryByText(/Photo by Pixabay/i)).not.toBeInTheDocument()
     expect(screen.getByText('elephant.')).toBeInTheDocument()
   })
 
