@@ -278,6 +278,6 @@ describe('EncounterOverlay — shiny session threading (DEX-02 / D-09)', () => {
       useEncounterStore.getState().toRecap()
     })
     expect(screen.getByRole('img', { name: /recap/i })).toHaveAttribute('src', imageUrl)
-    expect(screen.getByText('elephant.')).toBeInTheDocument()
+    expect(screen.getByText('elephant')).toBeInTheDocument()
   })
 })

@@ -27,7 +27,7 @@ describe('RecapCard', () => {
       />,
     )
     expect(screen.getByRole('img', { name: /recap/i })).toBeInTheDocument()
-    expect(screen.getByText('elephant.')).toBeInTheDocument()
+    expect(screen.getByText('elephant')).toBeInTheDocument()
   })
 
   it('shows attribution only after recap image loads', () => {
@@ -63,7 +63,7 @@ describe('RecapCard', () => {
     fireEvent.error(screen.getByRole('img', { name: /recap/i }))
     expect(screen.queryByRole('img', { name: /recap/i })).not.toBeInTheDocument()
     expect(screen.queryByText(/Photo by Pixabay/i)).not.toBeInTheDocument()
-    expect(screen.getByText('elephant.')).toBeInTheDocument()
+    expect(screen.getByText('elephant')).toBeInTheDocument()
   })
 
   it('renders a division equation on Quick recap', () => {

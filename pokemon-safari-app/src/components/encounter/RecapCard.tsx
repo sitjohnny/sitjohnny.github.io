@@ -79,7 +79,8 @@ export function RecapCard({
         </div>
       ) : null}
       <p className="font-[family-name:var(--font-numeral)] text-[32px] font-normal leading-[1.2] tracking-[0.06em] text-text">
-        {equation}.
+        {/* Math recaps keep a trailing period; spelling words stay punctuation-free. */}
+        {showImage ? equation : `${equation}.`}
       </p>
       <p className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
         {recapCopy.closing}

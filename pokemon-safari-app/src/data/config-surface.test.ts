@@ -294,8 +294,8 @@ describe('DATA-03 config surface', () => {
 
   it('exports spelling mix, tier probability, hint ratios, and copy', () => {
     expect(spellingMixProbability).toBe(0.5)
-    expect(spellingChallengeProbability).toBe(0.7)
-    expect(spellingHintReveal).toEqual({ minRatio: 0.25, maxRatio: 0.33 })
+  expect(spellingChallengeProbability).toBe(0.3)
+  expect(spellingHintReveal).toEqual({ minRatio: 0.5, maxRatio: 0.5 })
     expect(spellingCopy.prompt.length).toBeGreaterThan(0)
     expect(spellingCopy.loading.length).toBeGreaterThan(0)
     expect(spellingCopy.hint.length).toBeGreaterThan(0)
@@ -306,8 +306,8 @@ describe('DATA-03 config surface', () => {
     expect(spellingWords).toHaveLength(75)
     const early = spellingWordsByTier('early')
     const challenge = spellingWordsByTier('challenge')
-    expect(early.length).toBeGreaterThanOrEqual(20)
-    expect(challenge.length).toBeGreaterThanOrEqual(50)
+  expect(early.length).toBeGreaterThanOrEqual(40)
+  expect(challenge.length).toBeGreaterThanOrEqual(25)
     expect(early.length + challenge.length).toBe(75)
 
     const keys = new Set<string>()

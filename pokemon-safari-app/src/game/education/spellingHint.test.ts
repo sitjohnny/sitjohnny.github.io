@@ -18,12 +18,13 @@ function stubRng(values: number[]): Rng {
 }
 
 describe('spellingHint', () => {
-  it('spellingHintRevealCount keeps band and leaves a blank', () => {
-    expect(spellingHintRevealCount(8, 0.25)).toBe(2)
-    expect(spellingHintRevealCount(8, 0.33)).toBe(3)
-    expect(spellingHintRevealCount(3, 0.33)).toBe(1)
-    expect(spellingHintRevealCount(1, 0.3)).toBe(0)
-    expect(spellingHintRevealCount(2, 0.3)).toBe(1)
+  it('spellingHintRevealCount keeps half the letters and leaves a blank', () => {
+    expect(spellingHintRevealCount(8, 0.5)).toBe(4)
+    expect(spellingHintRevealCount(6, 0.5)).toBe(3)
+    expect(spellingHintRevealCount(5, 0.5)).toBe(3) // round(2.5) → 3, still < length
+    expect(spellingHintRevealCount(3, 0.5)).toBe(2)
+    expect(spellingHintRevealCount(1, 0.5)).toBe(0)
+    expect(spellingHintRevealCount(2, 0.5)).toBe(1)
   })
 
   it('pickSpellingHintIndices returns sorted unique indices', () => {
@@ -37,7 +38,7 @@ describe('spellingHint', () => {
   })
 
   it('rollSpellingHintRatio stays within config bounds', () => {
-    expect(rollSpellingHintRatio(stubRng([0]))).toBeCloseTo(0.25)
-    expect(rollSpellingHintRatio(stubRng([1]))).toBeCloseTo(0.33)
+    expect(rollSpellingHintRatio(stubRng([0]))).toBeCloseTo(0.5)
+    expect(rollSpellingHintRatio(stubRng([1]))).toBeCloseTo(0.5)
   })
 })

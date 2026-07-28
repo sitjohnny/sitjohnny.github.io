@@ -377,7 +377,8 @@ describe('EducationQuestion', () => {
     expect(hint).toBeDisabled()
     const blanks = screen.getByTestId('spelling-blanks')
     const revealed = blanks.textContent!.match(/[A-Z]/g) ?? []
-    expect(revealed.length).toBeGreaterThanOrEqual(1)
+    // tiger length 5 → ~50% hint ≈ 2–3 letters, never the full word
+    expect(revealed.length).toBeGreaterThanOrEqual(2)
     expect(revealed.length).toBeLessThan(5)
   })
 

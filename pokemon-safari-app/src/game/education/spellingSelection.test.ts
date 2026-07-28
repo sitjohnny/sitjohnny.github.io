@@ -25,14 +25,14 @@ describe('selectSpellingFact', () => {
     expect(spellingWords.some((w) => w.factKey === key)).toBe(true)
   })
 
-  it('selectSpellingFact draws challenge when tier roll < 0.7', () => {
+  it('selectSpellingFact draws challenge when tier roll < challenge probability', () => {
     const key = selectSpellingFact(stubRng([0.1, 0]), {})
     const word = spellingWordByFactKey(key)!
     expect(word.tier).toBe('challenge')
   })
 
-  it('selectSpellingFact draws early when tier roll >= 0.7', () => {
-    const key = selectSpellingFact(stubRng([0.7, 0]), {})
+  it('selectSpellingFact draws early when tier roll >= challenge probability', () => {
+    const key = selectSpellingFact(stubRng([0.3, 0]), {})
     const word = spellingWordByFactKey(key)!
     expect(word.tier).toBe('early')
   })
