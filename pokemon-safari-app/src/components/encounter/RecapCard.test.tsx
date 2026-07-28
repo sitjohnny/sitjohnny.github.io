@@ -16,6 +16,20 @@ describe('RecapCard', () => {
     expect(screen.getByText(recapCopy.closing)).toBeInTheDocument()
   })
 
+  it('renders spelling image and word on Quick recap', () => {
+    render(
+      <RecapCard
+        equation="elephant"
+        imageUrl="https://images.pexels.com/photos/66898/pexels-photo-66898.jpeg"
+        photographer="Pixabay"
+        pexelsUrl="https://www.pexels.com/photo/66898/"
+        onContinue={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('img', { name: /recap/i })).toBeInTheDocument()
+    expect(screen.getByText('elephant.')).toBeInTheDocument()
+  })
+
   it('renders a division equation on Quick recap', () => {
     render(<RecapCard equation="48 ÷ 6 = 8" onContinue={vi.fn()} />)
 

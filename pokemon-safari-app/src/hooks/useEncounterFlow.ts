@@ -119,6 +119,13 @@ function doSubmitAnswer(rng: Rng, raw: string): void {
     expected: question.expected,
     correct: result.ok,
     recapLine: question.recapLine,
+    ...(question.category === 'spelling'
+      ? {
+          imageUrl: question.imageUrl,
+          photographer: question.photographer,
+          pexelsUrl: question.pexelsUrl,
+        }
+      : {}),
   }
 
   useEncounterStore.getState().applyAnswer({ outcome, captureBonus, message })

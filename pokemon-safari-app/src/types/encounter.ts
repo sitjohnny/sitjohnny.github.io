@@ -27,6 +27,9 @@ export type EncounterEducationOutcome = {
   correct: boolean
   /** Equation for Quick recap, e.g. `7 × 8 = 56`. */
   recapLine: string
+  imageUrl?: string
+  photographer?: string
+  pexelsUrl?: string
 }
 
 export type EncounterSession = {

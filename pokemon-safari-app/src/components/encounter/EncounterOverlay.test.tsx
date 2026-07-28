@@ -253,4 +253,31 @@ describe('EncounterOverlay — shiny session threading (DEX-02 / D-09)', () => {
     const img = screen.getByRole('img', { name: /p1/i })
     expect(img).toHaveAttribute('src', 'https://example.test/s1.png')
   })
+
+  it('shows spelling recap image when education outcome includes imageUrl', () => {
+    render(<EncounterOverlay />)
+    const imageUrl =
+      'https://images.pexels.com/photos/66898/pexels-photo-66898.jpeg'
+    act(() => {
+      useEncounterStore.getState().open({
+        speciesId: SEEDED_SPECIES,
+        rarity: 'common',
+        biome: 'forest',
+        captureBonus: 0,
+        education: {
+          factKey: 'spell:elephant',
+          prompt: 'What is this?',
+          expected: 'elephant',
+          correct: false,
+          recapLine: 'elephant',
+          imageUrl,
+          photographer: 'Pixabay',
+          pexelsUrl: 'https://www.pexels.com/photo/66898/',
+        },
+      })
+      useEncounterStore.getState().toRecap()
+    })
+    expect(screen.getByRole('img', { name: /recap/i })).toHaveAttribute('src', imageUrl)
+    expect(screen.getByText('elephant.')).toBeInTheDocument()
+  })
 })

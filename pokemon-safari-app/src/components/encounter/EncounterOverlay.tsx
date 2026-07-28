@@ -159,7 +159,13 @@ export function EncounterOverlay() {
             onContinue={continueFromFlee}
           />
         ) : showRecap && education ? (
-          <RecapCard equation={education.recapLine} onContinue={dismissRecap} />
+          <RecapCard
+            equation={education.recapLine}
+            imageUrl={education.imageUrl}
+            photographer={education.photographer}
+            pexelsUrl={education.pexelsUrl}
+            onContinue={dismissRecap}
+          />
         ) : null}
       </div>
     </div>

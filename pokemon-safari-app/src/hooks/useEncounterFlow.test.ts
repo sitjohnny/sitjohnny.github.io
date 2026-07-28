@@ -282,6 +282,28 @@ describe('useEncounterFlow', () => {
     expect(loadAdaptiveStats()[spelling.factKey]).toEqual(before)
   })
 
+  it('stores spelling image fields on education outcome when a spelling answer is submitted', async () => {
+    persistSpellingEnabled(true)
+    await openPokemonAppear(sequenceRng(0, 0, 1, 0, 0, 0))
+    act(() => {
+      advanceFromAppear()
+    })
+    const asked = useEncounterStore.getState().question!
+    expect(asked.category).toBe('spelling')
+    if (asked.category !== 'spelling') return
+
+    act(() => {
+      submitAnswer(correctRaw(asked))
+    })
+
+    expect(useEncounterStore.getState().session?.education).toMatchObject({
+      imageUrl: asked.imageUrl,
+      photographer: asked.photographer,
+      pexelsUrl: asked.pexelsUrl,
+      recapLine: asked.recapLine,
+    })
+  })
+
   it('applies a correct answer with capture bonus and advances to timing after the hold', async () => {
     await openPokemonAppear(sequenceRng(0, 0, 0))
     vi.useFakeTimers()
