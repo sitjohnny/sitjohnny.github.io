@@ -117,6 +117,7 @@ export function EncounterOverlay() {
           />
         ) : showQuestion ? (
           <EducationQuestion
+            key={question.factKey}
             pokemon={pokemon}
             question={question}
             feedback={feedback}
