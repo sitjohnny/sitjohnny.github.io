@@ -17,6 +17,7 @@ export function RecapCard({
   onContinue,
   imageUrl,
   photographer,
+  pexelsUrl,
 }: RecapCardProps) {
   const showImage = Boolean(imageUrl)
   const [imageStatus, setImageStatus] = useState<ImageStatus>(() =>
@@ -66,7 +67,13 @@ export function RecapCard({
           ) : null}
           {attribution ? (
             <p className="font-[family-name:var(--font-label)] text-[12px] text-muted">
-              {attribution}
+              {pexelsUrl ? (
+                <a href={pexelsUrl} target="_blank" rel="noopener noreferrer">
+                  {attribution}
+                </a>
+              ) : (
+                attribution
+              )}
             </p>
           ) : null}
         </div>

@@ -103,6 +103,9 @@ export const spellingMixProbability = 0.5 as const
 export const spellingChallengeProbability = 0.7 as const
 /** Fraction of letters a Hint reveals (inclusive range); rolled per hint use. */
 export const spellingHintReveal = { minRatio: 0.25, maxRatio: 0.33 } as const
+/** Max wait for spelling picture load before treating as error (ms). */
+export const spellingImageTimeoutMs = 8000 as const
+
 export const spellingCopy = {
   prompt: 'What is this?',
   loading: 'Loading picture…',

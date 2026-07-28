@@ -36,6 +36,7 @@ describe('RecapCard', () => {
         equation="elephant"
         imageUrl="https://images.pexels.com/photos/66898/pexels-photo-66898.jpeg"
         photographer="Pixabay"
+        pexelsUrl="https://www.pexels.com/photo/66898/"
         onContinue={vi.fn()}
       />,
     )
@@ -43,7 +44,11 @@ describe('RecapCard', () => {
     expect(screen.getByText(spellingCopy.loading)).toBeInTheDocument()
     fireEvent.load(screen.getByRole('img', { name: /recap/i }))
     expect(screen.queryByText(spellingCopy.loading)).not.toBeInTheDocument()
-    expect(screen.getByText(/Photo by Pixabay/i)).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /Photo by Pixabay/i })
+    expect(link).toHaveAttribute(
+      'href',
+      'https://www.pexels.com/photo/66898/',
+    )
   })
 
   it('hides image and attribution when recap image errors', () => {

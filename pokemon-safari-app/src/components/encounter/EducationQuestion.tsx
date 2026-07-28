@@ -1,8 +1,14 @@
-import { useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
+import {
+  useEffect,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type KeyboardEvent,
+} from 'react'
 import { PixelButton } from '@/components/PixelButton'
 import { EncounterPokemonShowcase } from '@/components/encounter/EncounterPokemonShowcase'
 import { encounterDialogAccentProps } from '@/data/typeColors'
-import { spellingCopy } from '@/data/educationConfig'
+import { spellingCopy, spellingImageTimeoutMs } from '@/data/educationConfig'
 import {
   pickSpellingHintIndices,
   rollSpellingHintRatio,
@@ -44,6 +50,23 @@ export function EducationQuestion({
   )
   const [hintIndices, setHintIndices] = useState<number[] | null>(null)
   const imageErrorCalledRef = useRef(false)
+
+  const spellingImageKey =
+    question.category === 'spelling' ? question.imageUrl : ''
+
+  useEffect(() => {
+    if (question.category !== 'spelling' || imageStatus !== 'loading') return
+
+    const timer = window.setTimeout(() => {
+      setImageStatus('error')
+      if (!imageErrorCalledRef.current) {
+        imageErrorCalledRef.current = true
+        onImageError?.()
+      }
+    }, spellingImageTimeoutMs)
+
+    return () => clearTimeout(timer)
+  }, [question.category, spellingImageKey, imageStatus, onImageError])
 
   const locked = feedback !== null
   const accentProps = encounterDialogAccentProps(pokemon.types)
@@ -140,7 +163,17 @@ export function EducationQuestion({
           ) : null}
           {attribution ? (
             <p className="font-[family-name:var(--font-label)] text-[12px] text-muted">
-              {attribution}
+              {question.pexelsUrl ? (
+                <a
+                  href={question.pexelsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {attribution}
+                </a>
+              ) : (
+                attribution
+              )}
             </p>
           ) : null}
         </div>

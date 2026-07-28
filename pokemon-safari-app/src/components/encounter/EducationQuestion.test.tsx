@@ -1,8 +1,12 @@
 import userEvent from '@testing-library/user-event'
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EducationQuestion } from '@/components/encounter/EducationQuestion'
-import { feedbackCopy, spellingCopy } from '@/data/educationConfig'
+import {
+  feedbackCopy,
+  spellingCopy,
+  spellingImageTimeoutMs,
+} from '@/data/educationConfig'
 import { educationCaptureBonus } from '@/data/rates'
 import { typeColors } from '@/data/typeColors'
 import { makePokemonDto } from '@/test/pokeapi-test-helpers'
@@ -286,7 +290,30 @@ describe('EducationQuestion', () => {
     )
     fireEvent.load(screen.getByRole('img', { name: /spelling/i }))
     expect(screen.queryByText(spellingCopy.loading)).not.toBeInTheDocument()
-    expect(screen.getByText(/Photo by Pixabay/i)).toBeInTheDocument()
+    const link = screen.getByRole('link', { name: /Photo by Pixabay/i })
+    expect(link).toHaveAttribute('href', spellingQuestion.pexelsUrl)
+  })
+
+  it('calls onImageError once when the image load times out', async () => {
+    vi.useFakeTimers()
+    try {
+      const onImageError = vi.fn()
+      render(
+        <EducationQuestion
+          pokemon={pokemon}
+          question={spellingQuestion}
+          feedback={null}
+          onSubmit={vi.fn()}
+          onImageError={onImageError}
+        />,
+      )
+      await act(async () => {
+        vi.advanceTimersByTime(spellingImageTimeoutMs)
+      })
+      expect(onImageError).toHaveBeenCalledTimes(1)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 
   it('calls onImageError once when the image errors', () => {
