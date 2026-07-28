@@ -16,6 +16,7 @@ const question: EducationQuestionData = {
   a: 7,
   b: 8,
   expected: 56,
+  recapLine: '7 × 8 = 56',
 }
 
 function boostMessage(ok: boolean, lineIndex = 0): string {
@@ -178,6 +179,26 @@ describe('EducationQuestion', () => {
     )
 
     const feedback = screen.getByText(message)
+    expect(feedback.className).not.toMatch(/border-l/)
+    expect(feedback.className).not.toMatch(/border-accent/)
+    expect(feedback.className).toMatch(/text-secondary/)
+    expect(feedback.className).toMatch(/font-semibold/)
+  })
+
+  it('styles wrong feedback with destructive color for kid readability', () => {
+    const message = boostMessage(false)
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={question}
+        feedback={{ ok: false, message }}
+        onSubmit={vi.fn()}
+      />,
+    )
+
+    const feedback = screen.getByText(message)
+    expect(feedback.className).toMatch(/text-destructive/)
+    expect(feedback.className).toMatch(/font-semibold/)
     expect(feedback.className).not.toMatch(/border-l/)
     expect(feedback.className).not.toMatch(/border-accent/)
   })

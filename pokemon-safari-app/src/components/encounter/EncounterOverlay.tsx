@@ -19,7 +19,6 @@ import {
 } from '@/hooks/useEncounterFlow'
 import { getPokemon } from '@/services/pokeapi/cache'
 import { useEncounterStore } from '@/store/encounterStore'
-import type { EncounterEducationOutcome } from '@/types/encounter'
 import type { PokemonDto } from '@/types/pokemon'
 
 const ERROR_HEADING = 'That encounter got stuck.'
@@ -31,17 +30,6 @@ function resolveSessionPokemon(speciesId: number): PokemonDto | null {
   } catch {
     return null
   }
-}
-
-function operandsFromEducation(education: EncounterEducationOutcome): {
-  a: number
-  b: number
-  product: number
-} {
-  const [aRaw, bRaw] = education.factKey.split('x')
-  const a = Number(aRaw)
-  const b = Number(bRaw)
-  return { a, b, product: education.expected }
 }
 
 export function EncounterOverlay() {
@@ -166,7 +154,7 @@ export function EncounterOverlay() {
             onContinue={continueFromFlee}
           />
         ) : showRecap && education ? (
-          <RecapCard {...operandsFromEducation(education)} onContinue={dismissRecap} />
+          <RecapCard equation={education.recapLine} onContinue={dismissRecap} />
         ) : null}
       </div>
     </div>

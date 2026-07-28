@@ -13,6 +13,8 @@ import { biomeEncounterTables } from '@/data/encounterTables'
 import {
   multiplicationRange,
   doubleDigitMultiplication,
+  divisionProblems,
+  longDivisionProblems,
   adaptiveWeights,
   masteryThreshold,
   feedbackCopy,
@@ -90,6 +92,8 @@ describe('DATA-03 config surface', () => {
       'spriteReveal',
       'feedbackHold',
       'reducedFeedbackHold',
+      'incorrectFeedbackHold',
+      'reducedIncorrectFeedbackHold',
       'timingFreezeHold',
       'reducedTimingFreezeHold',
       'gradeFlash',
@@ -111,9 +115,7 @@ describe('DATA-03 config surface', () => {
 
   it('forest encounter pools partition Gen 1 (1..151) with no gaps or duplicates', () => {
     const { common, rare, legendary } = biomeEncounterTables.forest
-    expect([...legendary].sort((a, b) => a - b)).toEqual([
-      144, 145, 146, 150, 151,
-    ])
+    expect([...legendary].sort((a, b) => a - b)).toEqual([144, 145, 146, 150, 151])
     expect(new Set(rare).size).toBe(rare.length)
     expect(new Set(common).size).toBe(common.length)
 
@@ -127,11 +129,10 @@ describe('DATA-03 config surface', () => {
 
   it('forest rare pool matches the approved finals / cool list', () => {
     const expectedRare = [
-      3, 6, 9, 12, 15, 18, 22, 24, 26, 28, 31, 34, 36, 38, 40, 45, 47, 49, 51, 53,
-      55, 57, 59, 62, 65, 68, 71, 73, 76, 78, 80, 82, 85, 87, 89, 91, 94, 97, 99,
-      101, 103, 105, 106, 107, 110, 112, 113, 115, 117, 119, 121, 122, 123, 124,
-      125, 126, 127, 128, 130, 131, 132, 134, 135, 136, 137, 139, 141, 142, 143,
-      149,
+      3, 6, 9, 12, 15, 18, 22, 24, 26, 28, 31, 34, 36, 38, 40, 45, 47, 49, 51, 53, 55, 57,
+      59, 62, 65, 68, 71, 73, 76, 78, 80, 82, 85, 87, 89, 91, 94, 97, 99, 101, 103, 105,
+      106, 107, 110, 112, 113, 115, 117, 119, 121, 122, 123, 124, 125, 126, 127, 128, 130,
+      131, 132, 134, 135, 136, 137, 139, 141, 142, 143, 149,
     ]
     expect([...biomeEncounterTables.forest.rare].sort((a, b) => a - b)).toEqual(
       expectedRare,
@@ -140,7 +141,22 @@ describe('DATA-03 config surface', () => {
 
   it('exports education adaptive knobs and copy with {boost} placeholder', () => {
     expect(multiplicationRange).toEqual({ min: 1, max: 9 })
-    expect(doubleDigitMultiplication).toEqual({ min: 10, max: 20, probability: 0.2 })
+    expect(doubleDigitMultiplication).toEqual({ min: 10, max: 20, probability: 0.4 })
+    expect(divisionProblems).toEqual({
+      numeratorMin: 10,
+      numeratorMax: 100,
+      divisorMin: 1,
+      divisorMax: 9,
+      probability: 0.2,
+    })
+    expect(longDivisionProblems).toEqual({
+      numeratorMin: 10,
+      numeratorMax: 100,
+      divisorMin: 10,
+      divisorMax: 100,
+      quotientMin: 2,
+      withinDivisionProbability: 0.1,
+    })
     expect(typeof adaptiveWeights.starterWeight).toBe('number')
     expect(typeof adaptiveWeights.missBonus).toBe('number')
     expect(typeof adaptiveWeights.correctPenalty).toBe('number')
@@ -183,9 +199,7 @@ describe('DATA-03 config surface', () => {
       rare: 0.25,
       legendary: 0.05,
     })
-    expect(captureModifiers.rarity.common).toBeGreaterThan(
-      captureModifiers.rarity.rare,
-    )
+    expect(captureModifiers.rarity.common).toBeGreaterThan(captureModifiers.rarity.rare)
     expect(captureModifiers.rarity.rare).toBeGreaterThan(
       captureModifiers.rarity.legendary,
     )
@@ -209,12 +223,8 @@ describe('DATA-03 config surface', () => {
     })
 
     for (const key of ['perfect', 'great', 'good'] as const) {
-      expect(timingBar.zones.common[key]).toBeGreaterThan(
-        timingBar.zones.rare[key],
-      )
-      expect(timingBar.zones.rare[key]).toBeGreaterThan(
-        timingBar.zones.legendary[key],
-      )
+      expect(timingBar.zones.common[key]).toBeGreaterThan(timingBar.zones.rare[key])
+      expect(timingBar.zones.rare[key]).toBeGreaterThan(timingBar.zones.legendary[key])
     }
   })
 

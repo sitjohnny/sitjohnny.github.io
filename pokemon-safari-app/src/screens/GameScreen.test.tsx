@@ -108,8 +108,8 @@ async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>
   const step = findStepOnto('grass')
   const key = arrowFor(step.dir)
   useExploreStore.setState({ tile: { ...step.from }, facing: step.dir, moving: false })
-  // outcome, species, pool roll (>=0.2 → single-digit), fact pick, feedback, catch roll
-  setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 0))
+  // outcome, species, pool roll (>=0.6 → single-digit), fact pick, feedback, catch roll
+  setDefaultRngForTests(encounterRng(0, 0, 0.6, 0.3, 0.3, 0))
 
   fireEvent.keyDown(window, { code: key })
   await flushFrames(8)
@@ -347,7 +347,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     const user = userEvent.setup()
     const step = setupGrassApproach()
     // outcome, species, pool roll, fact pick, feedback, catch roll (0 = always catch)
-    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 0))
+    setDefaultRngForTests(encounterRng(0, 0, 0.6, 0.3, 0.3, 0))
     renderExplore()
 
     fireEvent.keyDown(window, { code: arrowFor(step.dir) })
@@ -375,10 +375,17 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     })
 
     expect(
-      await screen.findByRole('button', {
-        name: 'Capture',
-        timeout: encounterTimingMs.feedbackHold + 1000,
-      }),
+      await screen.findByRole(
+        'button',
+        { name: 'Capture' },
+        {
+          timeout:
+            Math.max(
+              encounterTimingMs.feedbackHold,
+              encounterTimingMs.incorrectFeedbackHold,
+            ) + 1000,
+        },
+      ),
     ).toBeInTheDocument()
     expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ready to throw!' })).toBeNull()
@@ -507,10 +514,17 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     expect(
-      await screen.findByRole('button', {
-        name: 'Capture',
-        timeout: encounterTimingMs.feedbackHold + 1000,
-      }),
+      await screen.findByRole(
+        'button',
+        { name: 'Capture' },
+        {
+          timeout:
+            Math.max(
+              encounterTimingMs.feedbackHold,
+              encounterTimingMs.incorrectFeedbackHold,
+            ) + 1000,
+        },
+      ),
     ).toBeInTheDocument()
     expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Capture' }))
@@ -546,10 +560,17 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     expect(
-      await screen.findByRole('button', {
-        name: 'Capture',
-        timeout: encounterTimingMs.feedbackHold + 1000,
-      }),
+      await screen.findByRole(
+        'button',
+        { name: 'Capture' },
+        {
+          timeout:
+            Math.max(
+              encounterTimingMs.feedbackHold,
+              encounterTimingMs.incorrectFeedbackHold,
+            ) + 1000,
+        },
+      ),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Capture' }))
 
@@ -576,10 +597,17 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.type(screen.getByLabelText('Your answer'), String(a * b))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
     expect(
-      await screen.findByRole('button', {
-        name: 'Capture',
-        timeout: encounterTimingMs.feedbackHold + 1000,
-      }),
+      await screen.findByRole(
+        'button',
+        { name: 'Capture' },
+        {
+          timeout:
+            Math.max(
+              encounterTimingMs.feedbackHold,
+              encounterTimingMs.incorrectFeedbackHold,
+            ) + 1000,
+        },
+      ),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Capture' }))
     expect(
@@ -636,10 +664,19 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
       expect(
-        await screen.findByRole('button', {
-          name: 'Capture',
-          timeout: encounterTimingMs.feedbackHold + 1000,
-        }),
+        await screen.findByRole(
+          'button',
+          { name: 'Capture' },
+          {
+            timeout:
+              Math.max(
+                encounterTimingMs.feedbackHold,
+                encounterTimingMs.incorrectFeedbackHold,
+                encounterTimingMs.reducedFeedbackHold,
+                encounterTimingMs.reducedIncorrectFeedbackHold,
+              ) + 1000,
+          },
+        ),
       ).toBeInTheDocument()
       expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Capture' }))
@@ -663,7 +700,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     const step = setupGrassApproach()
     // outcome, species, pool, fact, feedback, then three always-miss catch rolls
     // Use 1.0 so even a clamped 100% chance still fails (rng.next() < chance).
-    setDefaultRngForTests(encounterRng(0, 0, 0.5, 0.2, 0.3, 1, 1, 1))
+    setDefaultRngForTests(encounterRng(0, 0, 0.6, 0.3, 0.3, 1, 1, 1))
     renderExplore()
 
     fireEvent.keyDown(window, { code: arrowFor(step.dir) })
@@ -679,10 +716,17 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     expect(
-      await screen.findByRole('button', {
-        name: 'Capture',
-        timeout: encounterTimingMs.feedbackHold + 1000,
-      }),
+      await screen.findByRole(
+        'button',
+        { name: 'Capture' },
+        {
+          timeout:
+            Math.max(
+              encounterTimingMs.feedbackHold,
+              encounterTimingMs.incorrectFeedbackHold,
+            ) + 1000,
+        },
+      ),
     ).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Capture' }))
@@ -693,10 +737,11 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(screen.queryByRole('button', { name: /^Run$/i })).toBeNull()
 
     expect(
-      await screen.findByRole('button', {
-        name: 'Capture',
-        timeout: encounterTimingMs.failBeat + 2000,
-      }),
+      await screen.findByRole(
+        'button',
+        { name: 'Capture' },
+        { timeout: encounterTimingMs.failBeat + 2000 },
+      ),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Capture' }))
 
@@ -704,10 +749,11 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       await screen.findByText('Oh! It broke free!', {}, { timeout: 8000 }),
     ).toBeInTheDocument()
     expect(
-      await screen.findByRole('button', {
-        name: 'Capture',
-        timeout: encounterTimingMs.failBeat + 2000,
-      }),
+      await screen.findByRole(
+        'button',
+        { name: 'Capture' },
+        { timeout: encounterTimingMs.failBeat + 2000 },
+      ),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Capture' }))
 

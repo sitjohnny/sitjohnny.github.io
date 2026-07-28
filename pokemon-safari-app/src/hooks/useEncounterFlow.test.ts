@@ -9,7 +9,12 @@ import {
   postEncounterPokemonImmunitySteps,
   shinyRate,
 } from '@/data/rates'
-import { allDoubleDigitFacts, allFacts } from '@/game/education/adaptiveLearning'
+import {
+  allDivisionFacts,
+  allDoubleDigitFacts,
+  allFacts,
+  allLongDivisionFacts,
+} from '@/game/education/adaptiveLearning'
 import {
   loadAdaptiveStats,
   persistAdaptiveStats,
@@ -37,7 +42,12 @@ import {
 import type { EncounterCandidateEvent } from '@/types/map'
 import type { Rng } from '@/utils/rng'
 
-const FACT_SET = new Set([...allFacts(), ...allDoubleDigitFacts()])
+const FACT_SET = new Set([
+  ...allFacts(),
+  ...allDoubleDigitFacts(),
+  ...allDivisionFacts(),
+  ...allLongDivisionFacts(),
+])
 
 const candidate = (at = 1): EncounterCandidateEvent => ({
   type: 'encounter_candidate',
@@ -147,9 +157,7 @@ describe('useEncounterFlow', () => {
 
   it('keeps nothing silent and idle', async () => {
     // Mid of nothing band under weights pokemon80+nothing45+rare19+legendary1 (total 145)
-    render(
-      createElement(QueueLater, { rng: sequenceRng(0.71), event: candidate() }),
-    )
+    render(createElement(QueueLater, { rng: sequenceRng(0.71), event: candidate() }))
 
     await waitFor(() =>
       expect(useExploreStore.getState().pendingEncounters).toHaveLength(0),
@@ -248,6 +256,7 @@ describe('useEncounterFlow', () => {
       factKey: asked.factKey,
       prompt: asked.prompt,
       expected: asked.expected,
+      recapLine: asked.recapLine,
     })
     expect(state.session?.captureBonus).toBe(educationCaptureBonus.correct)
     expect(state.lastFactKey).toBe(asked.factKey)
@@ -264,6 +273,7 @@ describe('useEncounterFlow', () => {
 
   it('applies a wrong answer with no capture bonus', async () => {
     await openPokemonAppear(sequenceRng(0, 0, 0))
+    vi.useFakeTimers()
     act(() => {
       advanceFromAppear()
     })
@@ -273,11 +283,23 @@ describe('useEncounterFlow', () => {
       submitAnswer(String(asked.expected + 1))
     })
 
-    const state = useEncounterStore.getState()
+    let state = useEncounterStore.getState()
     expect(state.stage).toBe('feedback')
     expect(state.session?.education?.correct).toBe(false)
     expect(state.session?.captureBonus).toBe(educationCaptureBonus.incorrect)
     expect(state.lastFactKey).toBe(asked.factKey)
+
+    act(() => {
+      vi.advanceTimersByTime(encounterTimingMs.feedbackHold)
+    })
+    expect(useEncounterStore.getState().stage).toBe('feedback')
+
+    act(() => {
+      vi.advanceTimersByTime(
+        encounterTimingMs.incorrectFeedbackHold - encounterTimingMs.feedbackHold,
+      )
+    })
+    expect(useEncounterStore.getState().stage).toBe('timing')
   })
 
   it('treats a quota persist failure as a non-event that keeps the feedback stage', async () => {
@@ -443,7 +465,7 @@ describe('useEncounterFlow', () => {
       submitAnswer(String(asked.expected + 1))
     })
     act(() => {
-      vi.advanceTimersByTime(encounterTimingMs.feedbackHold)
+      vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
     })
     expect(useEncounterStore.getState().stage).toBe('timing')
 
@@ -532,7 +554,7 @@ describe('useEncounterFlow', () => {
         submitAnswer(String(asked.expected + 1))
       })
       act(() => {
-        vi.advanceTimersByTime(encounterTimingMs.feedbackHold)
+        vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
       })
       expect(useEncounterStore.getState().stage).toBe('timing')
 

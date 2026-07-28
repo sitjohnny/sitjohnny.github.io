@@ -237,6 +237,7 @@ describe('EncounterOverlay — shiny session threading (DEX-02 / D-09)', () => {
         a: 2,
         b: 3,
         expected: 6,
+        recapLine: '2 × 3 = 6',
       })
     })
     const img = screen.getByRole('img', { name: /p1/i })

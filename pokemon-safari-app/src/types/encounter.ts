@@ -25,6 +25,8 @@ export type EncounterEducationOutcome = {
   prompt: string
   expected: number
   correct: boolean
+  /** Equation for Quick recap, e.g. `7 × 8 = 56`. */
+  recapLine: string
 }
 
 export type EncounterSession = {
@@ -46,5 +48,4 @@ export type EncounterSession = {
 }
 
 export type EncounterResolution =
-  | { kind: 'nothing' }
-  | { kind: 'pokemon'; speciesId: number; rarity: RarityBand }
+  { kind: 'nothing' } | { kind: 'pokemon'; speciesId: number; rarity: RarityBand }

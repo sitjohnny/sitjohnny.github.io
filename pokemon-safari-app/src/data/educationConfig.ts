@@ -7,7 +7,35 @@ export const multiplicationRange = { min: 1, max: 9 } as const
 export const doubleDigitMultiplication = {
   min: 10,
   max: 20,
-  probability: 0.2, // chance a question draws from this pool
+  /** Absolute rate; with division at 0.2, single-digit gets the remaining 0.4. */
+  probability: 0.4,
+} as const
+
+/**
+ * Exact integer division: numerator ÷ single-digit divisor.
+ * Only facts with an integer quotient are generated.
+ */
+export const divisionProblems = {
+  numeratorMin: 10,
+  numeratorMax: 100,
+  divisorMin: 1,
+  divisorMax: 9,
+  /** Absolute rate; double-digit 0.4 + division 0.2 → single-digit 0.4. */
+  probability: 0.2,
+} as const
+
+/**
+ * Exact integer long division: two-digit ÷ two-digit within 10–100.
+ * Nested under division draws via withinDivisionProbability.
+ */
+export const longDivisionProblems = {
+  numeratorMin: 10,
+  numeratorMax: 100,
+  divisorMin: 10,
+  divisorMax: 100,
+  quotientMin: 2,
+  /** Share of division draws (nested under divisionProblems.probability). */
+  withinDivisionProbability: 0.1,
 } as const
 
 /** D-17 / D-19 adaptive weighting defaults from 04-RESEARCH. */
@@ -30,8 +58,11 @@ export const masteryThreshold = {
  * educationCaptureBonus.correct at render time so retuning the bonus retunes the copy.
  */
 export const feedbackCopy = {
-  correct: ['Nice!', 'You got it!', 'Great job!'],
-  incorrect: ['Not quite — you’ll get it next time!', 'Keep going — you’ve got this!'],
+  correct: ['That’s right!', 'You got it right!', 'Correct — great job!'],
+  incorrect: [
+    'That’s not right — try again next time!',
+    'Wrong answer — you’ll get the next one!',
+  ],
   correctSuffix: '+{boost}% catch boost',
   incorrectSuffix: 'No catch boost this time',
 } as const

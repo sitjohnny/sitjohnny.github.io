@@ -8,7 +8,9 @@
 
 import {
   adaptiveWeights,
+  divisionProblems,
   doubleDigitMultiplication,
+  longDivisionProblems,
   masteryThreshold,
   multiplicationRange,
 } from '@/data/educationConfig'
@@ -17,6 +19,10 @@ import type { AdaptiveStats, FactKey, FactStat } from './questionTypes'
 
 export function factKeyOf(a: number, b: number): FactKey {
   return `${a}x${b}`
+}
+
+export function divisionFactKeyOf(numerator: number, divisor: number): FactKey {
+  return `${numerator}d${divisor}`
 }
 
 /** Every ordered pair in range inclusive — `3x7` and `7x3` are distinct facts. */
@@ -44,6 +50,47 @@ export function allDoubleDigitFacts(
   for (let a = cfg.min; a <= cfg.max; a++) {
     for (let b = singleDigitRange.min; b <= singleDigitRange.max; b++) {
       out.push(factKeyOf(a, b))
+    }
+  }
+  return out
+}
+
+/**
+ * Exact integer division facts: numerator ÷ divisor where
+ * numeratorMin ≤ d·q ≤ numeratorMax for each divisor d.
+ */
+export function allDivisionFacts(
+  cfg: typeof divisionProblems = divisionProblems,
+): FactKey[] {
+  const out: FactKey[] = []
+  for (let d = cfg.divisorMin; d <= cfg.divisorMax; d++) {
+    const qMin = Math.ceil(cfg.numeratorMin / d)
+    const qMax = Math.floor(cfg.numeratorMax / d)
+    for (let q = qMin; q <= qMax; q++) {
+      const n = d * q
+      if (n >= cfg.numeratorMin && n <= cfg.numeratorMax) {
+        out.push(divisionFactKeyOf(n, d))
+      }
+    }
+  }
+  return out
+}
+
+/**
+ * Exact integer long-division facts: two-digit ÷ two-digit with quotient ≥ quotientMin.
+ */
+export function allLongDivisionFacts(
+  cfg: typeof longDivisionProblems = longDivisionProblems,
+): FactKey[] {
+  const out: FactKey[] = []
+  for (let d = cfg.divisorMin; d <= cfg.divisorMax; d++) {
+    const qMin = Math.max(cfg.quotientMin, Math.ceil(cfg.numeratorMin / d))
+    const qMax = Math.floor(cfg.numeratorMax / d)
+    for (let q = qMin; q <= qMax; q++) {
+      const n = d * q
+      if (n >= cfg.numeratorMin && n <= cfg.numeratorMax) {
+        out.push(divisionFactKeyOf(n, d))
+      }
     }
   }
   return out
@@ -96,6 +143,37 @@ function weightedEntriesForPool(
   return entries
 }
 
+function pickFromPools(
+  rng: Rng,
+  orderedPools: FactKey[][],
+  stats: AdaptiveStats,
+  excludeFactKey: string | null,
+  cfg: typeof adaptiveWeights,
+  threshold: typeof masteryThreshold,
+): FactKey {
+  for (const pool of orderedPools) {
+    const entries = weightedEntriesForPool(pool, stats, excludeFactKey, cfg, threshold)
+    if (entries.length > 0) {
+      return weightedPick(rng, entries)
+    }
+  }
+  // Exhausted exclude-only edge case: pick from the first non-empty raw pool.
+  for (const pool of orderedPools) {
+    if (pool.length > 0) {
+      return weightedPick(
+        rng,
+        pool.map((id) => ({ id, weight: cfg.minWeight })),
+      )
+    }
+  }
+  throw new Error('selectFact: no education facts available')
+}
+
+/**
+ * Mutually exclusive pool pick:
+ * division → double-digit mult → single-digit mult (remainder).
+ * Division draws nest a long-division share via withinDivisionProbability.
+ */
 export function selectFact(
   rng: Rng,
   stats: AdaptiveStats,
@@ -103,16 +181,42 @@ export function selectFact(
   cfg: typeof adaptiveWeights = adaptiveWeights,
   threshold: typeof masteryThreshold = masteryThreshold,
   doubleDigitCfg: typeof doubleDigitMultiplication = doubleDigitMultiplication,
+  divisionCfg: typeof divisionProblems = divisionProblems,
+  longDivisionCfg: typeof longDivisionProblems = longDivisionProblems,
 ): FactKey {
   const singlePool = allFacts()
   const doublePool = allDoubleDigitFacts(doubleDigitCfg)
-  const preferDouble = rng.next() < doubleDigitCfg.probability
-  const primary = preferDouble ? doublePool : singlePool
-  const fallback = preferDouble ? singlePool : doublePool
+  const shortDivisionPool = allDivisionFacts(divisionCfg)
+  const longDivisionPool = allLongDivisionFacts(longDivisionCfg)
+  const roll = rng.next()
+  const divisionCut = divisionCfg.probability
+  const doubleCut = divisionCut + doubleDigitCfg.probability
 
-  let entries = weightedEntriesForPool(primary, stats, excludeFactKey, cfg, threshold)
-  if (entries.length === 0) {
-    entries = weightedEntriesForPool(fallback, stats, excludeFactKey, cfg, threshold)
+  let primary: FactKey[]
+  let fallbacks: FactKey[][]
+  if (roll < divisionCut) {
+    const longRoll = rng.next()
+    if (longRoll < longDivisionCfg.withinDivisionProbability) {
+      primary = longDivisionPool
+      fallbacks = [shortDivisionPool, doublePool, singlePool]
+    } else {
+      primary = shortDivisionPool
+      fallbacks = [longDivisionPool, doublePool, singlePool]
+    }
+  } else if (roll < doubleCut) {
+    primary = doublePool
+    fallbacks = [singlePool, shortDivisionPool, longDivisionPool]
+  } else {
+    primary = singlePool
+    fallbacks = [doublePool, shortDivisionPool, longDivisionPool]
   }
-  return weightedPick(rng, entries)
+
+  return pickFromPools(
+    rng,
+    [primary, ...fallbacks],
+    stats,
+    excludeFactKey,
+    cfg,
+    threshold,
+  )
 }

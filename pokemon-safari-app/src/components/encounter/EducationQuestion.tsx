@@ -98,7 +98,11 @@ export function EducationQuestion({
         {feedback ? (
           <p
             aria-live="polite"
-            className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text"
+            className={
+              feedback.ok
+                ? 'font-[family-name:var(--font-body)] text-[16px] font-semibold leading-[1.5] text-secondary'
+                : 'font-[family-name:var(--font-body)] text-[16px] font-semibold leading-[1.5] text-destructive'
+            }
           >
             {feedback.message}
           </p>

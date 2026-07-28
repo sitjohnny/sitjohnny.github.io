@@ -21,8 +21,12 @@ export const educationCaptureBonus = {
 export const encounterTimingMs = {
   appearFlash: 240,
   spriteReveal: 180,
-  feedbackHold: 1000,
-  reducedFeedbackHold: 400,
+  /** Hold after a correct math answer so kids can read the green feedback. */
+  feedbackHold: 1800,
+  reducedFeedbackHold: 700,
+  /** Hold after a wrong math answer — slightly longer than correct. */
+  incorrectFeedbackHold: 2200,
+  reducedIncorrectFeedbackHold: 900,
   /** Hold after Capture so the frozen marker is readable before grade flash. */
   timingFreezeHold: 500,
   reducedTimingFreezeHold: 250,

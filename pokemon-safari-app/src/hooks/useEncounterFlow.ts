@@ -9,7 +9,7 @@ import {
   recordAttempt,
 } from '@/game/education/adaptiveStore'
 import { captureBonusFor, validateAnswer } from '@/game/education/answerValidator'
-import { multiplicationProvider } from '@/game/education/questionGenerator'
+import { educationProvider } from '@/game/education/questionGenerator'
 import { resolveCandidate } from '@/game/encounter'
 import { gradeAt } from '@/game/timing'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
@@ -75,7 +75,7 @@ function buildFeedbackMessage(ok: boolean, rng: Rng): string {
 function doAdvanceFromAppear(rng: Rng): void {
   const state = useEncounterStore.getState()
   if (state.stage !== 'appear') return
-  const question = multiplicationProvider.nextQuestion(
+  const question = educationProvider.nextQuestion(
     rng,
     loadAdaptiveStats(),
     state.lastFactKey,
@@ -100,15 +100,20 @@ function doSubmitAnswer(rng: Rng, raw: string): void {
     prompt: question.prompt,
     expected: question.expected,
     correct: result.ok,
+    recapLine: question.recapLine,
   }
 
   useEncounterStore.getState().applyAnswer({ outcome, captureBonus, message })
   persistAdaptiveStats(recordAttempt(loadAdaptiveStats(), question.factKey, result.ok))
 
   clearFeedbackTimer()
-  const hold = prefersReducedMotion()
-    ? encounterTimingMs.reducedFeedbackHold
-    : encounterTimingMs.feedbackHold
+  const hold = result.ok
+    ? prefersReducedMotion()
+      ? encounterTimingMs.reducedFeedbackHold
+      : encounterTimingMs.feedbackHold
+    : prefersReducedMotion()
+      ? encounterTimingMs.reducedIncorrectFeedbackHold
+      : encounterTimingMs.incorrectFeedbackHold
   feedbackTimerRef.current = setTimeout(() => {
     feedbackTimerRef.current = null
     if (useEncounterStore.getState().stage === 'feedback') {

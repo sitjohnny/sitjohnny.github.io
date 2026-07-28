@@ -10,6 +10,7 @@ const q7x8: EducationQuestion = {
   a: 7,
   b: 8,
   expected: 56,
+  recapLine: '7 × 8 = 56',
 }
 
 describe('answerValidator (D-11)', () => {

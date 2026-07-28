@@ -2,13 +2,11 @@ import { PixelButton } from '@/components/PixelButton'
 import { recapCopy } from '@/data/educationConfig'
 
 type RecapCardProps = {
-  a: number
-  b: number
-  product: number
+  equation: string
   onContinue: () => void
 }
 
-export function RecapCard({ a, b, product, onContinue }: RecapCardProps) {
+export function RecapCard({ equation, onContinue }: RecapCardProps) {
   return (
     <div className="gba-dialog flex w-full flex-col items-center gap-4 p-6 text-center">
       <h2
@@ -18,7 +16,7 @@ export function RecapCard({ a, b, product, onContinue }: RecapCardProps) {
         {recapCopy.heading}
       </h2>
       <p className="font-[family-name:var(--font-numeral)] text-[32px] font-normal leading-[1.2] tracking-[0.06em] text-text">
-        {a} × {b} = {product}.
+        {equation}.
       </p>
       <p className="font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5] text-text">
         {recapCopy.closing}

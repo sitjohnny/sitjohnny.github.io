@@ -1,14 +1,19 @@
 import { describe, expect, it } from 'vitest'
 import {
   adaptiveWeights,
+  divisionProblems,
   doubleDigitMultiplication,
+  longDivisionProblems,
   masteryThreshold,
   multiplicationRange,
 } from '@/data/educationConfig'
 import { createRng } from '@/utils/rng'
 import {
+  allDivisionFacts,
   allDoubleDigitFacts,
   allFacts,
+  allLongDivisionFacts,
+  divisionFactKeyOf,
   factKeyOf,
   factWeight,
   isMastered,
@@ -16,17 +21,38 @@ import {
 } from './adaptiveLearning'
 import type { AdaptiveStats, FactKey } from './questionTypes'
 
-const allSelectableFacts = () => [...allFacts(), ...allDoubleDigitFacts()]
+const allSelectableFacts = () => [
+  ...allFacts(),
+  ...allDoubleDigitFacts(),
+  ...allDivisionFacts(),
+  ...allLongDivisionFacts(),
+]
 
 function isDoubleDigitFact(key: FactKey): boolean {
+  if (!key.includes('x')) return false
   const [aStr] = key.split('x')
   const a = Number(aStr)
   return a >= doubleDigitMultiplication.min && a <= doubleDigitMultiplication.max
 }
 
+function isDivisionFact(key: FactKey): boolean {
+  return key.includes('d') && !key.includes('x')
+}
+
+function isLongDivisionFact(key: FactKey): boolean {
+  if (!isDivisionFact(key)) return false
+  const [, dStr] = key.split('d')
+  const d = Number(dStr)
+  return d >= longDivisionProblems.divisorMin
+}
+
 describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
   it('factKeyOf(7, 8) is 7x8', () => {
     expect(factKeyOf(7, 8)).toBe('7x8')
+  })
+
+  it('divisionFactKeyOf(48, 6) is 48d6', () => {
+    expect(divisionFactKeyOf(48, 6)).toBe('48d6')
   })
 
   it('allFacts returns 81 unique keys covering every pair in multiplicationRange', () => {
@@ -74,6 +100,50 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
       expect(b).toBeGreaterThanOrEqual(sMin)
       expect(b).toBeLessThanOrEqual(sMax)
     }
+  })
+
+  it('allDivisionFacts returns exact integer quotients only for 10–100 ÷ 1–9', () => {
+    const facts = allDivisionFacts()
+    expect(new Set(facts).size).toBe(facts.length)
+    expect(facts.length).toBeGreaterThan(0)
+
+    for (const key of facts) {
+      expect(isDivisionFact(key)).toBe(true)
+      const [nStr, dStr] = key.split('d')
+      const n = Number(nStr)
+      const d = Number(dStr)
+      expect(n).toBeGreaterThanOrEqual(divisionProblems.numeratorMin)
+      expect(n).toBeLessThanOrEqual(divisionProblems.numeratorMax)
+      expect(d).toBeGreaterThanOrEqual(divisionProblems.divisorMin)
+      expect(d).toBeLessThanOrEqual(divisionProblems.divisorMax)
+      expect(n % d).toBe(0)
+    }
+
+    expect(facts).toContain('48d6')
+    expect(facts).not.toContain('10d3')
+  })
+
+  it('allLongDivisionFacts returns exact integer quotients ≥ 2 for 10–100 ÷ 10–100', () => {
+    const facts = allLongDivisionFacts()
+    expect(new Set(facts).size).toBe(facts.length)
+    expect(facts.length).toBeGreaterThan(0)
+
+    for (const key of facts) {
+      expect(isDivisionFact(key)).toBe(true)
+      const [nStr, dStr] = key.split('d')
+      const n = Number(nStr)
+      const d = Number(dStr)
+      expect(n).toBeGreaterThanOrEqual(longDivisionProblems.numeratorMin)
+      expect(n).toBeLessThanOrEqual(longDivisionProblems.numeratorMax)
+      expect(d).toBeGreaterThanOrEqual(longDivisionProblems.divisorMin)
+      expect(d).toBeLessThanOrEqual(longDivisionProblems.divisorMax)
+      expect(n % d).toBe(0)
+      expect(n / d).toBeGreaterThanOrEqual(longDivisionProblems.quotientMin)
+    }
+
+    expect(facts).toContain('84d12')
+    expect(facts).not.toContain('50d50')
+    expect(facts).not.toContain('10d3')
   })
 
   it('factWeight(undefined) equals starterWeight; never-attempted facts share that weight (D-19)', () => {
@@ -148,17 +218,39 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
     }
   })
 
-  it('selectFact draws double-digit facts near the configured probability', () => {
-    const draws = 2000
+  it('selectFact draws pools near 40% single / 40% double / 20% division', () => {
+    const draws = 3000
     const rng = createRng(2026)
+    let singleCount = 0
     let doubleCount = 0
+    let divisionCount = 0
+    let longDivisionCount = 0
     for (let i = 0; i < draws; i++) {
       const picked = selectFact(rng, {})
-      if (isDoubleDigitFact(picked)) doubleCount += 1
+      if (isDivisionFact(picked)) {
+        divisionCount += 1
+        if (isLongDivisionFact(picked)) longDivisionCount += 1
+      } else if (isDoubleDigitFact(picked)) doubleCount += 1
+      else singleCount += 1
     }
-    const rate = doubleCount / draws
-    expect(rate).toBeGreaterThan(doubleDigitMultiplication.probability - 0.05)
-    expect(rate).toBeLessThan(doubleDigitMultiplication.probability + 0.05)
+    const singleRate = singleCount / draws
+    const doubleRate = doubleCount / draws
+    const divisionRate = divisionCount / draws
+    const longAmongDivision = longDivisionCount / divisionCount
+    const singleExpected =
+      1 - doubleDigitMultiplication.probability - divisionProblems.probability
+    expect(singleRate).toBeGreaterThan(singleExpected - 0.05)
+    expect(singleRate).toBeLessThan(singleExpected + 0.05)
+    expect(doubleRate).toBeGreaterThan(doubleDigitMultiplication.probability - 0.05)
+    expect(doubleRate).toBeLessThan(doubleDigitMultiplication.probability + 0.05)
+    expect(divisionRate).toBeGreaterThan(divisionProblems.probability - 0.05)
+    expect(divisionRate).toBeLessThan(divisionProblems.probability + 0.05)
+    expect(longAmongDivision).toBeGreaterThan(
+      longDivisionProblems.withinDivisionProbability - 0.05,
+    )
+    expect(longAmongDivision).toBeLessThan(
+      longDivisionProblems.withinDivisionProbability + 0.05,
+    )
   })
 
   it('weakest fact is favoured far more often than mastered, but mastered still appears (D-17)', () => {
@@ -175,7 +267,7 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
     expect(factWeight(stats[weak])).toBeGreaterThan(factWeight(stats[mastered]))
 
     const counts: Record<string, number> = { [weak]: 0, [mastered]: 0 }
-    const draws = 1000
+    const draws = 5000
     const rng = createRng(2026)
     for (let i = 0; i < draws; i++) {
       const picked = selectFact(rng, stats)

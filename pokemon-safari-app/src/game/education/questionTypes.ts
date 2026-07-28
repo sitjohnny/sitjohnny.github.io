@@ -9,20 +9,24 @@
 
 import type { Rng } from '@/utils/rng'
 
-/** Template-literal fact id, e.g. `'7x8'`. */
-export type FactKey = `${number}x${number}`
+/** Multiplication `7x8` or division `48d6` fact ids. */
+export type FactKey = `${number}x${number}` | `${number}d${number}`
 
 export type FactStat = { correct: number; incorrect: number }
 
 export type AdaptiveStats = Record<string, FactStat>
 
+export type EducationCategory = 'multiplication' | 'division'
+
 export type EducationQuestion = {
-  category: 'multiplication'
+  category: EducationCategory
   prompt: string
   factKey: FactKey
   a: number
   b: number
   expected: number
+  /** Equation shown on Quick recap, e.g. `7 × 8 = 56` or `48 ÷ 6 = 8`. */
+  recapLine: string
 }
 
 export type AnswerResult = { ok: boolean; expected: number; parsed: number | null }
