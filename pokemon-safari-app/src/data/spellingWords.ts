@@ -303,9 +303,9 @@ export const spellingWords = [
     word: 'table',
     tier: 'early',
     imageUrl:
-      'https://images.pexels.com/photos/209205/pexels-photo-209205.jpeg?auto=compress&cs=tinysrgb&w=600',
-    photographer: 'Pixabay',
-    pexelsUrl: 'https://www.pexels.com/photo/209205/',
+      'https://images.pexels.com/photos/8583931/pexels-photo-8583931.jpeg?auto=compress&cs=tinysrgb&w=600',
+    photographer: 'Curtis Adams',
+    pexelsUrl: 'https://www.pexels.com/photo/8583931/',
     factKey: 'spell:table',
   },
   {

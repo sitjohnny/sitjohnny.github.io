@@ -7,13 +7,19 @@ import ballFullOpen from '@/assets/encounter/ball-full-open.png'
 
 type BallShakeProps = {
   caught: boolean
+  /** Wrong education answers always get a single shake. Defaults to true. */
+  educationCorrect?: boolean
   onComplete: () => void
 }
 
 type Phase = 'shaking' | 'resolve-caught' | 'resolve-mid-open' | 'resolve-full-open'
 
-/** Catch always gets 3 shakes; escape randomizes 1–3 for flavor suspense. */
-export function shakeCountFor(caught: boolean): 1 | 2 | 3 {
+/**
+ * Catch always gets 3 shakes; escape randomizes 1–3 for flavor suspense.
+ * Wrong education answers always shake once.
+ */
+export function shakeCountFor(caught: boolean, educationCorrect = true): 1 | 2 | 3 {
+  if (!educationCorrect) return 1
   if (caught) return 3
   return (Math.floor(Math.random() * 3) + 1) as 1 | 2 | 3
 }
@@ -28,9 +34,13 @@ function spriteFor(phase: Phase): string {
  * Flavor shakes to a pre-resolved caught flag (D-30 / D-31). Never rolls capture.
  * Fail ending opens the ball (mid → full hold) before onComplete → fail beat.
  */
-export function BallShake({ caught, onComplete }: BallShakeProps) {
+export function BallShake({
+  caught,
+  educationCorrect = true,
+  onComplete,
+}: BallShakeProps) {
   const reducedMotion = prefersReducedMotion()
-  const [shakes] = useState(() => shakeCountFor(caught))
+  const [shakes] = useState(() => shakeCountFor(caught, educationCorrect))
   const [phase, setPhase] = useState<Phase>('shaking')
   /** While shaking (and not reduced), true only during each `shakeOnce` window. */
   const [rocking, setRocking] = useState(() => !reducedMotion)

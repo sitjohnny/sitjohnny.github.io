@@ -276,9 +276,7 @@ describe('useEncounterFlow', () => {
     })
 
     const next = useEncounterStore.getState().question!
-    expect(
-      next.category === 'multiplication' || next.category === 'division',
-    ).toBe(true)
+    expect(next.category === 'multiplication' || next.category === 'division').toBe(true)
     expect(loadAdaptiveStats()[spelling.factKey]).toEqual(before)
   })
 
@@ -340,7 +338,7 @@ describe('useEncounterFlow', () => {
     expect(state.session?.captureBonus).toBe(educationCaptureBonus.correct)
   })
 
-  it('applies a wrong answer with no capture bonus', async () => {
+  it('applies a wrong answer with no capture bonus and skips the timing bar', async () => {
     await openPokemonAppear(sequenceRng(0, 0, 0))
     vi.useFakeTimers()
     act(() => {
@@ -368,7 +366,10 @@ describe('useEncounterFlow', () => {
         encounterTimingMs.incorrectFeedbackHold - encounterTimingMs.feedbackHold,
       )
     })
-    expect(useEncounterStore.getState().stage).toBe('timing')
+    state = useEncounterStore.getState()
+    expect(state.stage).toBe('shake')
+    expect(state.session?.lastGrade).toBe('miss')
+    expect(state.session?.attemptsUsed).toBe(1)
   })
 
   it('treats a quota persist failure as a non-event that keeps the feedback stage', async () => {
@@ -536,11 +537,10 @@ describe('useEncounterFlow', () => {
     act(() => {
       vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
     })
-    expect(useEncounterStore.getState().stage).toBe('timing')
+    // Wrong education skips timing and auto-throws into shake.
+    expect(useEncounterStore.getState().stage).toBe('shake')
+    expect(useEncounterStore.getState().session?.lastGrade).toBe('miss')
 
-    act(() => {
-      capture(useEncounterStore.getState().session!.sweetSpot)
-    })
     act(() => {
       useEncounterStore.getState().toResult()
     })
@@ -625,17 +625,21 @@ describe('useEncounterFlow', () => {
       act(() => {
         vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
       })
-      expect(useEncounterStore.getState().stage).toBe('timing')
+      // Wrong education skips timing and auto-throws once.
+      expect(useEncounterStore.getState().stage).toBe('shake')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
 
-      // Wrong education → one throw only, then flee.
+      // Force escape so we exercise the flee → recap branch (catch rng is incidental).
       act(() => {
-        failThrow()
+        const session = useEncounterStore.getState().session!
+        useEncounterStore.setState({
+          session: { ...session, lastCaught: false },
+        })
       })
       act(() => {
         onShakeComplete()
       })
       expect(useEncounterStore.getState().stage).toBe('flee')
-      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
 
       act(() => {
         continueFromFlee()
@@ -643,7 +647,7 @@ describe('useEncounterFlow', () => {
       expect(useEncounterStore.getState().stage).toBe('recap')
     })
 
-    it('wrong education flees after a single failed throw (no retry)', async () => {
+    it('wrong education flees after a single failed auto-throw (no timing bar, no retry)', async () => {
       await openPokemonAppear(sequenceRng(0, 0, 0))
       vi.useFakeTimers()
       act(() => {
@@ -651,14 +655,21 @@ describe('useEncounterFlow', () => {
       })
       const asked = useEncounterStore.getState().question!
       act(() => {
-        submitAnswer(String(asked.expected + 1))
+        submitAnswer(incorrectRaw(asked))
       })
       act(() => {
         vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
       })
 
+      expect(useEncounterStore.getState().stage).toBe('shake')
+      expect(useEncounterStore.getState().session?.lastGrade).toBe('miss')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
+
       act(() => {
-        failThrow()
+        const session = useEncounterStore.getState().session!
+        useEncounterStore.setState({
+          session: { ...session, lastCaught: false },
+        })
       })
       act(() => {
         onShakeComplete()

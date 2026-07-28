@@ -152,15 +152,38 @@ function doSubmitAnswer(rng: Rng, raw: string): void {
       : encounterTimingMs.incorrectFeedbackHold
   feedbackTimerRef.current = setTimeout(() => {
     feedbackTimerRef.current = null
-    if (useEncounterStore.getState().stage === 'feedback') {
+    if (useEncounterStore.getState().stage !== 'feedback') return
+    if (result.ok) {
       useEncounterStore.getState().startTiming()
+      return
     }
+    doAutoThrowAfterWrong(rng)
   }, hold)
 }
 
 function clampPosition(position: number): number {
   if (!Number.isFinite(position)) return 0
   return Math.min(1, Math.max(0, position))
+}
+
+/** Wrong education skips the timing bar: roll catch with miss grade, go to shake. */
+function doAutoThrowAfterWrong(rng: Rng): void {
+  const state = useEncounterStore.getState()
+  if (state.stage !== 'feedback') return
+  const session = state.session
+  if (!session || session.education?.correct !== false) return
+
+  const grade = 'miss' as const
+  const chance = computeCatchChance({
+    rarity: session.rarity,
+    educationBonus: session.captureBonus,
+    educationCorrect: false,
+    grade,
+    ball: 'poke',
+    berry: false,
+  })
+  const caught = rollCapture(rng, chance)
+  useEncounterStore.getState().registerThrow({ grade, caught, chance })
 }
 
 function doCapture(rng: Rng, position: number): void {

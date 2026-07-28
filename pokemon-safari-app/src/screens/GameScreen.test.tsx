@@ -519,24 +519,22 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.type(screen.getByLabelText('Your answer'), String(a * b + 1))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
+    // Wrong education skips the capture bar and auto-throws into shake.
+    expect(screen.queryByRole('button', { name: 'Capture' })).toBeNull()
+    expect(screen.queryByText(/Math boost:/)).toBeNull()
+
     expect(
       await screen.findByRole(
-        'button',
-        { name: 'Capture' },
+        'heading',
+        { name: 'Gotcha!' },
         {
           timeout:
             Math.max(
               encounterTimingMs.feedbackHold,
               encounterTimingMs.incorrectFeedbackHold,
-            ) + 1000,
+            ) + 8000,
         },
       ),
-    ).toBeInTheDocument()
-    expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
-    await user.click(screen.getByRole('button', { name: 'Capture' }))
-
-    expect(
-      await screen.findByRole('heading', { name: 'Gotcha!' }, { timeout: 8000 }),
     ).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
@@ -669,10 +667,13 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       await user.type(screen.getByLabelText('Your answer'), String(a * b + 1))
       await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
+      expect(screen.queryByRole('button', { name: 'Capture' })).toBeNull()
+      expect(screen.queryByText(/Math boost:/)).toBeNull()
+
       expect(
         await screen.findByRole(
-          'button',
-          { name: 'Capture' },
+          'heading',
+          { name: 'Gotcha!' },
           {
             timeout:
               Math.max(
@@ -680,15 +681,9 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
                 encounterTimingMs.incorrectFeedbackHold,
                 encounterTimingMs.reducedFeedbackHold,
                 encounterTimingMs.reducedIncorrectFeedbackHold,
-              ) + 1000,
+              ) + 8000,
           },
         ),
-      ).toBeInTheDocument()
-      expect(screen.getByText(/Math boost:/)).toBeInTheDocument()
-      await user.click(screen.getByRole('button', { name: 'Capture' }))
-
-      expect(
-        await screen.findByRole('heading', { name: 'Gotcha!' }, { timeout: 8000 }),
       ).toBeInTheDocument()
       await user.click(screen.getByRole('button', { name: 'Continue' }))
 

@@ -70,6 +70,15 @@ describe('BallShake sprites + phases', () => {
     }
   })
 
+  it('wrong education: always 1 shake even on catch or high Math.random', () => {
+    for (const caught of [true, false]) {
+      cleanup()
+      vi.spyOn(Math, 'random').mockReturnValue(0.99)
+      render(<BallShake caught={caught} educationCorrect={false} onComplete={vi.fn()} />)
+      expect(ballRoot().getAttribute('data-shakes')).toBe('1')
+    }
+  })
+
   it('on catch: after 3 shakes enters resolve-caught with sparkles, never opens, then completes', () => {
     const onComplete = vi.fn()
     render(<BallShake caught onComplete={onComplete} />)

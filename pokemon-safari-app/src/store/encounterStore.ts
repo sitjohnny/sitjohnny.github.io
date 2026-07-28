@@ -18,26 +18,23 @@ type EncounterState = {
   lastFactKey: string | null
   question: EducationQuestion | null
   feedback: { ok: boolean; message: string } | null
-  open: (session: Omit<
-    EncounterSession,
-    | 'attemptsUsed'
-    | 'sweetSpot'
-    | 'lastGrade'
-    | 'lastCaught'
-    | 'lastChance'
-    | 'shiny'
-  > &
-    Partial<
-      Pick<
-        EncounterSession,
-        | 'attemptsUsed'
-        | 'sweetSpot'
-        | 'lastGrade'
-        | 'lastCaught'
-        | 'lastChance'
-        | 'shiny'
-      >
-    >) => void
+  open: (
+    session: Omit<
+      EncounterSession,
+      'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance' | 'shiny'
+    > &
+      Partial<
+        Pick<
+          EncounterSession,
+          | 'attemptsUsed'
+          | 'sweetSpot'
+          | 'lastGrade'
+          | 'lastCaught'
+          | 'lastChance'
+          | 'shiny'
+        >
+      >,
+  ) => void
   setStage: (stage: EncounterStage) => void
   askQuestion: (question: EducationQuestion) => void
   applyAnswer: (args: {
@@ -46,11 +43,7 @@ type EncounterState = {
     message: string
   }) => void
   startTiming: () => void
-  registerThrow: (args: {
-    grade: TimingGrade
-    caught: boolean
-    chance: number
-  }) => void
+  registerThrow: (args: { grade: TimingGrade; caught: boolean; chance: number }) => void
   toResult: () => void
   toFlee: () => void
   fail: () => void
@@ -72,22 +65,12 @@ function initialState() {
 function withCaptureDefaults(
   session: Omit<
     EncounterSession,
-    | 'attemptsUsed'
-    | 'sweetSpot'
-    | 'lastGrade'
-    | 'lastCaught'
-    | 'lastChance'
-    | 'shiny'
+    'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance' | 'shiny'
   > &
     Partial<
       Pick<
         EncounterSession,
-        | 'attemptsUsed'
-        | 'sweetSpot'
-        | 'lastGrade'
-        | 'lastCaught'
-        | 'lastChance'
-        | 'shiny'
+        'attemptsUsed' | 'sweetSpot' | 'lastGrade' | 'lastCaught' | 'lastChance' | 'shiny'
       >
     >,
 ): EncounterSession {
@@ -112,8 +95,7 @@ export const useEncounterStore = create<EncounterState>((set) => ({
       feedback: null,
     }),
   setStage: (stage) => set({ stage }),
-  askQuestion: (question) =>
-    set({ question, feedback: null, stage: 'question' }),
+  askQuestion: (question) => set({ question, feedback: null, stage: 'question' }),
   applyAnswer: ({ outcome, captureBonus, message }) =>
     set((state) => {
       if (!state.session) return state
@@ -146,7 +128,9 @@ export const useEncounterStore = create<EncounterState>((set) => ({
     }),
   registerThrow: ({ grade, caught, chance }) =>
     set((state) => {
-      if (!state.session || state.stage !== 'timing') return state
+      if (!state.session) return state
+      // Timing throws and wrong-education auto-throws (skip the capture bar).
+      if (state.stage !== 'timing' && state.stage !== 'feedback') return state
       const nextAttempts = Math.min(3, Math.max(0, state.session.attemptsUsed + 1))
       return {
         stage: 'shake' as const,
@@ -157,6 +141,7 @@ export const useEncounterStore = create<EncounterState>((set) => ({
           lastCaught: caught,
           lastChance: chance,
         },
+        feedback: null,
       }
     }),
   toResult: () => set({ stage: 'result' }),

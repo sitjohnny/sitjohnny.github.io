@@ -148,6 +148,7 @@ export function EncounterOverlay() {
             key={`${session.attemptsUsed}:${grade}`}
             grade={grade}
             caught={session.lastCaught === true}
+            educationCorrect={session.education?.correct === true}
             onComplete={onBallShakeComplete}
           />
         ) : stage === 'failBeat' ? (

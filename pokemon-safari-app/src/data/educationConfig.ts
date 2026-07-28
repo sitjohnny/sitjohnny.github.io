@@ -113,7 +113,7 @@ export const captureCopy = {
   fleeBody: 'That’s okay — you’ll find another!',
 } as const
 
-export const spellingMixProbability = 0.5 as const
+export const spellingMixProbability = 0.25 as const
 /** Share of spelling draws that use the challenge tier (remainder = early). */
 export const spellingChallengeProbability = 0.3 as const
 /** Fraction of letters a Hint reveals (inclusive range); rolled per hint use. */
@@ -130,5 +130,5 @@ export const spellingCopy = {
 
 export const spellingSettingsCopy = {
   label: 'Spelling questions',
-  hint: 'When on, half of catch quizzes may be picture spelling.',
+  hint: 'When on, about 1 in 4 catch quizzes may be picture spelling.',
 } as const
