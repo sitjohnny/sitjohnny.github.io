@@ -6,10 +6,6 @@ import { BottomNav } from '@/components/BottomNav'
 import { biomeEncounterTables } from '@/data/encounterTables'
 import { encounterTimingMs } from '@/data/rates'
 import { WORLD_SPAWN } from '@/data/worldConfig'
-import {
-  persistSpellingEnabled,
-  SPELLING_ENABLED_KEY,
-} from '@/game/education/spellingSettings'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { findStepOnto } from '@/test/world-step-helpers'
 import { GameScreen } from '@/screens/GameScreen'
@@ -131,8 +127,6 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     useUiStore.setState({ cacheReady: true })
     useExploreStore.getState().reset()
     useEncounterStore.getState().reset()
-    localStorage.removeItem(SPELLING_ENABLED_KEY)
-    persistSpellingEnabled(false)
     seedPokeCache()
     hydrateFromStorage()
   })
@@ -511,7 +505,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(screen.getByRole('group', { name: 'Walk controls' })).toBeInTheDocument()
   })
 
-  it('shows Quick recap after a wrong answer catch Continue, then returns to the map', async () => {
+  it('shows Quick recap after a wrong answer flee Continue, then returns to the map', async () => {
     const user = userEvent.setup()
     renderExplore()
     const { a, b } = await walkIntoPokemonEncounter(user)
@@ -519,14 +513,14 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await user.type(screen.getByLabelText('Your answer'), String(a * b + 1))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
-    // Wrong education skips the capture bar and auto-throws into shake.
+    // Wrong education skips capture bar, Miss flash, and shake — flees immediately.
     expect(screen.queryByRole('button', { name: 'Capture' })).toBeNull()
     expect(screen.queryByText(/Math boost:/)).toBeNull()
 
     expect(
       await screen.findByRole(
         'heading',
-        { name: 'Gotcha!' },
+        { name: 'It got away!' },
         {
           timeout:
             Math.max(
@@ -673,7 +667,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       expect(
         await screen.findByRole(
           'heading',
-          { name: 'Gotcha!' },
+          { name: 'It got away!' },
           {
             timeout:
               Math.max(

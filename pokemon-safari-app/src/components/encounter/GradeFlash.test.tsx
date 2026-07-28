@@ -19,4 +19,11 @@ describe('GradeFlash', () => {
     expect(screen.getByText(captureCopy.grades.perfect)).toBeInTheDocument()
     expect(screen.getByText(timingBoostLabel('perfect'))).toBeInTheDocument()
   })
+
+  it('hides timing boost subtitle when showTimingBoost is false', () => {
+    render(<GradeFlash grade="miss" showTimingBoost={false} onComplete={vi.fn()} />)
+
+    expect(screen.getByText(captureCopy.grades.miss)).toBeInTheDocument()
+    expect(screen.queryByText(timingBoostLabel('miss'))).not.toBeInTheDocument()
+  })
 })

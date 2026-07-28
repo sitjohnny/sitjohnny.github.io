@@ -7,6 +7,8 @@ import { prefersReducedMotion } from '@/hooks/useMapCamera'
 
 type GradeFlashProps = {
   grade: TimingGrade
+  /** When false, hide timing % subtitle (no meter was shown). */
+  showTimingBoost?: boolean
   onComplete: () => void
 }
 
@@ -15,7 +17,11 @@ type GradeFlashProps = {
  * AppearFlash-style presentational timer — no capture roll here.
  * Copy comes from captureCopy.grades.
  */
-export function GradeFlash({ grade, onComplete }: GradeFlashProps) {
+export function GradeFlash({
+  grade,
+  showTimingBoost = true,
+  onComplete,
+}: GradeFlashProps) {
   const reducedMotion = prefersReducedMotion()
 
   useEffect(() => {
@@ -34,9 +40,11 @@ export function GradeFlash({ grade, onComplete }: GradeFlashProps) {
       >
         {captureCopy.grades[grade]}
       </p>
-      <p className="font-[family-name:var(--font-label)] text-[16px] font-medium leading-[1.3] text-muted">
-        {timingBoostLabel(grade)}
-      </p>
+      {showTimingBoost ? (
+        <p className="font-[family-name:var(--font-label)] text-[16px] font-medium leading-[1.3] text-muted">
+          {timingBoostLabel(grade)}
+        </p>
+      ) : null}
     </div>
   )
 }

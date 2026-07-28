@@ -113,7 +113,8 @@ export const captureCopy = {
   fleeBody: 'That’s okay — you’ll find another!',
 } as const
 
-export const spellingMixProbability = 0.25 as const
+/** Spelling is product-disabled; keep at 0 so mix never selects it even if re-enabled. */
+export const spellingMixProbability = 0 as const
 /** Share of spelling draws that use the challenge tier (remainder = early). */
 export const spellingChallengeProbability = 0.3 as const
 /** Fraction of letters a Hint reveals (inclusive range); rolled per hint use. */
@@ -128,7 +129,8 @@ export const spellingCopy = {
   attribution: 'Photo by {name} / Pexels',
 } as const
 
+/** @deprecated Spelling toggle removed from Settings while the feature is off. */
 export const spellingSettingsCopy = {
   label: 'Spelling questions',
-  hint: 'When on, about 1 in 4 catch quizzes may be picture spelling.',
+  hint: 'Picture spelling is temporarily unavailable.',
 } as const

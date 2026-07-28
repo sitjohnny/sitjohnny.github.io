@@ -30,7 +30,13 @@ export function ShakeSequence({
   const [flashDone, setFlashDone] = useState(false)
 
   if (!flashDone) {
-    return <GradeFlash grade={grade} onComplete={() => setFlashDone(true)} />
+    return (
+      <GradeFlash
+        grade={grade}
+        showTimingBoost={educationCorrect}
+        onComplete={() => setFlashDone(true)}
+      />
+    )
   }
 
   return (

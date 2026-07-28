@@ -303,7 +303,7 @@ describe('DATA-03 config surface', () => {
   })
 
   it('exports spelling mix, tier probability, hint ratios, and copy', () => {
-    expect(spellingMixProbability).toBe(0.25)
+    expect(spellingMixProbability).toBe(0)
     expect(spellingChallengeProbability).toBe(0.3)
     expect(spellingHintReveal).toEqual({ minRatio: 0.5, maxRatio: 0.5 })
     expect(spellingCopy.prompt.length).toBeGreaterThan(0)

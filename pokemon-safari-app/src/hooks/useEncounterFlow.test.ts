@@ -20,11 +20,8 @@ import {
   persistAdaptiveStats,
   resetAdaptiveStatsForTests,
 } from '@/game/education/adaptiveStore'
+import { spellingEducationProvider } from '@/game/education/questionGenerator'
 import type { EducationQuestion } from '@/game/education/questionTypes'
-import {
-  persistSpellingEnabled,
-  SPELLING_ENABLED_KEY,
-} from '@/game/education/spellingSettings'
 import {
   advanceFromAppear,
   capture,
@@ -127,8 +124,6 @@ describe('useEncounterFlow', () => {
     resetCacheMemoryForTests()
     resetAdaptiveStatsForTests()
     resetDexForTests()
-    localStorage.removeItem(SPELLING_ENABLED_KEY)
-    persistSpellingEnabled(false)
     seedPokeCache()
     hydrateFromStorage()
     vi.useRealTimers()
@@ -251,8 +246,7 @@ describe('useEncounterFlow', () => {
     expect(state.stage).not.toBe('handoff')
   })
 
-  it('skips spelling entirely when spelling is disabled', async () => {
-    persistSpellingEnabled(false)
+  it('skips spelling entirely when advancing from appear', async () => {
     await openPokemonAppear(sequenceRng(0, 0, 1, 0))
     act(() => {
       advanceFromAppear()
@@ -262,13 +256,19 @@ describe('useEncounterFlow', () => {
   })
 
   it('replaceSpellingWithMath swaps to a math question without recording a spelling attempt', async () => {
-    persistSpellingEnabled(true)
     await openPokemonAppear(sequenceRng(0, 0, 1, 0, 0, 0))
     act(() => {
       advanceFromAppear()
     })
-    const spelling = useEncounterStore.getState().question!
+    const spelling = spellingEducationProvider.nextQuestion(
+      sequenceRng(0.1, 0),
+      loadAdaptiveStats(),
+      'common',
+    )
     expect(spelling.category).toBe('spelling')
+    act(() => {
+      useEncounterStore.getState().askQuestion(spelling)
+    })
     const before = loadAdaptiveStats()[spelling.factKey]
 
     act(() => {
@@ -281,13 +281,19 @@ describe('useEncounterFlow', () => {
   })
 
   it('stores spelling image fields on education outcome when a spelling answer is submitted', async () => {
-    persistSpellingEnabled(true)
     await openPokemonAppear(sequenceRng(0, 0, 1, 0, 0, 0))
     act(() => {
       advanceFromAppear()
     })
-    const asked = useEncounterStore.getState().question!
+    const asked = spellingEducationProvider.nextQuestion(
+      sequenceRng(0.1, 0),
+      loadAdaptiveStats(),
+      'common',
+    )
     expect(asked.category).toBe('spelling')
+    act(() => {
+      useEncounterStore.getState().askQuestion(asked)
+    })
     if (asked.category !== 'spelling') return
 
     act(() => {
@@ -367,9 +373,9 @@ describe('useEncounterFlow', () => {
       )
     })
     state = useEncounterStore.getState()
-    expect(state.stage).toBe('shake')
-    expect(state.session?.lastGrade).toBe('miss')
-    expect(state.session?.attemptsUsed).toBe(1)
+    expect(state.stage).toBe('flee')
+    expect(state.session?.lastGrade).toBeNull()
+    expect(state.session?.attemptsUsed).toBe(0)
   })
 
   it('treats a quota persist failure as a non-event that keeps the feedback stage', async () => {
@@ -524,7 +530,7 @@ describe('useEncounterFlow', () => {
     expect(useEncounterStore.getState().stage).toBe('idle')
   })
 
-  it('continueFromResult goes to recap when education was incorrect (D-29)', async () => {
+  it('continueFromFlee goes to recap when education was incorrect (D-29)', async () => {
     await openPokemonAppear(sequenceRng(0, 0, 0))
     vi.useFakeTimers()
     act(() => {
@@ -537,15 +543,12 @@ describe('useEncounterFlow', () => {
     act(() => {
       vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
     })
-    // Wrong education skips timing and auto-throws into shake.
-    expect(useEncounterStore.getState().stage).toBe('shake')
-    expect(useEncounterStore.getState().session?.lastGrade).toBe('miss')
+    // Wrong education skips timing/shake and flees immediately.
+    expect(useEncounterStore.getState().stage).toBe('flee')
+    expect(useEncounterStore.getState().session?.lastGrade).toBeNull()
 
     act(() => {
-      useEncounterStore.getState().toResult()
-    })
-    act(() => {
-      continueFromResult()
+      continueFromFlee()
     })
     expect(useEncounterStore.getState().stage).toBe('recap')
   })
@@ -625,21 +628,9 @@ describe('useEncounterFlow', () => {
       act(() => {
         vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
       })
-      // Wrong education skips timing and auto-throws once.
-      expect(useEncounterStore.getState().stage).toBe('shake')
-      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
-
-      // Force escape so we exercise the flee → recap branch (catch rng is incidental).
-      act(() => {
-        const session = useEncounterStore.getState().session!
-        useEncounterStore.setState({
-          session: { ...session, lastCaught: false },
-        })
-      })
-      act(() => {
-        onShakeComplete()
-      })
+      // Wrong education skips timing/shake and flees immediately.
       expect(useEncounterStore.getState().stage).toBe('flee')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(0)
 
       act(() => {
         continueFromFlee()
@@ -647,7 +638,7 @@ describe('useEncounterFlow', () => {
       expect(useEncounterStore.getState().stage).toBe('recap')
     })
 
-    it('wrong education flees after a single failed auto-throw (no timing bar, no retry)', async () => {
+    it('wrong education flees after feedback with no timing bar, shake, or retry', async () => {
       await openPokemonAppear(sequenceRng(0, 0, 0))
       vi.useFakeTimers()
       act(() => {
@@ -661,23 +652,11 @@ describe('useEncounterFlow', () => {
         vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
       })
 
-      expect(useEncounterStore.getState().stage).toBe('shake')
-      expect(useEncounterStore.getState().session?.lastGrade).toBe('miss')
-      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
-
-      act(() => {
-        const session = useEncounterStore.getState().session!
-        useEncounterStore.setState({
-          session: { ...session, lastCaught: false },
-        })
-      })
-      act(() => {
-        onShakeComplete()
-      })
-
       expect(useEncounterStore.getState().stage).toBe('flee')
+      expect(useEncounterStore.getState().session?.lastGrade).toBeNull()
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(0)
       expect(useEncounterStore.getState().stage).not.toBe('failBeat')
-      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
+      expect(useEncounterStore.getState().stage).not.toBe('shake')
     })
 
     it('continueFromFlee closes when education was correct (D-29)', async () => {

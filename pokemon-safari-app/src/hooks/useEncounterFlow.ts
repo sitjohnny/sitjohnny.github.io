@@ -18,7 +18,6 @@ import {
   mathEducationProvider,
   nextEducationQuestion,
 } from '@/game/education/questionGenerator'
-import { loadSpellingEnabled } from '@/game/education/spellingSettings'
 import { resolveCandidate } from '@/game/encounter'
 import { gradeAt } from '@/game/timing'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
@@ -86,12 +85,13 @@ function doAdvanceFromAppear(rng: Rng): void {
   if (state.stage !== 'appear') return
   const session = state.session
   if (!session) return
+  // Spelling quizzes are disabled product-wide (image bank inconsistency).
   const question = nextEducationQuestion(
     rng,
     loadAdaptiveStats(),
     session.rarity,
     state.lastFactKey,
-    { spellingEnabled: loadSpellingEnabled() },
+    { spellingEnabled: false },
   )
   useEncounterStore.getState().askQuestion(question)
 }
@@ -157,7 +157,7 @@ function doSubmitAnswer(rng: Rng, raw: string): void {
       useEncounterStore.getState().startTiming()
       return
     }
-    doAutoThrowAfterWrong(rng)
+    doFleeAfterWrong()
   }, hold)
 }
 
@@ -166,24 +166,13 @@ function clampPosition(position: number): number {
   return Math.min(1, Math.max(0, position))
 }
 
-/** Wrong education skips the timing bar: roll catch with miss grade, go to shake. */
-function doAutoThrowAfterWrong(rng: Rng): void {
+/** Wrong education skips timing and catch theater — go straight to flee. */
+function doFleeAfterWrong(): void {
   const state = useEncounterStore.getState()
   if (state.stage !== 'feedback') return
   const session = state.session
   if (!session || session.education?.correct !== false) return
-
-  const grade = 'miss' as const
-  const chance = computeCatchChance({
-    rarity: session.rarity,
-    educationBonus: session.captureBonus,
-    educationCorrect: false,
-    grade,
-    ball: 'poke',
-    berry: false,
-  })
-  const caught = rollCapture(rng, chance)
-  useEncounterStore.getState().registerThrow({ grade, caught, chance })
+  useEncounterStore.getState().toFlee()
 }
 
 function doCapture(rng: Rng, position: number): void {
@@ -249,7 +238,7 @@ export function dismissRecap(): void {
 
 /**
  * After BallShake ending: Gotcha → result; else fail beat → remount timing, or flee at max throws.
- * Wrong education answers get one throw; correct answers get three (D-04/D-26).
+ * Correct education answers get three throws (D-04/D-26); wrong education flees without throwing.
  * attemptsUsed is owned solely by registerThrow (T-05-04) — this path never increments.
  */
 export function onShakeComplete(): void {

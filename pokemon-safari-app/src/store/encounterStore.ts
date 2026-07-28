@@ -129,8 +129,8 @@ export const useEncounterStore = create<EncounterState>((set) => ({
   registerThrow: ({ grade, caught, chance }) =>
     set((state) => {
       if (!state.session) return state
-      // Timing throws and wrong-education auto-throws (skip the capture bar).
-      if (state.stage !== 'timing' && state.stage !== 'feedback') return state
+      // Timing throws only — wrong education flees without a throw.
+      if (state.stage !== 'timing') return state
       const nextAttempts = Math.min(3, Math.max(0, state.session.attemptsUsed + 1))
       return {
         stage: 'shake' as const,

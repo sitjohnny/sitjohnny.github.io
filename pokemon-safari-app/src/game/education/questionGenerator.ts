@@ -128,7 +128,7 @@ export function nextEducationQuestion(
   excludeFactKey?: string | null,
   options?: { spellingEnabled?: boolean },
 ): EducationQuestion {
-  const spellingEnabled = options?.spellingEnabled ?? true
+  const spellingEnabled = options?.spellingEnabled ?? false
   if (!spellingEnabled) {
     return mathEducationProvider.nextQuestion(rng, stats, rarity, excludeFactKey)
   }

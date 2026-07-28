@@ -31,15 +31,11 @@ function countingRng(values: number[]): { rng: Rng; getCount: () => number } {
 }
 
 describe('nextEducationQuestion', () => {
-  it('nextEducationQuestion picks spelling when enabled and roll < mix', () => {
-    const q = nextEducationQuestion(
-      stubRng([spellingMixProbability - 0.01, 0.1, 0]),
-      {},
-      'common',
-      null,
-      { spellingEnabled: true },
-    )
-    expect(q.category).toBe('spelling')
+  it('nextEducationQuestion never picks spelling while mix probability is 0', () => {
+    const q = nextEducationQuestion(stubRng([0, 0.1, 0]), {}, 'common', null, {
+      spellingEnabled: true,
+    })
+    expect(q.category === 'multiplication' || q.category === 'division').toBe(true)
   })
 
   it('nextEducationQuestion picks math when roll >= mix', () => {
@@ -76,13 +72,8 @@ describe('nextEducationQuestion', () => {
     expect(disabledCount()).toBe(enabledCount() - 1)
   })
 
-  it('defaults to spelling-enabled when options omitted', () => {
-    const q = nextEducationQuestion(
-      stubRng([spellingMixProbability - 0.01, 0.1, 0]),
-      {},
-      'common',
-      null,
-    )
-    expect(q.category).toBe('spelling')
+  it('defaults to spelling-disabled when options omitted', () => {
+    const q = nextEducationQuestion(stubRng([0, 0.1, 0]), {}, 'common', null)
+    expect(q.category === 'multiplication' || q.category === 'division').toBe(true)
   })
 })
