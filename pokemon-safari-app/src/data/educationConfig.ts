@@ -1,32 +1,27 @@
 /** Adaptive multiplication education knobs and copy — edit here only; UI must not hardcode these values. */
 
-/** D-08 single-digit multiplication range. */
-export const multiplicationRange = { min: 1, max: 9 } as const
+/** D-08 single-digit multiplication range (excludes ×1). */
+export const multiplicationRange = { min: 2, max: 9 } as const
 
 /** Double-digit × single-digit facts (double-digit operand first). */
 export const doubleDigitMultiplication = {
   min: 10,
   max: 20,
-  /** Absolute rate; with division at 0.2, single-digit gets the remaining 0.4. */
-  probability: 0.4,
 } as const
 
 /**
  * Exact integer division: numerator ÷ single-digit divisor.
- * Only facts with an integer quotient are generated.
+ * Only facts with an integer quotient are generated (excludes ÷1).
  */
 export const divisionProblems = {
   numeratorMin: 10,
   numeratorMax: 100,
-  divisorMin: 1,
+  divisorMin: 2,
   divisorMax: 9,
-  /** Absolute rate; double-digit 0.4 + division 0.2 → single-digit 0.4. */
-  probability: 0.2,
 } as const
 
 /**
  * Exact integer long division: two-digit ÷ two-digit within 10–100.
- * Nested under division draws via withinDivisionProbability.
  */
 export const longDivisionProblems = {
   numeratorMin: 10,
@@ -34,8 +29,29 @@ export const longDivisionProblems = {
   divisorMin: 10,
   divisorMax: 100,
   quotientMin: 2,
-  /** Share of division draws (nested under divisionProblems.probability). */
-  withinDivisionProbability: 0.1,
+} as const
+
+/**
+ * Per-rarity category mix for selectFact.
+ * Cuts are absolute in order: division → double → single (remainder).
+ * `longWithinDivision` is nested under division draws.
+ */
+export const rarityEducationMix = {
+  common: {
+    division: 0.05,
+    double: 0.25,
+    longWithinDivision: 0,
+  },
+  rare: {
+    division: 0.4,
+    double: 0.45,
+    longWithinDivision: 0.15,
+  },
+  legendary: {
+    division: 0.75,
+    double: 0.25,
+    longWithinDivision: 0.4,
+  },
 } as const
 
 /** D-17 / D-19 adaptive weighting defaults from 04-RESEARCH. */
@@ -64,7 +80,6 @@ export const feedbackCopy = {
     'Wrong answer — you’ll get the next one!',
   ],
   correctSuffix: '+{boost}% catch boost',
-  incorrectSuffix: 'No catch boost this time',
 } as const
 
 export const recapCopy = {
@@ -83,7 +98,7 @@ export const captureCopy = {
   captureCta: 'Capture',
   continueCta: 'Continue',
   mathBoost: 'Math boost: +{n}%',
-  throwOf: 'Throw {n} of 3',
+  throwOf: 'Throw {n} of {max}',
   grades: {
     perfect: 'Perfect!',
     great: 'Great!',

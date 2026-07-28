@@ -5,6 +5,7 @@
  * React, Zustand, and browser globals.
  */
 
+import type { RarityBand } from '@/types/encounter'
 import type {
   AdaptiveStats,
   EducationProvider,
@@ -65,9 +66,10 @@ export const educationProvider: EducationProvider = {
   nextQuestion(
     rng: Rng,
     stats: AdaptiveStats,
+    rarity: RarityBand,
     excludeFactKey?: string | null,
   ): EducationQuestion {
-    const factKey = selectFact(rng, stats, excludeFactKey ?? null)
+    const factKey = selectFact(rng, stats, excludeFactKey ?? null, rarity)
     return buildQuestion(factKey)
   },
 

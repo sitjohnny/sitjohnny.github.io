@@ -18,14 +18,20 @@ const BALL_SHAKE_TOTAL_MS =
   encounterTimingMs.shakeEscapeHold
 
 /** Drive the store to a live timing-stage session for the seeded species. */
-function openTimingSession(): void {
+function openTimingSession(educationCorrect = true): void {
   act(() => {
     useEncounterStore.getState().open({
       speciesId: SEEDED_SPECIES,
       rarity: 'common',
       biome: 'forest',
-      education: null,
-      captureBonus: 0,
+      education: {
+        factKey: '7x8',
+        prompt: 'What is 7 × 8?',
+        expected: 56,
+        correct: educationCorrect,
+        recapLine: '7 × 8 = 56',
+      },
+      captureBonus: educationCorrect ? 0.15 : 0,
     })
   })
   act(() => {

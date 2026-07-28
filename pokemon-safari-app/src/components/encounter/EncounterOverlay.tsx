@@ -9,6 +9,7 @@ import { ShakeSequence } from '@/components/encounter/ShakeSequence'
 import { TimingBar } from '@/components/encounter/TimingBar'
 import { EmptyState } from '@/components/EmptyState'
 import { PixelButton } from '@/components/PixelButton'
+import { captureThrowLimits } from '@/data/rates'
 import {
   advanceFromAppear,
   continueFromFlee,
@@ -128,6 +129,11 @@ export function EncounterOverlay() {
             pokemon={pokemon}
             captureBonus={session.captureBonus}
             attemptsUsed={session.attemptsUsed}
+            maxThrows={
+              session.education?.correct === true
+                ? captureThrowLimits.educationCorrect
+                : captureThrowLimits.educationIncorrect
+            }
             sweetSpot={session.sweetSpot}
             rarity={session.rarity}
             shiny={session.shiny}

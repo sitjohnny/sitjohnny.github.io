@@ -18,6 +18,8 @@ type TimingBarProps = {
   pokemon: PokemonDto
   captureBonus: number
   attemptsUsed: number
+  /** Max throws allowed this encounter (3 correct / 1 incorrect education). */
+  maxThrows: number
   sweetSpot: number
   rarity: RarityBand
   shiny?: boolean
@@ -46,6 +48,7 @@ export function TimingBar({
   pokemon,
   captureBonus,
   attemptsUsed,
+  maxThrows,
   sweetSpot,
   rarity,
   shiny = false,
@@ -62,7 +65,9 @@ export function TimingBar({
   const zones = timingBar.zones[rarity]
   const bonusPercent = Math.round(captureBonus * 100)
   const hasBoost = captureBonus > 0
-  const throwLabel = captureCopy.throwOf.replace('{n}', String(attemptsUsed + 1))
+  const throwLabel = captureCopy.throwOf
+    .replace('{n}', String(attemptsUsed + 1))
+    .replace('{max}', String(maxThrows))
   const boostLabel = captureCopy.mathBoost.replace('{n}', String(bonusPercent))
   const canCapture = !locked && !frozen
   const accentProps = encounterDialogAccentProps(pokemon.types)

@@ -7,6 +7,7 @@
  * browser globals.
  */
 
+import type { RarityBand } from '@/types/encounter'
 import type { Rng } from '@/utils/rng'
 
 /** Multiplication `7x8` or division `48d6` fact ids. */
@@ -37,6 +38,7 @@ export type EducationProvider = {
   nextQuestion: (
     rng: Rng,
     stats: AdaptiveStats,
+    rarity: RarityBand,
     excludeFactKey?: string | null,
   ) => EducationQuestion
   validate: (question: EducationQuestion, raw: string) => AnswerResult

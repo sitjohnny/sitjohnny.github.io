@@ -15,6 +15,14 @@ export const grassOutcomeWeights = {
 export const educationCaptureBonus = {
   correct: 0.15,
   incorrect: 0,
+  /** Multiplies clamped catch chance when the education answer is wrong. */
+  incorrectMultiplier: 0.01,
+} as const
+
+/** Max capture throws this encounter — wrong education answers get one shot. */
+export const captureThrowLimits = {
+  educationCorrect: 3,
+  educationIncorrect: 1,
 } as const
 
 /** 04-UI-SPEC Motion + Discretionary Defaults D7/D8 encounter overlay timings (ms). */

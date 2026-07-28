@@ -11,6 +11,8 @@ import type { Rng } from '@/utils/rng'
 export type CatchInputs = {
   rarity: RarityBand
   educationBonus: number
+  /** When false, clamped chance is multiplied by education.incorrectMultiplier. */
+  educationCorrect: boolean
   grade: TimingGrade
   ball?: 'poke' | 'great'
   berry?: boolean
@@ -29,7 +31,9 @@ export function computeCatchChance(
   const timing = cfg.timing[inputs.grade]
   const ball = cfg.ball[inputs.ball ?? 'poke']
   const berry = inputs.berry ? cfg.berry : 0
-  return clampChance(rarityBase + inputs.educationBonus + timing + ball + berry)
+  const sum = clampChance(rarityBase + inputs.educationBonus + timing + ball + berry)
+  if (inputs.educationCorrect) return sum
+  return clampChance(sum * cfg.education.incorrectMultiplier)
 }
 
 export function rollCapture(rng: Rng, chance: number): boolean {

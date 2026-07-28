@@ -5,6 +5,7 @@ import { describe, expect, it } from 'vitest'
 import {
   grassOutcomeWeights,
   educationCaptureBonus,
+  captureThrowLimits,
   encounterTimingMs,
   shinyRate,
   dexSaveDebounceMs,
@@ -15,6 +16,7 @@ import {
   doubleDigitMultiplication,
   divisionProblems,
   longDivisionProblems,
+  rarityEducationMix,
   adaptiveWeights,
   masteryThreshold,
   feedbackCopy,
@@ -87,6 +89,11 @@ describe('DATA-03 config surface', () => {
   it('exports educationCaptureBonus and encounterTimingMs knobs', () => {
     expect(educationCaptureBonus.correct).toBe(0.15)
     expect(educationCaptureBonus.incorrect).toBe(0)
+    expect(educationCaptureBonus.incorrectMultiplier).toBe(0.01)
+    expect(captureThrowLimits).toEqual({
+      educationCorrect: 3,
+      educationIncorrect: 1,
+    })
     for (const key of [
       'appearFlash',
       'spriteReveal',
@@ -140,14 +147,13 @@ describe('DATA-03 config surface', () => {
   })
 
   it('exports education adaptive knobs and copy with {boost} placeholder', () => {
-    expect(multiplicationRange).toEqual({ min: 1, max: 9 })
-    expect(doubleDigitMultiplication).toEqual({ min: 10, max: 20, probability: 0.4 })
+    expect(multiplicationRange).toEqual({ min: 2, max: 9 })
+    expect(doubleDigitMultiplication).toEqual({ min: 10, max: 20 })
     expect(divisionProblems).toEqual({
       numeratorMin: 10,
       numeratorMax: 100,
-      divisorMin: 1,
+      divisorMin: 2,
       divisorMax: 9,
-      probability: 0.2,
     })
     expect(longDivisionProblems).toEqual({
       numeratorMin: 10,
@@ -155,7 +161,11 @@ describe('DATA-03 config surface', () => {
       divisorMin: 10,
       divisorMax: 100,
       quotientMin: 2,
-      withinDivisionProbability: 0.1,
+    })
+    expect(rarityEducationMix).toEqual({
+      common: { division: 0.05, double: 0.25, longWithinDivision: 0 },
+      rare: { division: 0.4, double: 0.45, longWithinDivision: 0.15 },
+      legendary: { division: 0.75, double: 0.25, longWithinDivision: 0.4 },
     })
     expect(typeof adaptiveWeights.starterWeight).toBe('number')
     expect(typeof adaptiveWeights.missBonus).toBe('number')
@@ -167,7 +177,6 @@ describe('DATA-03 config surface', () => {
     expect(feedbackCopy.correct.length).toBeGreaterThan(0)
     expect(feedbackCopy.incorrect.length).toBeGreaterThan(0)
     expect(feedbackCopy.correctSuffix).toContain('{boost}')
-    expect(feedbackCopy.incorrectSuffix.length).toBeGreaterThan(0)
     expect(feedbackCopy.correctSuffix).not.toMatch(/\b15\b/)
   })
 
