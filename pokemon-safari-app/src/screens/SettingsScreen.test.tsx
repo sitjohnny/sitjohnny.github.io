@@ -6,6 +6,10 @@ import { CACHE_KEY, EDU_STATS_KEY, SAVE_KEY } from '@/services/pokeapi/keys'
 import { persistSave } from '@/services/save'
 import { useDexStore } from '@/store/dexStore'
 import { useExploreStore } from '@/store/exploreStore'
+import {
+  loadSpellingEnabled,
+  SPELLING_ENABLED_KEY,
+} from '@/game/education/spellingSettings'
 import { eraseProgress, SettingsScreen } from './SettingsScreen'
 
 const SEEDED_CACHE = JSON.stringify({
@@ -52,6 +56,22 @@ afterEach(() => {
   localStorage.removeItem(SAVE_KEY)
   localStorage.removeItem(EDU_STATS_KEY)
   localStorage.removeItem(CACHE_KEY)
+  localStorage.removeItem(SPELLING_ENABLED_KEY)
+})
+
+describe('SettingsScreen spelling toggle', () => {
+  it('renders a spelling toggle that persists off', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <SettingsScreen />
+      </MemoryRouter>,
+    )
+    const toggle = screen.getByRole('switch', { name: /spelling questions/i })
+    expect(toggle).toBeChecked()
+    await user.click(toggle)
+    expect(loadSpellingEnabled()).toBe(false)
+  })
 })
 
 describe('SettingsScreen erase progress', () => {

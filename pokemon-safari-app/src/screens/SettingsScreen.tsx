@@ -1,5 +1,10 @@
 import { useState } from 'react'
 import { clearAdaptiveStats } from '@/game/education/adaptiveStore'
+import {
+  loadSpellingEnabled,
+  persistSpellingEnabled,
+} from '@/game/education/spellingSettings'
+import { spellingSettingsCopy } from '@/data/educationConfig'
 import { PixelButton } from '@/components/PixelButton'
 import { ScreenTitle } from '@/components/ScreenTitle'
 import { clearSave } from '@/services/save'
@@ -21,13 +26,36 @@ export function eraseProgress(): void {
 
 export function SettingsScreen() {
   const [confirmOpen, setConfirmOpen] = useState(false)
+  const [spellingEnabled, setSpellingEnabled] = useState(() => loadSpellingEnabled())
 
   return (
     <section className="flex flex-1 flex-col gap-6">
       <header className="sticky top-0 z-10 bg-dominant px-4 pb-3 pt-[max(8px,env(safe-area-inset-top))]">
         <ScreenTitle>Settings</ScreenTitle>
       </header>
-      <div className="flex flex-1 items-center justify-center px-4">
+      <div className="flex flex-1 flex-col items-center justify-center gap-6 px-4">
+        <label className="flex w-full max-w-sm cursor-pointer items-start gap-3 font-[family-name:var(--font-body)] text-text">
+          <input
+            type="checkbox"
+            role="switch"
+            className="mt-1 size-5 shrink-0 accent-accent"
+            checked={spellingEnabled}
+            aria-label={spellingSettingsCopy.label}
+            onChange={(e) => {
+              const next = e.target.checked
+              setSpellingEnabled(next)
+              persistSpellingEnabled(next)
+            }}
+          />
+          <span className="flex flex-col gap-1">
+            <span className="text-[16px] font-medium leading-[1.5]">
+              {spellingSettingsCopy.label}
+            </span>
+            <span className="text-[14px] leading-[1.5] text-text/80">
+              {spellingSettingsCopy.hint}
+            </span>
+          </span>
+        </label>
         <PixelButton variant="destructive" onClick={() => setConfirmOpen(true)}>
           Reset Save
         </PixelButton>

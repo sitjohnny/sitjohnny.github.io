@@ -109,3 +109,8 @@ export const spellingCopy = {
   hint: 'Hint',
   attribution: 'Photo by {name} / Pexels',
 } as const
+
+export const spellingSettingsCopy = {
+  label: 'Spelling questions',
+  hint: 'When on, half of catch quizzes may be picture spelling.',
+} as const
