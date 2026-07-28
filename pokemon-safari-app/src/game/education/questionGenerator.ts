@@ -1,19 +1,27 @@
 /**
- * EducationProvider — multiplication and division behind the D-22 seam.
+ * EducationProvider — multiplication, division, and spelling behind the D-22 seam.
  *
  * Selection and validation stay pure; config comes from data/. Keep free of
  * React, Zustand, and browser globals.
  */
 
+import {
+  spellingCopy,
+  spellingMixProbability,
+} from '@/data/educationConfig'
+import { spellingWordByFactKey } from '@/data/spellingWords'
+import type { Rng } from '@/utils/rng'
+import { selectFact } from './adaptiveLearning'
+import { validateAnswer } from './answerValidator'
+import { selectSpellingFact } from './spellingSelection'
 import type {
   AdaptiveStats,
   EducationProvider,
   EducationQuestion,
   MathEducationQuestion,
+  SpellingEducationQuestion,
+  SpellingFactKey,
 } from './questionTypes'
-import type { Rng } from '@/utils/rng'
-import { selectFact } from './adaptiveLearning'
-import { validateAnswer } from './answerValidator'
 
 function isDivisionKey(key: string): boolean {
   return key.includes('d') && !key.includes('x')
@@ -34,7 +42,7 @@ function parseFactKey(key: string): {
 
 type MathFactKey = `${number}x${number}` | `${number}d${number}`
 
-function buildQuestion(factKey: MathFactKey): MathEducationQuestion {
+function buildMathQuestion(factKey: MathFactKey): MathEducationQuestion {
   const { a, b, category } = parseFactKey(factKey)
   if (category === 'division') {
     const expected = a / b
@@ -60,8 +68,26 @@ function buildQuestion(factKey: MathFactKey): MathEducationQuestion {
   }
 }
 
-/** Unified provider used by encounter flow for all education categories. */
-export const educationProvider: EducationProvider = {
+function buildSpellingQuestion(factKey: SpellingFactKey): SpellingEducationQuestion {
+  const entry = spellingWordByFactKey(factKey)
+  if (!entry) {
+    throw new Error(`buildSpellingQuestion: unknown factKey ${factKey}`)
+  }
+  const expected = entry.word.toLowerCase()
+  return {
+    category: 'spelling',
+    prompt: spellingCopy.prompt,
+    factKey,
+    word: entry.word,
+    imageUrl: entry.imageUrl,
+    photographer: entry.photographer,
+    pexelsUrl: entry.pexelsUrl,
+    expected,
+    recapLine: entry.word,
+  }
+}
+
+export const mathEducationProvider: EducationProvider = {
   category: 'education',
 
   nextQuestion(
@@ -70,7 +96,7 @@ export const educationProvider: EducationProvider = {
     excludeFactKey?: string | null,
   ): EducationQuestion {
     const factKey = selectFact(rng, stats, excludeFactKey ?? null) as MathFactKey
-    return buildQuestion(factKey)
+    return buildMathQuestion(factKey)
   },
 
   validate(question, raw) {
@@ -78,5 +104,41 @@ export const educationProvider: EducationProvider = {
   },
 }
 
-/** @deprecated Prefer educationProvider — kept for any residual imports. */
-export const multiplicationProvider = educationProvider
+export const spellingEducationProvider: EducationProvider = {
+  category: 'spelling',
+
+  nextQuestion(
+    rng: Rng,
+    stats: AdaptiveStats,
+    excludeFactKey?: string | null,
+  ): EducationQuestion {
+    const factKey = selectSpellingFact(rng, stats, excludeFactKey ?? null)
+    return buildSpellingQuestion(factKey)
+  },
+
+  validate(question, raw) {
+    return validateAnswer(question, raw)
+  },
+}
+
+export function nextEducationQuestion(
+  rng: Rng,
+  stats: AdaptiveStats,
+  excludeFactKey?: string | null,
+  options?: { spellingEnabled?: boolean },
+): EducationQuestion {
+  const spellingEnabled = options?.spellingEnabled ?? true
+  if (!spellingEnabled) {
+    return mathEducationProvider.nextQuestion(rng, stats, excludeFactKey)
+  }
+  if (rng.next() < spellingMixProbability) {
+    return spellingEducationProvider.nextQuestion(rng, stats, excludeFactKey)
+  }
+  return mathEducationProvider.nextQuestion(rng, stats, excludeFactKey)
+}
+
+/** @deprecated Prefer mathEducationProvider or nextEducationQuestion. */
+export const educationProvider = mathEducationProvider
+
+/** @deprecated Prefer mathEducationProvider — kept for any residual imports. */
+export const multiplicationProvider = mathEducationProvider
