@@ -6,6 +6,10 @@ import { BottomNav } from '@/components/BottomNav'
 import { biomeEncounterTables } from '@/data/encounterTables'
 import { encounterTimingMs } from '@/data/rates'
 import { WORLD_SPAWN } from '@/data/worldConfig'
+import {
+  persistSpellingEnabled,
+  SPELLING_ENABLED_KEY,
+} from '@/game/education/spellingSettings'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import { findStepOnto } from '@/test/world-step-helpers'
 import { GameScreen } from '@/screens/GameScreen'
@@ -127,6 +131,8 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     useUiStore.setState({ cacheReady: true })
     useExploreStore.getState().reset()
     useEncounterStore.getState().reset()
+    localStorage.removeItem(SPELLING_ENABLED_KEY)
+    persistSpellingEnabled(false)
     seedPokeCache()
     hydrateFromStorage()
   })

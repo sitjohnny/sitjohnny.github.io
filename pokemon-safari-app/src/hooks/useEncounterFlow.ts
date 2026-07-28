@@ -9,7 +9,11 @@ import {
   recordAttempt,
 } from '@/game/education/adaptiveStore'
 import { captureBonusFor, validateAnswer } from '@/game/education/answerValidator'
-import { educationProvider } from '@/game/education/questionGenerator'
+import {
+  mathEducationProvider,
+  nextEducationQuestion,
+} from '@/game/education/questionGenerator'
+import { loadSpellingEnabled } from '@/game/education/spellingSettings'
 import { resolveCandidate } from '@/game/encounter'
 import { gradeAt } from '@/game/timing'
 import { prefersReducedMotion } from '@/hooks/useMapCamera'
@@ -75,7 +79,21 @@ function buildFeedbackMessage(ok: boolean, rng: Rng): string {
 function doAdvanceFromAppear(rng: Rng): void {
   const state = useEncounterStore.getState()
   if (state.stage !== 'appear') return
-  const question = educationProvider.nextQuestion(
+  const question = nextEducationQuestion(
+    rng,
+    loadAdaptiveStats(),
+    state.lastFactKey,
+    { spellingEnabled: loadSpellingEnabled() },
+  )
+  useEncounterStore.getState().askQuestion(question)
+}
+
+function doReplaceSpellingWithMath(rng: Rng): void {
+  const state = useEncounterStore.getState()
+  if (state.stage !== 'question') return
+  if (state.question?.category !== 'spelling') return
+  if (state.feedback !== null) return
+  const question = mathEducationProvider.nextQuestion(
     rng,
     loadAdaptiveStats(),
     state.lastFactKey,
@@ -153,6 +171,11 @@ export function advanceFromAppear(): void {
 /** Overlay / tests: validate, persist, and schedule timing (D-03). */
 export function submitAnswer(raw: string): void {
   doSubmitAnswer(flowRngRef.current, raw)
+}
+
+/** Overlay: swap spelling → math when the word image fails (no attempt recorded). */
+export function replaceSpellingWithMath(): void {
+  doReplaceSpellingWithMath(flowRngRef.current)
 }
 
 /** Overlay / tests: freeze timing, grade, roll before shake (D-21 / D-31). */

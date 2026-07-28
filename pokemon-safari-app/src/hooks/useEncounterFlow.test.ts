@@ -20,12 +20,18 @@ import {
   persistAdaptiveStats,
   resetAdaptiveStatsForTests,
 } from '@/game/education/adaptiveStore'
+import type { EducationQuestion } from '@/game/education/questionTypes'
+import {
+  persistSpellingEnabled,
+  SPELLING_ENABLED_KEY,
+} from '@/game/education/spellingSettings'
 import {
   advanceFromAppear,
   capture,
   continueFromFlee,
   continueFromResult,
   onShakeComplete,
+  replaceSpellingWithMath,
   submitAnswer,
   useEncounterFlow,
 } from '@/hooks/useEncounterFlow'
@@ -62,6 +68,14 @@ function sequenceRng(...values: number[]): Rng {
   return { next: () => values[Math.min(index++, values.length - 1)] ?? 0 }
 }
 
+function correctRaw(q: EducationQuestion): string {
+  return q.category === 'spelling' ? q.word : String(q.expected)
+}
+
+function incorrectRaw(q: EducationQuestion): string {
+  return q.category === 'spelling' ? `${q.word}x` : String(q.expected + 1)
+}
+
 function Harness({ rng }: { rng: Rng }) {
   useEncounterFlow({ rng })
   return null
@@ -91,7 +105,7 @@ async function reachTimingAfterCorrect(
   })
   const asked = useEncounterStore.getState().question!
   act(() => {
-    submitAnswer(String(asked.expected))
+    submitAnswer(correctRaw(asked))
   })
   act(() => {
     vi.advanceTimersByTime(encounterTimingMs.feedbackHold)
@@ -113,6 +127,8 @@ describe('useEncounterFlow', () => {
     resetCacheMemoryForTests()
     resetAdaptiveStatsForTests()
     resetDexForTests()
+    localStorage.removeItem(SPELLING_ENABLED_KEY)
+    persistSpellingEnabled(false)
     seedPokeCache()
     hydrateFromStorage()
     vi.useRealTimers()
@@ -235,6 +251,37 @@ describe('useEncounterFlow', () => {
     expect(state.stage).not.toBe('handoff')
   })
 
+  it('skips spelling entirely when spelling is disabled', async () => {
+    persistSpellingEnabled(false)
+    await openPokemonAppear(sequenceRng(0, 0, 1, 0))
+    act(() => {
+      advanceFromAppear()
+    })
+    const asked = useEncounterStore.getState().question!
+    expect(asked.category).not.toBe('spelling')
+  })
+
+  it('replaceSpellingWithMath swaps to a math question without recording a spelling attempt', async () => {
+    persistSpellingEnabled(true)
+    await openPokemonAppear(sequenceRng(0, 0, 1, 0, 0, 0))
+    act(() => {
+      advanceFromAppear()
+    })
+    const spelling = useEncounterStore.getState().question!
+    expect(spelling.category).toBe('spelling')
+    const before = loadAdaptiveStats()[spelling.factKey]
+
+    act(() => {
+      replaceSpellingWithMath()
+    })
+
+    const next = useEncounterStore.getState().question!
+    expect(
+      next.category === 'multiplication' || next.category === 'division',
+    ).toBe(true)
+    expect(loadAdaptiveStats()[spelling.factKey]).toEqual(before)
+  })
+
   it('applies a correct answer with capture bonus and advances to timing after the hold', async () => {
     await openPokemonAppear(sequenceRng(0, 0, 0))
     vi.useFakeTimers()
@@ -246,7 +293,7 @@ describe('useEncounterFlow', () => {
     const beforeCorrect = loadAdaptiveStats()[asked.factKey]?.correct ?? 0
 
     act(() => {
-      submitAnswer(String(asked.expected))
+      submitAnswer(correctRaw(asked))
     })
 
     let state = useEncounterStore.getState()
@@ -280,7 +327,7 @@ describe('useEncounterFlow', () => {
 
     const asked = useEncounterStore.getState().question!
     act(() => {
-      submitAnswer(String(asked.expected + 1))
+      submitAnswer(incorrectRaw(asked))
     })
 
     let state = useEncounterStore.getState()
@@ -315,7 +362,7 @@ describe('useEncounterFlow', () => {
     })
 
     act(() => {
-      submitAnswer(String(asked.expected))
+      submitAnswer(correctRaw(asked))
     })
 
     expect(useEncounterStore.getState().stage).toBe('feedback')
@@ -355,7 +402,7 @@ describe('useEncounterFlow', () => {
       }
       seen.push(asked.factKey)
       act(() => {
-        submitAnswer(String(asked.expected))
+        submitAnswer(correctRaw(asked))
       })
       act(() => {
         useEncounterStore.getState().close()
@@ -462,7 +509,7 @@ describe('useEncounterFlow', () => {
     })
     const asked = useEncounterStore.getState().question!
     act(() => {
-      submitAnswer(String(asked.expected + 1))
+      submitAnswer(incorrectRaw(asked))
     })
     act(() => {
       vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
@@ -551,7 +598,7 @@ describe('useEncounterFlow', () => {
       })
       const asked = useEncounterStore.getState().question!
       act(() => {
-        submitAnswer(String(asked.expected + 1))
+        submitAnswer(incorrectRaw(asked))
       })
       act(() => {
         vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
