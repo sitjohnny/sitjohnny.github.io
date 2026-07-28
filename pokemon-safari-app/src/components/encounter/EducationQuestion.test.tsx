@@ -1,14 +1,28 @@
 import userEvent from '@testing-library/user-event'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { EducationQuestion } from '@/components/encounter/EducationQuestion'
-import { feedbackCopy } from '@/data/educationConfig'
+import { feedbackCopy, spellingCopy } from '@/data/educationConfig'
 import { educationCaptureBonus } from '@/data/rates'
 import { typeColors } from '@/data/typeColors'
 import { makePokemonDto } from '@/test/pokeapi-test-helpers'
-import type { EducationQuestion as EducationQuestionData } from '@/game/education/questionTypes'
+import type {
+  EducationQuestion as EducationQuestionData,
+  SpellingEducationQuestion,
+} from '@/game/education/questionTypes'
 
 const pokemon = makePokemonDto(25, { name: 'pikachu' })
+const spellingQuestion: SpellingEducationQuestion = {
+  category: 'spelling',
+  prompt: spellingCopy.prompt,
+  factKey: 'spell:tiger',
+  word: 'tiger',
+  imageUrl: 'https://images.pexels.com/photos/631317/pexels-photo-631317.jpeg',
+  photographer: 'Pixabay',
+  pexelsUrl: 'https://www.pexels.com/photo/631317/',
+  expected: 'tiger',
+  recapLine: 'tiger',
+}
 const question: EducationQuestionData = {
   category: 'multiplication',
   prompt: 'What is 7 × 8?',
@@ -246,5 +260,109 @@ describe('EducationQuestion', () => {
     const dialog = screen.getByRole('heading', { name: 'pikachu' }).closest('.gba-dialog')
     expect(dialog).toHaveAttribute('data-primary-type', 'electric')
     expect(dialog).toHaveStyle({ borderLeftColor: typeColors.electric })
+  })
+
+  it('shows loading copy before the image loads', () => {
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={spellingQuestion}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+    expect(screen.getByText(spellingCopy.loading)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /submit/i })).toBeDisabled()
+  })
+
+  it('enables submit after image load and shows attribution', () => {
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={spellingQuestion}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+    fireEvent.load(screen.getByRole('img', { name: /spelling/i }))
+    expect(screen.queryByText(spellingCopy.loading)).not.toBeInTheDocument()
+    expect(screen.getByText(/Photo by Pixabay/i)).toBeInTheDocument()
+  })
+
+  it('calls onImageError once when the image errors', () => {
+    const onImageError = vi.fn()
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={spellingQuestion}
+        feedback={null}
+        onSubmit={vi.fn()}
+        onImageError={onImageError}
+      />,
+    )
+    const img = screen.getByRole('img', { name: /spelling/i })
+    fireEvent.error(img)
+    fireEvent.error(img)
+    expect(onImageError).toHaveBeenCalledTimes(1)
+  })
+
+  it('filters non-letters and caps length to the word', async () => {
+    const user = userEvent.setup()
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={spellingQuestion}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+    fireEvent.load(screen.getByRole('img', { name: /spelling/i }))
+    await user.type(screen.getByLabelText(/your answer/i), 'Ti1g@erXX')
+    expect(screen.getByLabelText(/your answer/i)).toHaveValue('tiger')
+  })
+
+  it('renders blanks matching word length', () => {
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={spellingQuestion}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+    expect(screen.getByTestId('spelling-blanks')).toHaveTextContent('_ _ _ _ _')
+  })
+
+  it('hint reveals letters in blank positions and disables after one use', async () => {
+    const user = userEvent.setup()
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={spellingQuestion}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+    fireEvent.load(screen.getByRole('img', { name: /spelling/i }))
+    const hint = screen.getByRole('button', { name: spellingCopy.hint })
+    expect(hint).toBeEnabled()
+    await user.click(hint)
+    expect(hint).toBeDisabled()
+    const blanks = screen.getByTestId('spelling-blanks')
+    const revealed = blanks.textContent!.match(/[A-Z]/g) ?? []
+    expect(revealed.length).toBeGreaterThanOrEqual(1)
+    expect(revealed.length).toBeLessThan(5)
+  })
+
+  it('hint stays disabled while the image is loading', () => {
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={spellingQuestion}
+        feedback={null}
+        onSubmit={vi.fn()}
+      />,
+    )
+    expect(screen.getByRole('button', { name: spellingCopy.hint })).toBeDisabled()
   })
 })

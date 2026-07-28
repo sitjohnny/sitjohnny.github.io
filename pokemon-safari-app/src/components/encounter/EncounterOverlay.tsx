@@ -15,6 +15,7 @@ import {
   continueFromResult,
   dismissRecap,
   onShakeComplete,
+  replaceSpellingWithMath,
   submitAnswer,
 } from '@/hooks/useEncounterFlow'
 import { getPokemon } from '@/services/pokeapi/cache'
@@ -123,6 +124,9 @@ export function EncounterOverlay() {
             feedback={feedback}
             onSubmit={submitAnswer}
             shiny={session.shiny}
+            onImageError={
+              question.category === 'spelling' ? replaceSpellingWithMath : undefined
+            }
           />
         ) : stage === 'timing' ? (
           <TimingBar
