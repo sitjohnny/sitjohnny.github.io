@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { educationCaptureBonus } from '@/data/rates'
 import { captureBonusFor, validateAnswer } from './answerValidator'
-import type { EducationQuestion } from './questionTypes'
+import type { EducationQuestion, SpellingEducationQuestion } from './questionTypes'
 
 const q7x8: EducationQuestion = {
   category: 'multiplication',
@@ -11,6 +11,18 @@ const q7x8: EducationQuestion = {
   b: 8,
   expected: 56,
   recapLine: '7 × 8 = 56',
+}
+
+const qElephant: SpellingEducationQuestion = {
+  category: 'spelling',
+  prompt: 'What is this?',
+  factKey: 'spell:elephant',
+  word: 'elephant',
+  imageUrl: 'https://images.pexels.com/photos/66898/pexels-photo-66898.jpeg',
+  photographer: 'Pixabay',
+  pexelsUrl: 'https://www.pexels.com/photo/66898/',
+  expected: 'elephant',
+  recapLine: 'elephant',
 }
 
 describe('answerValidator (D-11)', () => {
@@ -72,5 +84,36 @@ describe('answerValidator (D-11)', () => {
     expect(captureBonusFor({ ok: false, expected: 56, parsed: null })).toBe(
       educationCaptureBonus.incorrect,
     )
+  })
+
+  it('validateAnswer accepts case-insensitive spelling and strips spaces', () => {
+    expect(validateAnswer(qElephant, 'Elephant')).toEqual({
+      ok: true,
+      expected: 'elephant',
+      parsed: 'elephant',
+    })
+    expect(validateAnswer(qElephant, ' ele phant ')).toEqual({
+      ok: true,
+      expected: 'elephant',
+      parsed: 'elephant',
+    })
+  })
+
+  it('validateAnswer rejects wrong spelling with parsed string', () => {
+    expect(validateAnswer(qElephant, 'elefant')).toEqual({
+      ok: false,
+      expected: 'elephant',
+      parsed: 'elefant',
+    })
+  })
+
+  it('validateAnswer rejects empty / non-letter spelling input with parsed null', () => {
+    for (const raw of ['', '   ', '123', 'ele-phant']) {
+      expect(validateAnswer(qElephant, raw)).toEqual({
+        ok: false,
+        expected: 'elephant',
+        parsed: null,
+      })
+    }
   })
 })

@@ -23,7 +23,7 @@ export type EncounterStage =
 export type EncounterEducationOutcome = {
   factKey: string
   prompt: string
-  expected: number
+  expected: number | string
   correct: boolean
   /** Equation for Quick recap, e.g. `7 × 8 = 56`. */
   recapLine: string

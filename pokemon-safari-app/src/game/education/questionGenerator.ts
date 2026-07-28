@@ -9,7 +9,7 @@ import type {
   AdaptiveStats,
   EducationProvider,
   EducationQuestion,
-  FactKey,
+  MathEducationQuestion,
 } from './questionTypes'
 import type { Rng } from '@/utils/rng'
 import { selectFact } from './adaptiveLearning'
@@ -32,7 +32,9 @@ function parseFactKey(key: string): {
   return { a: Number(aStr), b: Number(bStr), category: 'multiplication' }
 }
 
-function buildQuestion(factKey: FactKey): EducationQuestion {
+type MathFactKey = `${number}x${number}` | `${number}d${number}`
+
+function buildQuestion(factKey: MathFactKey): MathEducationQuestion {
   const { a, b, category } = parseFactKey(factKey)
   if (category === 'division') {
     const expected = a / b
@@ -67,7 +69,7 @@ export const educationProvider: EducationProvider = {
     stats: AdaptiveStats,
     excludeFactKey?: string | null,
   ): EducationQuestion {
-    const factKey = selectFact(rng, stats, excludeFactKey ?? null)
+    const factKey = selectFact(rng, stats, excludeFactKey ?? null) as MathFactKey
     return buildQuestion(factKey)
   },
 

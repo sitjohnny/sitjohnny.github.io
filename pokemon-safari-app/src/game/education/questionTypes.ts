@@ -9,19 +9,20 @@
 
 import type { Rng } from '@/utils/rng'
 
-/** Multiplication `7x8` or division `48d6` fact ids. */
-export type FactKey = `${number}x${number}` | `${number}d${number}`
+export type SpellingFactKey = `spell:${string}`
+export type FactKey =
+  | `${number}x${number}`
+  | `${number}d${number}`
+  | SpellingFactKey
 
 export type FactStat = { correct: number; incorrect: number }
 
 export type AdaptiveStats = Record<string, FactStat>
 
-export type EducationCategory = 'multiplication' | 'division'
-
-export type EducationQuestion = {
-  category: EducationCategory
+export type MathEducationQuestion = {
+  category: 'multiplication' | 'division'
   prompt: string
-  factKey: FactKey
+  factKey: `${number}x${number}` | `${number}d${number}`
   a: number
   b: number
   expected: number
@@ -29,7 +30,34 @@ export type EducationQuestion = {
   recapLine: string
 }
 
-export type AnswerResult = { ok: boolean; expected: number; parsed: number | null }
+export type SpellingEducationQuestion = {
+  category: 'spelling'
+  prompt: string
+  factKey: SpellingFactKey
+  word: string
+  imageUrl: string
+  photographer: string
+  pexelsUrl: string
+  expected: string // lowercase target
+  recapLine: string // e.g. "elephant"
+}
+
+export type EducationQuestion =
+  | MathEducationQuestion
+  | SpellingEducationQuestion
+export type EducationCategory = EducationQuestion['category']
+
+export type MathAnswerResult = {
+  ok: boolean
+  expected: number
+  parsed: number | null
+}
+export type SpellingAnswerResult = {
+  ok: boolean
+  expected: string
+  parsed: string | null
+}
+export type AnswerResult = MathAnswerResult | SpellingAnswerResult
 
 /** Seam later categories plug into without touching encounter flow (D-22). */
 export type EducationProvider = {
