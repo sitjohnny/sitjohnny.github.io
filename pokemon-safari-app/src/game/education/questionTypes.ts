@@ -7,6 +7,7 @@
  * browser globals.
  */
 
+import type { RarityBand } from '@/types/encounter'
 import type { Rng } from '@/utils/rng'
 
 export type SpellingFactKey = `spell:${string}`
@@ -65,6 +66,7 @@ export type EducationProvider = {
   nextQuestion: (
     rng: Rng,
     stats: AdaptiveStats,
+    rarity: RarityBand,
     excludeFactKey?: string | null,
   ) => EducationQuestion
   validate: (question: EducationQuestion, raw: string) => AnswerResult

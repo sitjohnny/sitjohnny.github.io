@@ -13,7 +13,9 @@ import {
   longDivisionProblems,
   masteryThreshold,
   multiplicationRange,
+  rarityEducationMix,
 } from '@/data/educationConfig'
+import type { RarityBand } from '@/types/encounter'
 import { weightedPick, type Rng } from '@/utils/rng'
 import type { AdaptiveStats, FactKey, FactStat } from './questionTypes'
 
@@ -170,33 +172,36 @@ function pickFromPools(
 }
 
 /**
- * Mutually exclusive pool pick:
+ * Mutually exclusive pool pick by rarity mix:
  * division → double-digit mult → single-digit mult (remainder).
- * Division draws nest a long-division share via withinDivisionProbability.
+ * Division draws nest a long-division share via longWithinDivision.
  */
 export function selectFact(
   rng: Rng,
   stats: AdaptiveStats,
   excludeFactKey: string | null = null,
+  rarity: RarityBand = 'common',
   cfg: typeof adaptiveWeights = adaptiveWeights,
   threshold: typeof masteryThreshold = masteryThreshold,
   doubleDigitCfg: typeof doubleDigitMultiplication = doubleDigitMultiplication,
   divisionCfg: typeof divisionProblems = divisionProblems,
   longDivisionCfg: typeof longDivisionProblems = longDivisionProblems,
+  mixCfg: typeof rarityEducationMix = rarityEducationMix,
 ): FactKey {
   const singlePool = allFacts()
   const doublePool = allDoubleDigitFacts(doubleDigitCfg)
   const shortDivisionPool = allDivisionFacts(divisionCfg)
   const longDivisionPool = allLongDivisionFacts(longDivisionCfg)
+  const mix = mixCfg[rarity]
   const roll = rng.next()
-  const divisionCut = divisionCfg.probability
-  const doubleCut = divisionCut + doubleDigitCfg.probability
+  const divisionCut = mix.division
+  const doubleCut = divisionCut + mix.double
 
   let primary: FactKey[]
   let fallbacks: FactKey[][]
   if (roll < divisionCut) {
     const longRoll = rng.next()
-    if (longRoll < longDivisionCfg.withinDivisionProbability) {
+    if (longRoll < mix.longWithinDivision) {
       primary = longDivisionPool
       fallbacks = [shortDivisionPool, doublePool, singlePool]
     } else {

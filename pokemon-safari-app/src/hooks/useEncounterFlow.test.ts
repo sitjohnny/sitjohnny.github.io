@@ -627,25 +627,46 @@ describe('useEncounterFlow', () => {
       })
       expect(useEncounterStore.getState().stage).toBe('timing')
 
-      for (let n = 0; n < 3; n += 1) {
-        act(() => {
-          failThrow()
-        })
-        act(() => {
-          onShakeComplete()
-        })
-        if (n < 2) {
-          act(() => {
-            vi.advanceTimersByTime(encounterTimingMs.failBeat)
-          })
-        }
-      }
+      // Wrong education → one throw only, then flee.
+      act(() => {
+        failThrow()
+      })
+      act(() => {
+        onShakeComplete()
+      })
       expect(useEncounterStore.getState().stage).toBe('flee')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
 
       act(() => {
         continueFromFlee()
       })
       expect(useEncounterStore.getState().stage).toBe('recap')
+    })
+
+    it('wrong education flees after a single failed throw (no retry)', async () => {
+      await openPokemonAppear(sequenceRng(0, 0, 0))
+      vi.useFakeTimers()
+      act(() => {
+        advanceFromAppear()
+      })
+      const asked = useEncounterStore.getState().question!
+      act(() => {
+        submitAnswer(String(asked.expected + 1))
+      })
+      act(() => {
+        vi.advanceTimersByTime(encounterTimingMs.incorrectFeedbackHold)
+      })
+
+      act(() => {
+        failThrow()
+      })
+      act(() => {
+        onShakeComplete()
+      })
+
+      expect(useEncounterStore.getState().stage).toBe('flee')
+      expect(useEncounterStore.getState().stage).not.toBe('failBeat')
+      expect(useEncounterStore.getState().session?.attemptsUsed).toBe(1)
     })
 
     it('continueFromFlee closes when education was correct (D-29)', async () => {

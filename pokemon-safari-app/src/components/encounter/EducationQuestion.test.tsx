@@ -42,7 +42,7 @@ function boostMessage(ok: boolean, lineIndex = 0): string {
   if (ok) {
     return `${feedbackCopy.correct[lineIndex]} ${feedbackCopy.correctSuffix.replace('{boost}', String(boost))}`
   }
-  return `${feedbackCopy.incorrect[lineIndex]} ${feedbackCopy.incorrectSuffix}`
+  return feedbackCopy.incorrect[lineIndex]!
 }
 
 afterEach(cleanup)

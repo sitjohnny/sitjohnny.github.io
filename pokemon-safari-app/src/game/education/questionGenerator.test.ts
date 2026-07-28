@@ -35,6 +35,7 @@ describe('nextEducationQuestion', () => {
     const q = nextEducationQuestion(
       stubRng([spellingMixProbability - 0.01, 0.1, 0]),
       {},
+      'common',
       null,
       { spellingEnabled: true },
     )
@@ -45,21 +46,18 @@ describe('nextEducationQuestion', () => {
     const q = nextEducationQuestion(
       stubRng([spellingMixProbability, 0, 0]),
       {},
+      'common',
       null,
       { spellingEnabled: true },
     )
-    expect(q.category === 'multiplication' || q.category === 'division').toBe(
-      true,
-    )
+    expect(q.category === 'multiplication' || q.category === 'division').toBe(true)
   })
 
   it('nextEducationQuestion always picks math when spelling disabled', () => {
-    const q = nextEducationQuestion(stubRng([0, 0, 0]), {}, null, {
+    const q = nextEducationQuestion(stubRng([0, 0, 0]), {}, 'common', null, {
       spellingEnabled: false,
     })
-    expect(q.category === 'multiplication' || q.category === 'division').toBe(
-      true,
-    )
+    expect(q.category === 'multiplication' || q.category === 'division').toBe(true)
   })
 
   it('skips spelling subject roll when spellingEnabled is false', () => {
@@ -68,9 +66,13 @@ describe('nextEducationQuestion', () => {
       spellingMixProbability + 0.01,
       ...mathRolls,
     ])
-    nextEducationQuestion(enabledRng, {}, null, { spellingEnabled: true })
+    nextEducationQuestion(enabledRng, {}, 'common', null, {
+      spellingEnabled: true,
+    })
     const { rng: disabledRng, getCount: disabledCount } = countingRng(mathRolls)
-    nextEducationQuestion(disabledRng, {}, null, { spellingEnabled: false })
+    nextEducationQuestion(disabledRng, {}, 'common', null, {
+      spellingEnabled: false,
+    })
     expect(disabledCount()).toBe(enabledCount() - 1)
   })
 
@@ -78,6 +80,7 @@ describe('nextEducationQuestion', () => {
     const q = nextEducationQuestion(
       stubRng([spellingMixProbability - 0.01, 0.1, 0]),
       {},
+      'common',
       null,
     )
     expect(q.category).toBe('spelling')

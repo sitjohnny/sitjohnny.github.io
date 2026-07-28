@@ -20,6 +20,7 @@ describe('computeCatchChance', () => {
     const chance = computeCatchChance({
       rarity: 'common',
       educationBonus: cfg.education.correct,
+      educationCorrect: true,
       grade: 'perfect',
       ball: 'great',
       berry: true,
@@ -38,6 +39,7 @@ describe('computeCatchChance', () => {
       computeCatchChance({
         rarity: 'common',
         educationBonus: 10,
+        educationCorrect: true,
         grade: 'perfect',
         ball: 'great',
         berry: true,
@@ -48,6 +50,7 @@ describe('computeCatchChance', () => {
       computeCatchChance({
         rarity: 'legendary',
         educationBonus: -10,
+        educationCorrect: true,
         grade: 'miss',
       }),
     ).toBe(0)
@@ -56,6 +59,7 @@ describe('computeCatchChance', () => {
       computeCatchChance({
         rarity: 'common',
         educationBonus: Number.NaN,
+        educationCorrect: true,
         grade: 'good',
       }),
     ).toBe(0)
@@ -65,11 +69,13 @@ describe('computeCatchChance', () => {
     const withDefaults = computeCatchChance({
       rarity: 'rare',
       educationBonus: 0,
+      educationCorrect: true,
       grade: 'good',
     })
     const explicit = computeCatchChance({
       rarity: 'rare',
       educationBonus: 0,
+      educationCorrect: true,
       grade: 'good',
       ball: 'poke',
       berry: false,
@@ -86,6 +92,7 @@ describe('computeCatchChance', () => {
     const chance = computeCatchChance({
       rarity: 'common',
       educationBonus: captureModifiers.education.correct,
+      educationCorrect: true,
       grade: 'miss',
     })
     expect(Number.isFinite(chance)).toBe(true)
@@ -97,10 +104,33 @@ describe('computeCatchChance', () => {
     const inputs = {
       rarity: 'rare' as const,
       educationBonus: captureModifiers.education.incorrect,
+      educationCorrect: false,
       grade: 'great' as const,
     }
     // Attempt index is intentionally absent from CatchInputs — same inputs ⇒ same chance.
     expect(computeCatchChance(inputs)).toBe(computeCatchChance(inputs))
+  })
+
+  it('wrong education multiplies clamped chance by incorrectMultiplier (perfect zone)', () => {
+    const correctChance = computeCatchChance({
+      rarity: 'rare',
+      educationBonus: 0,
+      educationCorrect: true,
+      grade: 'perfect',
+    })
+    const wrongChance = computeCatchChance({
+      rarity: 'rare',
+      educationBonus: captureModifiers.education.incorrect,
+      educationCorrect: false,
+      grade: 'perfect',
+    })
+    expect(correctChance).toBe(
+      captureModifiers.rarity.rare + captureModifiers.timing.perfect,
+    )
+    expect(wrongChance).toBe(
+      correctChance * captureModifiers.education.incorrectMultiplier,
+    )
+    expect(wrongChance).toBe(0.005)
   })
 })
 
@@ -152,6 +182,7 @@ describe('CATCH-05 distribution', () => {
       const commonRate = catchRate(seed, n, {
         rarity: 'common',
         educationBonus: captureModifiers.education.correct,
+        educationCorrect: true,
         grade: 'good',
       })
       expect(commonRate).toBeGreaterThanOrEqual(0.7)
@@ -159,6 +190,7 @@ describe('CATCH-05 distribution', () => {
       const legendaryRate = catchRate(seed, n, {
         rarity: 'legendary',
         educationBonus: captureModifiers.education.incorrect,
+        educationCorrect: false,
         grade: 'miss',
       })
       expect(legendaryRate).toBeLessThanOrEqual(0.2)

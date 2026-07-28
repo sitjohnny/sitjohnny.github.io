@@ -22,6 +22,7 @@ function renderBar(
     locked?: boolean
     captureBonus?: number
     attemptsUsed?: number
+    maxThrows?: number
     sweetSpot?: number
     rarity?: 'common' | 'rare' | 'legendary'
   } = {},
@@ -31,6 +32,7 @@ function renderBar(
       pokemon={pokemon}
       captureBonus={overrides.captureBonus ?? 0.15}
       attemptsUsed={overrides.attemptsUsed ?? 0}
+      maxThrows={overrides.maxThrows ?? 3}
       sweetSpot={overrides.sweetSpot ?? 0.62}
       rarity={overrides.rarity ?? 'common'}
       locked={overrides.locked}
@@ -142,12 +144,17 @@ describe('TimingBar', () => {
     expect(container.textContent).not.toMatch(/Perfect!|Great!|Good!|Miss!/)
   })
 
-  it('shows Math boost and Throw n of 3 copy', () => {
+  it('shows Math boost and Throw n of max copy', () => {
     renderBar({ captureBonus: 0.15, attemptsUsed: 0 })
 
     expect(screen.getByText(/Throw 1 of 3/)).toBeInTheDocument()
     expect(screen.getByText(/Math boost: \+15%/)).toBeInTheDocument()
     expect(document.querySelector('.boost-chip')).not.toBeNull()
+  })
+
+  it('shows Throw 1 of 1 when maxThrows is 1', () => {
+    renderBar({ captureBonus: 0, attemptsUsed: 0, maxThrows: 1 })
+    expect(screen.getByText(/Throw 1 of 1/)).toBeInTheDocument()
   })
 
   it('shows artwork, type badges, and primary type accent', () => {
@@ -165,6 +172,7 @@ describe('TimingBar', () => {
         pokemon={typed}
         captureBonus={0}
         attemptsUsed={0}
+        maxThrows={3}
         sweetSpot={0.5}
         rarity="common"
       />,

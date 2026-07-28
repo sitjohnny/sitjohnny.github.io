@@ -6,6 +6,7 @@ import {
   longDivisionProblems,
   masteryThreshold,
   multiplicationRange,
+  rarityEducationMix,
 } from '@/data/educationConfig'
 import { createRng } from '@/utils/rng'
 import {
@@ -46,6 +47,10 @@ function isLongDivisionFact(key: FactKey): boolean {
   return d >= longDivisionProblems.divisorMin
 }
 
+function isSingleDigitFact(key: FactKey): boolean {
+  return key.includes('x') && !isDoubleDigitFact(key)
+}
+
 describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
   it('factKeyOf(7, 8) is 7x8', () => {
     expect(factKeyOf(7, 8)).toBe('7x8')
@@ -55,10 +60,11 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
     expect(divisionFactKeyOf(48, 6)).toBe('48d6')
   })
 
-  it('allFacts returns 81 unique keys covering every pair in multiplicationRange', () => {
+  it('allFacts returns unique keys covering every pair in multiplicationRange (no ×1)', () => {
     const facts = allFacts()
     const { min, max } = multiplicationRange
     const expectedCount = (max - min + 1) ** 2
+    expect(min).toBe(2)
     expect(facts).toHaveLength(expectedCount)
     expect(new Set(facts).size).toBe(expectedCount)
 
@@ -76,9 +82,11 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
       expect(b).toBeGreaterThanOrEqual(min)
       expect(b).toBeLessThanOrEqual(max)
     }
+    expect(facts).not.toContain('1x5')
+    expect(facts).not.toContain('5x1')
   })
 
-  it('allDoubleDigitFacts returns 99 unique keys for 10–20 × 1–9', () => {
+  it('allDoubleDigitFacts returns unique keys for 10–20 × 2–9', () => {
     const facts = allDoubleDigitFacts()
     const { min, max } = doubleDigitMultiplication
     const { min: sMin, max: sMax } = multiplicationRange
@@ -100,9 +108,10 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
       expect(b).toBeGreaterThanOrEqual(sMin)
       expect(b).toBeLessThanOrEqual(sMax)
     }
+    expect(facts).not.toContain('12x1')
   })
 
-  it('allDivisionFacts returns exact integer quotients only for 10–100 ÷ 1–9', () => {
+  it('allDivisionFacts returns exact integer quotients only for 10–100 ÷ 2–9', () => {
     const facts = allDivisionFacts()
     expect(new Set(facts).size).toBe(facts.length)
     expect(facts.length).toBeGreaterThan(0)
@@ -121,6 +130,8 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
 
     expect(facts).toContain('48d6')
     expect(facts).not.toContain('10d3')
+    expect(facts).not.toContain('10d1')
+    expect(facts).not.toContain('100d1')
   })
 
   it('allLongDivisionFacts returns exact integer quotients ≥ 2 for 10–100 ÷ 10–100', () => {
@@ -200,7 +211,7 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
 
   it('selectFact with a stub rng returns a FactKey in the selectable union', () => {
     const rng = createRng(42)
-    const picked = selectFact(rng, {})
+    const picked = selectFact(rng, {}, null, 'common')
     expect(allSelectableFacts()).toContain(picked)
   })
 
@@ -212,45 +223,85 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
     const selectable = new Set(allSelectableFacts())
     for (let seed = 0; seed < 200; seed++) {
       const rng = createRng(seed * 997 + 13)
-      const picked = selectFact(rng, stats, exclude)
+      const picked = selectFact(rng, stats, exclude, 'common')
       expect(picked).not.toBe(exclude)
       expect(selectable.has(picked)).toBe(true)
     }
   })
 
-  it('selectFact draws pools near 40% single / 40% double / 20% division', () => {
+  it('selectFact common mix skews toward single-digit', () => {
     const draws = 3000
     const rng = createRng(2026)
+    const mix = rarityEducationMix.common
+    let singleCount = 0
+    let doubleCount = 0
+    let divisionCount = 0
+    for (let i = 0; i < draws; i++) {
+      const picked = selectFact(rng, {}, null, 'common')
+      if (isDivisionFact(picked)) divisionCount += 1
+      else if (isDoubleDigitFact(picked)) doubleCount += 1
+      else singleCount += 1
+    }
+    const singleExpected = 1 - mix.double - mix.division
+    expect(singleCount / draws).toBeGreaterThan(singleExpected - 0.05)
+    expect(singleCount / draws).toBeLessThan(singleExpected + 0.05)
+    expect(doubleCount / draws).toBeGreaterThan(mix.double - 0.05)
+    expect(doubleCount / draws).toBeLessThan(mix.double + 0.05)
+    expect(divisionCount / draws).toBeGreaterThan(mix.division - 0.05)
+    expect(divisionCount / draws).toBeLessThan(mix.division + 0.05)
+  })
+
+  it('selectFact legendary never picks single-digit over many draws', () => {
+    const draws = 2000
+    const rng = createRng(2027)
+    let singleCount = 0
+    let divisionCount = 0
+    let longDivisionCount = 0
+    for (let i = 0; i < draws; i++) {
+      const picked = selectFact(rng, {}, null, 'legendary')
+      if (isSingleDigitFact(picked)) singleCount += 1
+      if (isDivisionFact(picked)) {
+        divisionCount += 1
+        if (isLongDivisionFact(picked)) longDivisionCount += 1
+      }
+    }
+    expect(singleCount).toBe(0)
+    const mix = rarityEducationMix.legendary
+    expect(divisionCount / draws).toBeGreaterThan(mix.division - 0.05)
+    expect(divisionCount / draws).toBeLessThan(mix.division + 0.05)
+    expect(longDivisionCount / divisionCount).toBeGreaterThan(
+      mix.longWithinDivision - 0.05,
+    )
+    expect(longDivisionCount / divisionCount).toBeLessThan(mix.longWithinDivision + 0.05)
+  })
+
+  it('selectFact rare mix is near configured cuts', () => {
+    const draws = 3000
+    const rng = createRng(2028)
+    const mix = rarityEducationMix.rare
     let singleCount = 0
     let doubleCount = 0
     let divisionCount = 0
     let longDivisionCount = 0
     for (let i = 0; i < draws; i++) {
-      const picked = selectFact(rng, {})
+      const picked = selectFact(rng, {}, null, 'rare')
       if (isDivisionFact(picked)) {
         divisionCount += 1
         if (isLongDivisionFact(picked)) longDivisionCount += 1
       } else if (isDoubleDigitFact(picked)) doubleCount += 1
       else singleCount += 1
     }
-    const singleRate = singleCount / draws
-    const doubleRate = doubleCount / draws
-    const divisionRate = divisionCount / draws
-    const longAmongDivision = longDivisionCount / divisionCount
-    const singleExpected =
-      1 - doubleDigitMultiplication.probability - divisionProblems.probability
-    expect(singleRate).toBeGreaterThan(singleExpected - 0.05)
-    expect(singleRate).toBeLessThan(singleExpected + 0.05)
-    expect(doubleRate).toBeGreaterThan(doubleDigitMultiplication.probability - 0.05)
-    expect(doubleRate).toBeLessThan(doubleDigitMultiplication.probability + 0.05)
-    expect(divisionRate).toBeGreaterThan(divisionProblems.probability - 0.05)
-    expect(divisionRate).toBeLessThan(divisionProblems.probability + 0.05)
-    expect(longAmongDivision).toBeGreaterThan(
-      longDivisionProblems.withinDivisionProbability - 0.05,
+    const singleExpected = 1 - mix.double - mix.division
+    expect(singleCount / draws).toBeGreaterThan(singleExpected - 0.05)
+    expect(singleCount / draws).toBeLessThan(singleExpected + 0.05)
+    expect(doubleCount / draws).toBeGreaterThan(mix.double - 0.05)
+    expect(doubleCount / draws).toBeLessThan(mix.double + 0.05)
+    expect(divisionCount / draws).toBeGreaterThan(mix.division - 0.05)
+    expect(divisionCount / draws).toBeLessThan(mix.division + 0.05)
+    expect(longDivisionCount / divisionCount).toBeGreaterThan(
+      mix.longWithinDivision - 0.05,
     )
-    expect(longAmongDivision).toBeLessThan(
-      longDivisionProblems.withinDivisionProbability + 0.05,
-    )
+    expect(longDivisionCount / divisionCount).toBeLessThan(mix.longWithinDivision + 0.05)
   })
 
   it('weakest fact is favoured far more often than mastered, but mastered still appears (D-17)', () => {
@@ -270,7 +321,7 @@ describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
     const draws = 5000
     const rng = createRng(2026)
     for (let i = 0; i < draws; i++) {
-      const picked = selectFact(rng, stats)
+      const picked = selectFact(rng, stats, null, 'common')
       if (picked === weak || picked === mastered) {
         counts[picked] = (counts[picked] ?? 0) + 1
       }

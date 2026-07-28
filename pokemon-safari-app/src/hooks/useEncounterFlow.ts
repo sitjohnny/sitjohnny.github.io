@@ -1,6 +1,11 @@
 import { useEffect } from 'react'
 import { feedbackCopy } from '@/data/educationConfig'
-import { educationCaptureBonus, encounterTimingMs, shinyRate } from '@/data/rates'
+import {
+  educationCaptureBonus,
+  captureThrowLimits,
+  encounterTimingMs,
+  shinyRate,
+} from '@/data/rates'
 import { WORLD_SEED } from '@/data/worldConfig'
 import { computeCatchChance, rollCapture } from '@/game/capture'
 import {
@@ -73,15 +78,18 @@ function buildFeedbackMessage(ok: boolean, rng: Rng): string {
     const boost = Math.round(educationCaptureBonus.correct * 100)
     return `${line} ${feedbackCopy.correctSuffix.replace('{boost}', String(boost))}`
   }
-  return `${line} ${feedbackCopy.incorrectSuffix}`
+  return line
 }
 
 function doAdvanceFromAppear(rng: Rng): void {
   const state = useEncounterStore.getState()
   if (state.stage !== 'appear') return
+  const session = state.session
+  if (!session) return
   const question = nextEducationQuestion(
     rng,
     loadAdaptiveStats(),
+    session.rarity,
     state.lastFactKey,
     { spellingEnabled: loadSpellingEnabled() },
   )
@@ -93,9 +101,12 @@ function doReplaceSpellingWithMath(rng: Rng): void {
   if (state.stage !== 'question') return
   if (state.question?.category !== 'spelling') return
   if (state.feedback !== null) return
+  const session = state.session
+  if (!session) return
   const question = mathEducationProvider.nextQuestion(
     rng,
     loadAdaptiveStats(),
+    session.rarity,
     state.lastFactKey,
   )
   useEncounterStore.getState().askQuestion(question)
@@ -162,6 +173,7 @@ function doCapture(rng: Rng, position: number): void {
   const chance = computeCatchChance({
     rarity: session.rarity,
     educationBonus: session.captureBonus,
+    educationCorrect: session.education?.correct === true,
     grade,
     ball: 'poke',
     berry: false,
@@ -213,7 +225,8 @@ export function dismissRecap(): void {
 }
 
 /**
- * After BallShake ending: Gotcha → result; else fail beat → remount timing, or flee at 3 (D-04/D-26).
+ * After BallShake ending: Gotcha → result; else fail beat → remount timing, or flee at max throws.
+ * Wrong education answers get one throw; correct answers get three (D-04/D-26).
  * attemptsUsed is owned solely by registerThrow (T-05-04) — this path never increments.
  */
 export function onShakeComplete(): void {
@@ -229,9 +242,13 @@ export function onShakeComplete(): void {
     useEncounterStore.getState().toResult()
     return
   }
+  const maxThrows =
+    session.education?.correct === true
+      ? captureThrowLimits.educationCorrect
+      : captureThrowLimits.educationIncorrect
   // Clamp so NaN/out-of-range never skips flee (threat T-05-04).
-  const attemptsUsed = Math.min(3, Math.max(0, session.attemptsUsed | 0))
-  if (attemptsUsed >= 3) {
+  const attemptsUsed = Math.min(maxThrows, Math.max(0, session.attemptsUsed | 0))
+  if (attemptsUsed >= maxThrows) {
     useEncounterStore.getState().toFlee()
     return
   }

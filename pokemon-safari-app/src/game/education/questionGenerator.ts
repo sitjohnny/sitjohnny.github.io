@@ -5,11 +5,9 @@
  * React, Zustand, and browser globals.
  */
 
-import {
-  spellingCopy,
-  spellingMixProbability,
-} from '@/data/educationConfig'
+import { spellingCopy, spellingMixProbability } from '@/data/educationConfig'
 import { spellingWordByFactKey } from '@/data/spellingWords'
+import type { RarityBand } from '@/types/encounter'
 import type { Rng } from '@/utils/rng'
 import { selectFact } from './adaptiveLearning'
 import { validateAnswer } from './answerValidator'
@@ -93,9 +91,10 @@ export const mathEducationProvider: EducationProvider = {
   nextQuestion(
     rng: Rng,
     stats: AdaptiveStats,
+    rarity: RarityBand,
     excludeFactKey?: string | null,
   ): EducationQuestion {
-    const factKey = selectFact(rng, stats, excludeFactKey ?? null) as MathFactKey
+    const factKey = selectFact(rng, stats, excludeFactKey ?? null, rarity) as MathFactKey
     return buildMathQuestion(factKey)
   },
 
@@ -110,6 +109,7 @@ export const spellingEducationProvider: EducationProvider = {
   nextQuestion(
     rng: Rng,
     stats: AdaptiveStats,
+    _rarity: RarityBand,
     excludeFactKey?: string | null,
   ): EducationQuestion {
     const factKey = selectSpellingFact(rng, stats, excludeFactKey ?? null)
@@ -124,17 +124,18 @@ export const spellingEducationProvider: EducationProvider = {
 export function nextEducationQuestion(
   rng: Rng,
   stats: AdaptiveStats,
+  rarity: RarityBand,
   excludeFactKey?: string | null,
   options?: { spellingEnabled?: boolean },
 ): EducationQuestion {
   const spellingEnabled = options?.spellingEnabled ?? true
   if (!spellingEnabled) {
-    return mathEducationProvider.nextQuestion(rng, stats, excludeFactKey)
+    return mathEducationProvider.nextQuestion(rng, stats, rarity, excludeFactKey)
   }
   if (rng.next() < spellingMixProbability) {
-    return spellingEducationProvider.nextQuestion(rng, stats, excludeFactKey)
+    return spellingEducationProvider.nextQuestion(rng, stats, rarity, excludeFactKey)
   }
-  return mathEducationProvider.nextQuestion(rng, stats, excludeFactKey)
+  return mathEducationProvider.nextQuestion(rng, stats, rarity, excludeFactKey)
 }
 
 /** @deprecated Prefer mathEducationProvider or nextEducationQuestion. */
