@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { describe, expect, it } from 'vitest'
+import { MEGA_CATALOG_LENGTH } from '@/data/megaCatalog'
 import {
   CACHE_KEY,
   CACHE_VERSION,
@@ -9,6 +10,7 @@ import {
   EDU_STATS_VERSION,
   NATIONAL_DEX_COUNT,
   SAVE_KEY,
+  TOTAL_ROSTER_COUNT,
 } from '@/services/pokeapi/keys'
 
 const servicesDir = join(dirname(fileURLToPath(import.meta.url)), '..')
@@ -19,6 +21,10 @@ describe('pokeapi keys (DATA-04, D-11)', () => {
     expect(NATIONAL_DEX_COUNT).toBe(649)
     expect(CACHE_VERSION).toBe(4)
     expect(CACHE_KEY).toBe('pokemon-safari:poke-cache:v4')
+  })
+
+  it('TOTAL_ROSTER_COUNT includes Mega/Primal catalog after National Dex', () => {
+    expect(TOTAL_ROSTER_COUNT).toBe(NATIONAL_DEX_COUNT + MEGA_CATALOG_LENGTH)
   })
 
   it('reserves SAVE_KEY as pokemon-safari:save:v1 distinct from CACHE_KEY', () => {
