@@ -18,7 +18,7 @@ import { useDexStore } from '@/store/dexStore'
 const DEX_QUOTA_MESSAGE =
   'Couldn\u2019t save your Pokédex on this device. You can still play this visit.'
 
-const DEFAULT_FILTER: DexFilterState = { status: 'all', type: null }
+const DEFAULT_FILTER: DexFilterState = { status: 'all', type: null, mode: 'all' }
 
 function pokemonTypes(speciesId: number): string[] {
   try {

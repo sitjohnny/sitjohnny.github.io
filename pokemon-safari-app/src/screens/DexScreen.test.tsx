@@ -4,7 +4,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { BottomNav } from '@/components/BottomNav'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
-import { NATIONAL_DEX_COUNT, SAVE_KEY } from '@/services/pokeapi/keys'
+import { NATIONAL_DEX_COUNT, SAVE_KEY, TOTAL_ROSTER_COUNT } from '@/services/pokeapi/keys'
 import { DexScreen } from '@/screens/DexScreen'
 import { useUiStore } from '@/store'
 import { useDexStore } from '@/store/dexStore'
@@ -84,7 +84,7 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
   it('renders National Dex tile buttons and no EmptyState placeholder', () => {
     renderDex()
     const tiles = dexTileButtons()
-    expect(tiles.length).toBe(NATIONAL_DEX_COUNT)
+    expect(tiles.length).toBe(TOTAL_ROSTER_COUNT)
     expect(screen.queryByText('Safari isn’t ready yet')).not.toBeInTheDocument()
   })
 
@@ -175,10 +175,10 @@ describe('DexScreen filters (DEX filters)', () => {
       saveSoftFail: false,
     })
     renderDex()
-    expect(dexTileButtons().length).toBe(NATIONAL_DEX_COUNT)
+    expect(dexTileButtons().length).toBe(TOTAL_ROSTER_COUNT)
 
     await user.click(screen.getByRole('button', { name: 'Missing' }))
-    expect(dexTileButtons().length).toBe(NATIONAL_DEX_COUNT - 1)
+    expect(dexTileButtons().length).toBe(TOTAL_ROSTER_COUNT - 1)
   })
 
   it('Shiny filter with no shinies shows empty-state heading', async () => {
