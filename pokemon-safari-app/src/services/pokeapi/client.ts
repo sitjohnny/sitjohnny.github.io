@@ -1,5 +1,6 @@
-import type { PokemonDto } from '@/types/pokemon'
-import { GEN1_COUNT } from './keys'
+import { MEGA_CATALOG, MEGA_CATALOG_BY_ID, type MegaCatalogEntry } from '@/data/megaCatalog'
+import type { PokemonDto, PokemonKind } from '@/types/pokemon'
+import { GEN1_COUNT, NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from './keys'
 
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2/pokemon'
 const POKEAPI_SPECIES_BASE = 'https://pokeapi.co/api/v2/pokemon-species'
@@ -45,8 +46,24 @@ export function sanitizeSpriteUrl(url: unknown): string | null {
   }
 }
 
-function assertGen1Id(id: unknown): asserts id is number {
-  if (typeof id !== 'number' || !Number.isInteger(id) || id < 1 || id > GEN1_COUNT) {
+export function assertNationalId(id: unknown): asserts id is number {
+  if (
+    typeof id !== 'number' ||
+    !Number.isInteger(id) ||
+    id < 1 ||
+    id > NATIONAL_DEX_COUNT
+  ) {
+    throw new Error(`Invalid Pokémon id: ${String(id)}`)
+  }
+}
+
+export function assertRosterId(id: unknown): asserts id is number {
+  if (
+    typeof id !== 'number' ||
+    !Number.isInteger(id) ||
+    id < 1 ||
+    id > TOTAL_ROSTER_COUNT
+  ) {
     throw new Error(`Invalid Pokémon id: ${String(id)}`)
   }
 }
@@ -66,10 +83,30 @@ function assertNonNegativeInt(value: unknown, field: string): asserts value is n
  * Shape PokéAPI JSON into a slim DTO with ASVS guards (T-02-02, T-02-04).
  * Sorts types by slot; sprite fields are https-only or null.
  */
-export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
-  assertGen1Id(raw.id)
-  if (typeof raw.name !== 'string' || !raw.name) {
+export type ToPokemonDtoOptions = {
+  /** Override PokéAPI's form id with our synthetic/National id. */
+  id?: number
+  name?: string
+  kind?: PokemonKind
+  baseSpeciesId?: number | null
+}
+
+export function toPokemonDto(raw: PokeApiPokemon, options?: ToPokemonDtoOptions): PokemonDto {
+  const id = options?.id ?? raw.id
+  if (options) {
+    assertRosterId(id)
+  } else {
+    assertNationalId(id)
+  }
+
+  const name = options?.name ?? raw.name
+  if (typeof name !== 'string' || !name) {
     throw new Error('Invalid Pokémon name')
+  }
+  const kind = options?.kind ?? 'species'
+  const baseSpeciesId = options?.baseSpeciesId ?? null
+  if (baseSpeciesId !== null) {
+    assertNationalId(baseSpeciesId)
   }
   if (!Array.isArray(raw.types)) {
     throw new Error('Invalid Pokémon types')
@@ -91,8 +128,8 @@ export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
   const officialArtwork = sprites.other?.['official-artwork']?.front_default
 
   return {
-    id: raw.id,
-    name: raw.name,
+    id,
+    name,
     types,
     sprites: {
       front_default: sanitizeSpriteUrl(sprites.front_default),
@@ -104,8 +141,8 @@ export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
     height: raw.height,
     weight: raw.weight,
     habitat: null,
-    kind: 'species',
-    baseSpeciesId: null,
+    kind,
+    baseSpeciesId,
   }
 }
 
@@ -182,13 +219,29 @@ export async function mapPool<T, R>(
 }
 
 export async function fetchPokemon(id: number): Promise<PokemonDto> {
-  assertGen1Id(id)
+  assertNationalId(id)
   const res = await fetch(`${POKEAPI_BASE}/${id}`)
   if (!res.ok) {
     throw new Error(`PokéAPI failed for id ${id}: ${res.status}`)
   }
   const json = (await res.json()) as PokeApiPokemon
   return toPokemonDto(json)
+}
+
+export async function fetchMegaPokemon(entry: MegaCatalogEntry): Promise<PokemonDto> {
+  const res = await fetch(`${POKEAPI_BASE}/${entry.pokeApiSlug}`)
+  if (!res.ok) {
+    throw new Error(`PokéAPI failed for ${entry.pokeApiSlug}: ${res.status}`)
+  }
+  const json = (await res.json()) as PokeApiPokemon
+  const dto = toPokemonDto(json, {
+    id: entry.id,
+    name: entry.displayName,
+    kind: entry.kind,
+    baseSpeciesId: entry.baseSpeciesId,
+  })
+  const meta = await fetchSpeciesMeta(entry.baseSpeciesId)
+  return { ...dto, ...meta }
 }
 
 export type SpeciesMeta = {
@@ -199,7 +252,7 @@ export type SpeciesMeta = {
 
 /** Prefetch-time species fields — stores only final strings (never raw arrays). */
 export async function fetchSpeciesMeta(id: number): Promise<SpeciesMeta> {
-  assertGen1Id(id)
+  assertNationalId(id)
   const res = await fetch(`${POKEAPI_SPECIES_BASE}/${id}`)
   if (!res.ok) {
     throw new Error(`PokéAPI species failed for id ${id}: ${res.status}`)
@@ -236,6 +289,49 @@ export type FetchGen1Options = {
   ids?: number[]
 }
 
+export type FetchRosterOptions = {
+  concurrency?: number
+  onProgress?: (done: number, total: number) => void
+  /** When set, only these National Dex ids are fetched (resume / partial). */
+  nationalIds?: number[]
+  /** When set, only these synthetic mega/primal ids are fetched (resume / partial). */
+  megaIds?: number[]
+}
+
+type RosterWorkItem =
+  | { kind: 'species'; id: number }
+  | { kind: 'mega'; entry: MegaCatalogEntry }
+
+export async function fetchRosterAll(options: FetchRosterOptions = {}): Promise<PokemonDto[]> {
+  const {
+    concurrency = DEFAULT_CONCURRENCY,
+    onProgress,
+    nationalIds = Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => i + 1),
+    megaIds = MEGA_CATALOG.map((entry) => entry.id),
+  } = options
+
+  const nationalWork: RosterWorkItem[] = nationalIds.map((id) => {
+    assertNationalId(id)
+    return { kind: 'species', id }
+  })
+  const megaWork: RosterWorkItem[] = megaIds.map((id) => {
+    assertRosterId(id)
+    const entry = MEGA_CATALOG_BY_ID.get(id)
+    if (!entry) {
+      throw new Error(`Invalid Mega catalog id: ${String(id)}`)
+    }
+    return { kind: 'mega', entry }
+  })
+  const work = [...nationalWork, ...megaWork]
+
+  return mapPool(
+    work,
+    concurrency,
+    (item) => (item.kind === 'species' ? fetchPokemon(item.id) : fetchMegaPokemon(item.entry)),
+    onProgress,
+  )
+}
+
 export async function fetchGen1All(options: FetchGen1Options = {}): Promise<PokemonDto[]> {
   const {
     concurrency = DEFAULT_CONCURRENCY,
@@ -243,5 +339,5 @@ export async function fetchGen1All(options: FetchGen1Options = {}): Promise<Poke
     ids = Array.from({ length: GEN1_COUNT }, (_, i) => i + 1),
   } = options
 
-  return mapPool(ids, concurrency, (id) => fetchPokemon(id), onProgress)
+  return fetchRosterAll({ concurrency, onProgress, nationalIds: ids, megaIds: [] })
 }

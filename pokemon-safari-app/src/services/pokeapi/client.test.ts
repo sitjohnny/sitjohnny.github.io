@@ -1,10 +1,12 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import {
-  fetchGen1All,
+  fetchMegaPokemon,
+  fetchRosterAll,
   selectGenus,
   selectHabitat,
   toPokemonDto,
 } from '@/services/pokeapi/client'
+import { MEGA_CATALOG } from '@/data/megaCatalog'
 import { getFetchMaxInFlight, stubPokeApiFetch } from '@/test/pokeapi-test-helpers'
 
 afterEach(() => {
@@ -17,6 +19,15 @@ beforeEach(() => {
 })
 
 describe('toPokemonDto', () => {
+  const basePokemon = {
+    id: 1,
+    name: 'bulbasaur',
+    types: [{ slot: 1, type: { name: 'grass' } }],
+    sprites: { front_default: null, front_shiny: null },
+    height: 7,
+    weight: 69,
+  }
+
   it('sorts types by slot and maps front_default + front_shiny', () => {
     const dto = toPokemonDto({
       id: 6,
@@ -97,6 +108,31 @@ describe('toPokemonDto', () => {
     expect(() => toPokemonDto({ ...base, height: 7, weight: NaN })).toThrow()
     expect(() => toPokemonDto({ ...base, height: 1.5, weight: 69 })).toThrow()
   })
+
+  it('accepts national id 649 and sets kind species', () => {
+    const dto = toPokemonDto({ ...basePokemon, id: 649, name: 'genesect' }, {})
+
+    expect(dto.id).toBe(649)
+    expect(dto.kind).toBe('species')
+    expect(dto.baseSpeciesId).toBeNull()
+  })
+
+  it('remaps mega form to synthetic id and display name', () => {
+    const dto = toPokemonDto(
+      { ...basePokemon, id: 10034, name: 'charizard-mega-x' },
+      {
+        id: 651,
+        name: 'Mega Charizard X',
+        kind: 'mega',
+        baseSpeciesId: 6,
+      },
+    )
+
+    expect(dto.id).toBe(651)
+    expect(dto.name).toBe('Mega Charizard X')
+    expect(dto.kind).toBe('mega')
+    expect(dto.baseSpeciesId).toBe(6)
+  })
 })
 
 describe('selectGenus / selectHabitat', () => {
@@ -120,23 +156,59 @@ describe('selectGenus / selectHabitat', () => {
   })
 })
 
-describe('fetchGen1All', () => {
+describe('fetchMegaPokemon', () => {
+  it('uses slug URL and remaps via catalog entry', async () => {
+    const entry = MEGA_CATALOG.find((e) => e.pokeApiSlug === 'charizard-mega-x')!
+    const fetchMock = stubPokeApiFetch({
+      bodyFor: () => ({
+        id: 10034,
+        name: 'charizard-mega-x',
+        types: [
+          { slot: 2, type: { name: 'dragon' } },
+          { slot: 1, type: { name: 'fire' } },
+        ],
+        height: 17,
+        weight: 1105,
+        sprites: {
+          front_default: 'https://example.test/charizard-mega-x.png',
+          front_shiny: null,
+        },
+      }),
+    })
+
+    const dto = await fetchMegaPokemon(entry)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://pokeapi.co/api/v2/pokemon/charizard-mega-x',
+    )
+    expect(fetchMock).toHaveBeenCalledWith('https://pokeapi.co/api/v2/pokemon-species/6')
+    expect(dto.id).toBe(entry.id)
+    expect(dto.name).toBe(entry.displayName)
+    expect(dto.kind).toBe('mega')
+    expect(dto.baseSpeciesId).toBe(entry.baseSpeciesId)
+    expect(dto.genus).toBe('Genus 6')
+  })
+})
+
+describe('fetchRosterAll', () => {
   it('uses concurrency ≤8 and reports onProgress(done, total)', async () => {
     const fetchMock = stubPokeApiFetch({ delayMs: 5 })
     const progress: Array<{ done: number; total: number }> = []
 
-    const results = await fetchGen1All({
+    const results = await fetchRosterAll({
       concurrency: 8,
+      nationalIds: [1, 2],
+      megaIds: [650, 651],
       onProgress: (done, total) => {
         progress.push({ done, total })
       },
     })
 
-    expect(results).toHaveLength(151)
+    expect(results).toHaveLength(4)
     expect(getFetchMaxInFlight(fetchMock)).toBeLessThanOrEqual(8)
     expect(progress.length).toBeGreaterThan(0)
-    expect(progress.at(-1)).toEqual({ done: 151, total: 151 })
-    expect(progress.every((p) => p.total === 151)).toBe(true)
+    expect(progress.at(-1)).toEqual({ done: 4, total: 4 })
+    expect(progress.every((p) => p.total === 4)).toBe(true)
     expect(progress.map((p) => p.done)).toEqual(
       [...progress.map((p) => p.done)].sort((a, b) => a - b),
     )
