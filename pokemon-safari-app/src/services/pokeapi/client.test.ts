@@ -117,6 +117,12 @@ describe('toPokemonDto', () => {
     expect(dto.baseSpeciesId).toBeNull()
   })
 
+  it('rejects synthetic roster ids when options still resolve to species', () => {
+    expect(() => toPokemonDto({ ...basePokemon, id: 650, name: 'venusaur-mega' }, {})).toThrow(
+      'Invalid Pokémon id: 650',
+    )
+  })
+
   it('remaps mega form to synthetic id and display name', () => {
     const dto = toPokemonDto(
       { ...basePokemon, id: 10034, name: 'charizard-mega-x' },

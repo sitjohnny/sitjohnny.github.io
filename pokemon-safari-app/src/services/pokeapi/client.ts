@@ -93,17 +93,17 @@ export type ToPokemonDtoOptions = {
 
 export function toPokemonDto(raw: PokeApiPokemon, options?: ToPokemonDtoOptions): PokemonDto {
   const id = options?.id ?? raw.id
-  if (options) {
-    assertRosterId(id)
-  } else {
+  const kind = options?.kind ?? 'species'
+  if (kind === 'species') {
     assertNationalId(id)
+  } else {
+    assertRosterId(id)
   }
 
   const name = options?.name ?? raw.name
   if (typeof name !== 'string' || !name) {
     throw new Error('Invalid Pokémon name')
   }
-  const kind = options?.kind ?? 'species'
   const baseSpeciesId = options?.baseSpeciesId ?? null
   if (baseSpeciesId !== null) {
     assertNationalId(baseSpeciesId)
