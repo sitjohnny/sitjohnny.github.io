@@ -1,6 +1,7 @@
 import { vi, type Mock } from 'vitest'
 
-import { CACHE_KEY, CACHE_VERSION } from '@/services/pokeapi/keys'
+import { MEGA_CATALOG } from '@/data/megaCatalog'
+import { CACHE_KEY, CACHE_VERSION, NATIONAL_DEX_COUNT } from '@/services/pokeapi/keys'
 
 /** Must match `CACHE_KEY` from `@/services/pokeapi/keys` (DATA-04 / D-11). */
 export const TEST_CACHE_KEY = CACHE_KEY
@@ -54,9 +55,22 @@ export function makePokemonDto(
   }
 }
 
-/** Write a valid CacheEnvelope (v3) to CACHE_KEY only — never touches SAVE_KEY. */
+export function makeFullRosterDtos(): TestPokemonDto[] {
+  return [
+    ...Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => makePokemonDto(i + 1)),
+    ...MEGA_CATALOG.map((entry) =>
+      makePokemonDto(entry.id, {
+        name: entry.displayName,
+        kind: entry.kind,
+        baseSpeciesId: entry.baseSpeciesId,
+      }),
+    ),
+  ]
+}
+
+/** Write a valid CacheEnvelope to CACHE_KEY only — never touches SAVE_KEY. */
 export function seedPokeCache(
-  pokemon: TestPokemonDto[] = Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
+  pokemon: TestPokemonDto[] = makeFullRosterDtos(),
   overrides: Partial<TestCacheEnvelope> = {},
 ): TestCacheEnvelope {
   const envelope: TestCacheEnvelope = {

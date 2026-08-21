@@ -2,14 +2,21 @@ import { readFileSync, readdirSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { MEGA_CATALOG } from '@/data/megaCatalog'
 import {
   ensureCache,
   getPokemon,
   hasValidCache,
   hydrateFromStorage,
+  isCacheReady,
   resetCacheMemoryForTests,
 } from '@/services/pokeapi/cache'
-import { CACHE_KEY, SAVE_KEY } from '@/services/pokeapi/keys'
+import {
+  CACHE_KEY,
+  NATIONAL_DEX_COUNT,
+  SAVE_KEY,
+  TOTAL_ROSTER_COUNT,
+} from '@/services/pokeapi/keys'
 import {
   TEST_CACHE_KEY,
   clearPokeCacheKey,
@@ -20,6 +27,19 @@ import {
 
 const pokeapiDir = dirname(fileURLToPath(import.meta.url))
 const servicesRoot = join(pokeapiDir, '..')
+
+function makeFullRosterDtos() {
+  return [
+    ...Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => makePokemonDto(i + 1)),
+    ...MEGA_CATALOG.map((entry) =>
+      makePokemonDto(entry.id, {
+        name: entry.displayName,
+        kind: entry.kind,
+        baseSpeciesId: entry.baseSpeciesId,
+      }),
+    ),
+  ]
+}
 
 afterEach(() => {
   vi.unstubAllGlobals()
@@ -44,7 +64,7 @@ beforeEach(() => {
 })
 
 describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
-  it('writes CacheEnvelope version 4 with 151 DTOs to CACHE_KEY only', async () => {
+  it('writes CacheEnvelope version 4 with full roster DTOs to CACHE_KEY only', async () => {
     stubPokeApiFetch()
     localStorage.setItem(SAVE_KEY, JSON.stringify({ version: 1, marker: 'keep-me' }))
 
@@ -57,22 +77,83 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
       pokemon: unknown[]
     }
     expect(envelope.version).toBe(4)
-    expect(envelope.pokemon).toHaveLength(151)
+    expect(envelope.pokemon).toHaveLength(TOTAL_ROSTER_COUNT)
+    expect(envelope.pokemon.at(-1)).toMatchObject({
+      id: TOTAL_ROSTER_COUNT,
+      kind: 'mega',
+      baseSpeciesId: 531,
+    })
     expect(localStorage.getItem(SAVE_KEY)).toContain('keep-me')
+  })
+
+  it('ensureCache / write path never clears SAVE_KEY (Gen 1 progress survives)', async () => {
+    const save = {
+      version: 2,
+      savedAt: '2026-01-01T00:00:00.000Z',
+      data: {
+        dex: {
+          '25': {
+            seen: true,
+            firstEncounteredAt: '2026-01-01T00:00:00.000Z',
+            firstCapturedAt: '2026-01-01T00:00:00.000Z',
+            catchCount: 2,
+            shinyOwned: true,
+          },
+        },
+        explore: { x: 0, y: 0, facing: 'down' },
+      },
+    }
+    localStorage.setItem(SAVE_KEY, JSON.stringify(save))
+    stubPokeApiFetch()
+
+    await ensureCache({ concurrency: 8, onProgress: () => {} })
+
+    const raw = localStorage.getItem(SAVE_KEY)
+    expect(raw).toBeTruthy()
+    const parsed = JSON.parse(raw!)
+    expect(parsed.data.dex['25'].catchCount).toBe(2)
+    expect(parsed.data.dex['25'].shinyOwned).toBe(true)
   })
 
   it('after hydrate, getPokemon works and fetch count does not increase', async () => {
     const fetchMock = stubPokeApiFetch()
     await ensureCache({ concurrency: 8, onProgress: () => {} })
     const callsAfterEnsure = fetchMock.mock.calls.length
-    expect(callsAfterEnsure).toBe(302)
+    expect(callsAfterEnsure).toBe(TOTAL_ROSTER_COUNT * 2)
 
     resetCacheMemoryForTests()
     hydrateFromStorage()
 
     expect(getPokemon(25).name).toBe('p25')
+    expect(getPokemon(TOTAL_ROSTER_COUNT)).toMatchObject({
+      id: TOTAL_ROSTER_COUNT,
+      kind: 'mega',
+      baseSpeciesId: 531,
+    })
     expect(hasValidCache()).toBe(true)
     expect(fetchMock.mock.calls.length).toBe(callsAfterEnsure)
+  })
+
+  it('hasValidCache requires national and mega ids', () => {
+    seedPokeCache(Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => makePokemonDto(i + 1)))
+    expect(hasValidCache()).toBe(false)
+
+    seedPokeCache(makeFullRosterDtos())
+    expect(hasValidCache()).toBe(true)
+  })
+
+  it('hydrate rejects stored DTOs without explicit kind and baseSpeciesId', () => {
+    const roster = makeFullRosterDtos()
+    const invalid = { ...roster[0] } as Record<string, unknown>
+    delete invalid.kind
+    delete invalid.baseSpeciesId
+    roster[0] = invalid as (typeof roster)[number]
+    seedPokeCache(roster)
+
+    hydrateFromStorage()
+
+    expect(isCacheReady()).toBe(false)
+    expect(hasValidCache()).toBe(false)
   })
 })
 
@@ -118,7 +199,7 @@ describe('version mismatch (D-10)', () => {
       JSON.stringify({
         version: 0,
         fetchedAt: new Date().toISOString(),
-        pokemon: Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
+        pokemon: Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => makePokemonDto(i + 1)),
       }),
     )
 
@@ -127,7 +208,7 @@ describe('version mismatch (D-10)', () => {
     const fetchMock = stubPokeApiFetch()
     await ensureCache({ concurrency: 8, onProgress: () => {} })
 
-    expect(fetchMock.mock.calls.length).toBe(302)
+    expect(fetchMock.mock.calls.length).toBe(TOTAL_ROSTER_COUNT * 2)
     expect(hasValidCache()).toBe(true)
     const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!) as { version: number }
     expect(stored.version).toBe(4)
@@ -141,7 +222,7 @@ describe('cache v4 DTO shape (species meta)', () => {
       JSON.stringify({
         version: 2,
         fetchedAt: new Date().toISOString(),
-        pokemon: Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
+        pokemon: Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => makePokemonDto(i + 1)),
       }),
     )
     hydrateFromStorage()
@@ -197,5 +278,11 @@ describe('storage discipline (DATA-04, D-11)', () => {
       const source = readFileSync(file, 'utf8')
       expect(source, file).not.toMatch(/localStorage\.clear\s*\(/)
     }
+  })
+
+  it('cache module never references SAVE_KEY or save storage literals', () => {
+    const cacheSource = readFileSync(join(pokeapiDir, 'cache.ts'), 'utf8')
+    expect(cacheSource).not.toMatch(/\bSAVE_KEY\b/)
+    expect(cacheSource).not.toMatch(/pokemon-safari:save/)
   })
 })

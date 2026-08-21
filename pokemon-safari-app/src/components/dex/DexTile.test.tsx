@@ -6,6 +6,7 @@ import { DexTile } from '@/components/dex/DexTile'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import {
   clearPokeCacheKey,
+  makeFullRosterDtos,
   makePokemonDto,
   seedPokeCache,
 } from '@/test/pokeapi-test-helpers'
@@ -113,9 +114,7 @@ describe('DexTile a11y (D-06, D-07, D-09, T-06-02)', () => {
 describe('DexDetailSheet caught lore (D-03, D-09, D-16, D-20)', () => {
   beforeEach(() => {
     seedPokeCache(
-      Array.from({ length: 151 }, (_, i) =>
-        i + 1 === 25 ? pikachu : makePokemonDto(i + 1),
-      ),
+      makeFullRosterDtos().map((pokemon) => (pokemon.id === 25 ? pikachu : pokemon)),
     )
     hydrateFromStorage()
   })
@@ -153,11 +152,13 @@ describe('DexDetailSheet caught lore (D-03, D-09, D-16, D-20)', () => {
 
   it('null flavorText renders kid-friendly placeholder only in UI', () => {
     seedPokeCache(
-      Array.from({ length: 151 }, (_, i) =>
-        makePokemonDto(i + 1, {
-          name: i + 1 === 25 ? 'pikachu' : `p${i + 1}`,
-          flavorText: null,
-        }),
+      makeFullRosterDtos().map((pokemon) =>
+        pokemon.id === 25
+          ? makePokemonDto(25, {
+              name: 'pikachu',
+              flavorText: null,
+            })
+          : pokemon,
       ),
     )
     hydrateFromStorage()

@@ -4,7 +4,7 @@ import {
   filterDexSpeciesIds,
   type DexFilterState,
 } from '@/game/dexFilters'
-import { GEN1_COUNT } from '@/services/pokeapi/keys'
+import { NATIONAL_DEX_COUNT } from '@/services/pokeapi/keys'
 
 function dexWithCaught(ids: number[], shinyIds: number[] = []): DexData {
   const dex: DexData = {}
@@ -20,7 +20,7 @@ function dexWithCaught(ids: number[], shinyIds: number[] = []): DexData {
   return dex
 }
 
-const allIds = () => Array.from({ length: GEN1_COUNT }, (_, i) => i + 1)
+const allIds = () => Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => i + 1)
 
 const typeMap: Record<number, string[]> = {
   1: ['grass', 'poison'],
@@ -37,7 +37,7 @@ function typeOf(id: number): string[] {
 describe('filterDexSpeciesIds', () => {
   const base: DexFilterState = { status: 'all', type: null }
 
-  it('all + no type returns 1..151 ascending', () => {
+  it('all + no type returns 1..649 ascending', () => {
     expect(filterDexSpeciesIds({}, base, typeOf)).toEqual(allIds())
   })
 
@@ -52,7 +52,7 @@ describe('filterDexSpeciesIds', () => {
     const ids = filterDexSpeciesIds(dex, { status: 'missing', type: null }, typeOf)
     expect(ids).not.toContain(1)
     expect(ids).not.toContain(25)
-    expect(ids.length).toBe(GEN1_COUNT - 2)
+    expect(ids.length).toBe(NATIONAL_DEX_COUNT - 2)
     expect(ids).toEqual([...ids].sort((a, b) => a - b))
   })
 

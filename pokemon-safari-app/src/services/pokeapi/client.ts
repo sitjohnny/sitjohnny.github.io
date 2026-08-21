@@ -1,10 +1,11 @@
 import { MEGA_CATALOG, MEGA_CATALOG_BY_ID, type MegaCatalogEntry } from '@/data/megaCatalog'
 import type { PokemonDto, PokemonKind } from '@/types/pokemon'
-import { GEN1_COUNT, NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from './keys'
+import { NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from './keys'
 
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2/pokemon'
 const POKEAPI_SPECIES_BASE = 'https://pokeapi.co/api/v2/pokemon-species'
 const DEFAULT_CONCURRENCY = 8
+const LEGACY_GEN1_COUNT = 151
 
 /** Emerald → Ruby → Sapphire → FireRed (D-15 / D-16). */
 export const FLAVOR_VERSION_PRIORITY = ['emerald', 'ruby', 'sapphire', 'firered'] as const
@@ -336,7 +337,7 @@ export async function fetchGen1All(options: FetchGen1Options = {}): Promise<Poke
   const {
     concurrency = DEFAULT_CONCURRENCY,
     onProgress,
-    ids = Array.from({ length: GEN1_COUNT }, (_, i) => i + 1),
+    ids = Array.from({ length: LEGACY_GEN1_COUNT }, (_, i) => i + 1),
   } = options
 
   return fetchRosterAll({ concurrency, onProgress, nationalIds: ids, megaIds: [] })

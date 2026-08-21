@@ -3,6 +3,7 @@ import { cleanup, render, screen } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { BootScreen } from '@/screens/BootScreen'
+import { TOTAL_ROSTER_COUNT } from '@/services/pokeapi/keys'
 
 const retryMock = vi.fn()
 
@@ -32,20 +33,22 @@ function renderBoot() {
 }
 
 describe('BootScreen loading', () => {
-  it('shows Catching them all… with n/151 and progressbar named Catching them all', () => {
+  it('shows Catching them all… with full roster progress', () => {
     usePokemonCacheMock.mockReturnValue({
       status: 'loading',
-      progress: { done: 42, total: 151 },
+      progress: { done: 42, total: TOTAL_ROSTER_COUNT },
       error: null,
       retry: retryMock,
     })
 
     renderBoot()
 
-    expect(screen.getByText(/Catching them all…\s*42\/151/)).toBeInTheDocument()
+    expect(
+      screen.getByText(new RegExp(`Catching them all…\\s*42/${TOTAL_ROSTER_COUNT}`)),
+    ).toBeInTheDocument()
     const bar = screen.getByRole('progressbar', { name: 'Catching them all' })
     expect(bar).toHaveAttribute('aria-valuemin', '0')
-    expect(bar).toHaveAttribute('aria-valuemax', '151')
+    expect(bar).toHaveAttribute('aria-valuemax', String(TOTAL_ROSTER_COUNT))
     expect(bar).toHaveAttribute('aria-valuenow', '42')
   })
 })
@@ -59,7 +62,7 @@ describe('BootScreen ready navigation', () => {
   it('navigates to /game with replace when cache status becomes ready', () => {
     usePokemonCacheMock.mockReturnValue({
       status: 'ready',
-      progress: { done: 151, total: 151 },
+      progress: { done: TOTAL_ROSTER_COUNT, total: TOTAL_ROSTER_COUNT },
       error: null,
       retry: retryMock,
     })
@@ -91,7 +94,7 @@ describe('BootScreen failure', () => {
 
     usePokemonCacheMock.mockReturnValue({
       status: 'error',
-      progress: { done: 10, total: 151 },
+      progress: { done: 10, total: TOTAL_ROSTER_COUNT },
       error: new Error('network'),
       retry: retryMock,
     })
@@ -120,7 +123,7 @@ describe('BootScreen failure', () => {
 
     usePokemonCacheMock.mockReturnValue({
       status: 'error',
-      progress: { done: 0, total: 151 },
+      progress: { done: 0, total: TOTAL_ROSTER_COUNT },
       error: new Error('network'),
       retry: retryMock,
     })

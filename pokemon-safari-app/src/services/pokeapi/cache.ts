@@ -1,6 +1,13 @@
 import type { CacheEnvelope, PokemonDto } from '@/types/pokemon'
-import { fetchPokemon, fetchSpeciesMeta, mapPool, sanitizeSpriteUrl } from './client'
-import { CACHE_KEY, CACHE_VERSION, GEN1_COUNT } from './keys'
+import { MEGA_CATALOG, MEGA_CATALOG_BY_ID, type MegaCatalogEntry } from '@/data/megaCatalog'
+import {
+  fetchMegaPokemon,
+  fetchPokemon,
+  fetchSpeciesMeta,
+  mapPool,
+  sanitizeSpriteUrl,
+} from './client'
+import { CACHE_KEY, CACHE_VERSION, NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from './keys'
 
 const DEFAULT_CONCURRENCY = 8
 
@@ -36,8 +43,24 @@ function isValidEnvelope(envelope: CacheEnvelope | null): envelope is CacheEnvel
   return (
     envelope !== null &&
     envelope.version === CACHE_VERSION &&
-    envelope.pokemon.length === GEN1_COUNT
+    Array.isArray(envelope.pokemon) &&
+    pokemonMapFromStored(envelope.pokemon) !== null
   )
+}
+
+function expectedRosterIds(): number[] {
+  return [
+    ...Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => i + 1),
+    ...MEGA_CATALOG.map((entry) => entry.id),
+  ]
+}
+
+function isCompleteRoster(map: Map<number, PokemonDto>): boolean {
+  if (map.size !== TOTAL_ROSTER_COUNT) return false
+  for (const id of expectedRosterIds()) {
+    if (!map.has(id)) return false
+  }
+  return true
 }
 
 /**
@@ -49,7 +72,12 @@ function fromStoredDto(raw: unknown): PokemonDto {
   }
   const obj = raw as Record<string, unknown>
   const id = obj.id
-  if (typeof id !== 'number' || !Number.isInteger(id) || id < 1 || id > GEN1_COUNT) {
+  if (
+    typeof id !== 'number' ||
+    !Number.isInteger(id) ||
+    id < 1 ||
+    id > TOTAL_ROSTER_COUNT
+  ) {
     throw new Error(`Invalid Pokémon id: ${String(id)}`)
   }
   if (typeof obj.name !== 'string' || !obj.name) {
@@ -92,14 +120,36 @@ function fromStoredDto(raw: unknown): PokemonDto {
     throw new Error('Invalid Pokémon habitat')
   }
   const kindRaw = obj.kind
-  const kind =
-    kindRaw === 'species' || kindRaw === 'mega' || kindRaw === 'primal' ? kindRaw : 'species'
+  if (!(kindRaw === 'species' || kindRaw === 'mega' || kindRaw === 'primal')) {
+    throw new Error('Invalid Pokémon kind')
+  }
+  const kind = kindRaw
   const baseSpeciesIdRaw = obj.baseSpeciesId
-  const baseSpeciesId =
-    baseSpeciesIdRaw === null ||
-    (typeof baseSpeciesIdRaw === 'number' && Number.isInteger(baseSpeciesIdRaw))
-      ? baseSpeciesIdRaw
-      : null
+  let baseSpeciesId: number | null
+  if (kind === 'species') {
+    if (baseSpeciesIdRaw !== null || id > NATIONAL_DEX_COUNT) {
+      throw new Error('Invalid Pokémon baseSpeciesId')
+    }
+    baseSpeciesId = null
+  } else {
+    if (
+      typeof baseSpeciesIdRaw !== 'number' ||
+      !Number.isInteger(baseSpeciesIdRaw) ||
+      baseSpeciesIdRaw < 1 ||
+      baseSpeciesIdRaw > NATIONAL_DEX_COUNT
+    ) {
+      throw new Error('Invalid Pokémon baseSpeciesId')
+    }
+    const catalogEntry = MEGA_CATALOG_BY_ID.get(id)
+    if (
+      !catalogEntry ||
+      catalogEntry.kind !== kind ||
+      catalogEntry.baseSpeciesId !== baseSpeciesIdRaw
+    ) {
+      throw new Error('Invalid Mega catalog DTO')
+    }
+    baseSpeciesId = baseSpeciesIdRaw
+  }
   return {
     id,
     name: obj.name,
@@ -121,22 +171,25 @@ function fromStoredDto(raw: unknown): PokemonDto {
   }
 }
 
-/** Validate and load DTOs into memory. Returns false if any entry is invalid/incomplete. */
-function loadMemoryFromPokemon(pokemon: unknown[]): boolean {
+function pokemonMapFromStored(pokemon: unknown[]): Map<number, PokemonDto> | null {
   const next = new Map<number, PokemonDto>()
   for (const raw of pokemon) {
     try {
       const dto = fromStoredDto(raw)
-      if (next.has(dto.id)) return false
+      if (next.has(dto.id)) return null
       next.set(dto.id, dto)
     } catch {
-      return false
+      return null
     }
   }
-  if (next.size !== GEN1_COUNT) return false
-  for (let id = 1; id <= GEN1_COUNT; id++) {
-    if (!next.has(id)) return false
-  }
+  if (!isCompleteRoster(next)) return null
+  return next
+}
+
+/** Validate and load DTOs into memory. Returns false if any entry is invalid/incomplete. */
+function loadMemoryFromPokemon(pokemon: unknown[]): boolean {
+  const next = pokemonMapFromStored(pokemon)
+  if (!next) return false
   memory = next
   return true
 }
@@ -154,26 +207,17 @@ export function hydrateFromStorage(): void {
   }
 }
 
-/** True when map holds every Gen 1 id 1..GEN1_COUNT (no gaps/duplicates). */
-function isCompleteGen1(map: Map<number, PokemonDto>): boolean {
-  if (map.size !== GEN1_COUNT) return false
-  for (let id = 1; id <= GEN1_COUNT; id++) {
-    if (!map.has(id)) return false
-  }
-  return true
-}
-
-/** True when storage (or already-hydrated memory) holds a full Gen 1 set at CACHE_VERSION. */
+/** True when storage (or already-hydrated memory) holds a full roster at CACHE_VERSION. */
 export function hasValidCache(): boolean {
-  if (isCompleteGen1(memory)) {
+  if (isCompleteRoster(memory)) {
     return true
   }
   return isValidEnvelope(parseEnvelope(localStorage.getItem(CACHE_KEY)))
 }
 
-/** True when in-memory Map is fully populated for Gen 1. */
+/** True when in-memory Map is fully populated for the full roster. */
 export function isCacheReady(): boolean {
-  return isCompleteGen1(memory)
+  return isCompleteRoster(memory)
 }
 
 /** Synchronous lookup — throws if missing (DATA-02). */
@@ -215,8 +259,12 @@ export type EnsureCacheOptions = {
   resume?: boolean
 }
 
+type CacheWorkItem =
+  | { kind: 'species'; id: number }
+  | { kind: 'mega'; entry: MegaCatalogEntry }
+
 /**
- * Prefetch Gen 1 into memory + versioned localStorage.
+ * Prefetch full roster into memory + versioned localStorage.
  * Returns persist result ('ok' | 'quota'). Memory stays playable on quota.
  */
 export async function ensureCache(
@@ -239,11 +287,11 @@ export async function ensureCache(
 
   if (!resume) {
     // Full warm path: if already valid in memory/storage, hydrate and skip network.
-    if (memory.size === GEN1_COUNT) {
+    if (isCompleteRoster(memory)) {
       const envelope: CacheEnvelope = {
         version: CACHE_VERSION,
         fetchedAt: new Date().toISOString(),
-        pokemon: Array.from({ length: GEN1_COUNT }, (_, i) => getPokemon(i + 1)),
+        pokemon: expectedRosterIds().map((id) => getPokemon(id)),
       }
       return persistCache(envelope)
     }
@@ -256,41 +304,46 @@ export async function ensureCache(
     }
   }
 
-  const ids = resume
-    ? Array.from({ length: GEN1_COUNT }, (_, i) => i + 1).filter((id) => !memory.has(id))
-    : Array.from({ length: GEN1_COUNT }, (_, i) => i + 1)
+  const missingNationalIds = Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => i + 1).filter(
+    (id) => !memory.has(id),
+  )
+  const missingMegaEntries = MEGA_CATALOG.filter((entry) => !memory.has(entry.id))
+  const work: CacheWorkItem[] = [
+    ...missingNationalIds.map((id): CacheWorkItem => ({ kind: 'species', id })),
+    ...missingMegaEntries.map((entry): CacheWorkItem => ({ kind: 'mega', entry })),
+  ]
 
-  if (ids.length > 0) {
-    // One worker per id: pokemon then species, merge, then commit (Pitfall 3).
+  if (work.length > 0) {
+    // One worker per roster id: fetch, merge, then commit (Pitfall 3).
     // mapPool rejects on first failure, but prior successes remain in memory for resume.
     await mapPool(
-      ids,
+      work,
       concurrency,
-      async (id) => {
-        const dto = await fetchPokemon(id)
-        const meta = await fetchSpeciesMeta(id)
-        const full = { ...dto, ...meta }
+      async (item) => {
+        const full =
+          item.kind === 'species'
+            ? { ...(await fetchPokemon(item.id)), ...(await fetchSpeciesMeta(item.id)) }
+            : await fetchMegaPokemon(item.entry)
         memory.set(full.id, full)
         return full
       },
       () => {
-        onProgress?.(memory.size, GEN1_COUNT)
+        onProgress?.(Math.min(memory.size, TOTAL_ROSTER_COUNT), TOTAL_ROSTER_COUNT)
       },
     )
   } else {
-    onProgress?.(GEN1_COUNT, GEN1_COUNT)
+    onProgress?.(TOTAL_ROSTER_COUNT, TOTAL_ROSTER_COUNT)
+  }
+
+  if (!isCompleteRoster(memory)) {
+    const missing = expectedRosterIds().find((id) => !memory.has(id))
+    throw new Error(`Missing Pokémon ${String(missing)} after ensureCache`)
   }
 
   const envelope: CacheEnvelope = {
     version: CACHE_VERSION,
     fetchedAt: new Date().toISOString(),
-    pokemon: Array.from({ length: GEN1_COUNT }, (_, i) => {
-      const p = memory.get(i + 1)
-      if (!p) {
-        throw new Error(`Missing Pokémon ${i + 1} after ensureCache`)
-      }
-      return p
-    }),
+    pokemon: expectedRosterIds().map((id) => getPokemon(id)),
   }
 
   return persistCache(envelope)

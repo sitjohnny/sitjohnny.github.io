@@ -5,7 +5,7 @@ import {
   hydrateFromStorage,
   isCacheReady,
 } from '@/services/pokeapi/cache'
-import { GEN1_COUNT } from '@/services/pokeapi/keys'
+import { TOTAL_ROSTER_COUNT } from '@/services/pokeapi/keys'
 import { useUiStore } from '@/store'
 
 export type PokemonCacheStatus = 'idle' | 'loading' | 'ready' | 'error' | 'quota'
@@ -24,7 +24,7 @@ export function usePokemonCache(): PokemonCacheState {
   const setCacheReady = useUiStore((s) => s.setCacheReady)
   const setQuotaSoftFail = useUiStore((s) => s.setQuotaSoftFail)
   const [status, setStatus] = useState<PokemonCacheStatus>('idle')
-  const [progress, setProgress] = useState({ done: 0, total: GEN1_COUNT })
+  const [progress, setProgress] = useState({ done: 0, total: TOTAL_ROSTER_COUNT })
   const [error, setError] = useState<Error | null>(null)
   const running = useRef(false)
   const cancelled = useRef(false)
@@ -58,7 +58,7 @@ export function usePokemonCache(): PokemonCacheState {
           } else {
             setStatus('ready')
           }
-          setProgress({ done: GEN1_COUNT, total: GEN1_COUNT })
+          setProgress({ done: TOTAL_ROSTER_COUNT, total: TOTAL_ROSTER_COUNT })
         }
       } catch (e) {
         if (!cancelled.current) {
@@ -81,7 +81,7 @@ export function usePokemonCache(): PokemonCacheState {
     if (hasValidCache() && isCacheReady()) {
       setStatus('ready')
       setCacheReady(true)
-      setProgress({ done: GEN1_COUNT, total: GEN1_COUNT })
+      setProgress({ done: TOTAL_ROSTER_COUNT, total: TOTAL_ROSTER_COUNT })
       return () => {
         cancelled.current = true
       }

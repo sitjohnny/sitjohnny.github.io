@@ -14,5 +14,3 @@ export const EDU_STATS_KEY = `pokemon-safari:edu-stats:v${EDU_STATS_VERSION}`
 /** National Dex Gen 1–5 inclusive. */
 export const NATIONAL_DEX_COUNT = 649
 export const TOTAL_ROSTER_COUNT = NATIONAL_DEX_COUNT + MEGA_CATALOG_LENGTH
-/** Remove in Task 4 when roster prefetch goes live. */
-export const GEN1_COUNT = 151

@@ -2,7 +2,7 @@
  * Pure Pokédex browse filters (session UI uses these selectors).
  */
 
-import { GEN1_COUNT } from '@/services/pokeapi/keys'
+import { NATIONAL_DEX_COUNT } from '@/services/pokeapi/keys'
 import type { DexData } from '@/types/save'
 
 export type DexStatusFilter = 'all' | 'caught' | 'missing' | 'shiny'
@@ -50,7 +50,7 @@ export function filterDexSpeciesIds(
   typeOf: (speciesId: number) => string[],
 ): number[] {
   const out: number[] = []
-  for (let id = 1; id <= GEN1_COUNT; id += 1) {
+  for (let id = 1; id <= NATIONAL_DEX_COUNT; id += 1) {
     if (!matchesStatus(dex, id, filter.status)) continue
     if (!matchesType(dex, typeOf, id, filter.type)) continue
     out.push(id)

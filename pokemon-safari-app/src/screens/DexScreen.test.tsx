@@ -4,11 +4,16 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { BottomNav } from '@/components/BottomNav'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
-import { SAVE_KEY } from '@/services/pokeapi/keys'
+import { NATIONAL_DEX_COUNT, SAVE_KEY } from '@/services/pokeapi/keys'
 import { DexScreen } from '@/screens/DexScreen'
 import { useUiStore } from '@/store'
 import { useDexStore } from '@/store/dexStore'
-import { clearPokeCacheKey, makePokemonDto, seedPokeCache } from '@/test/pokeapi-test-helpers'
+import {
+  clearPokeCacheKey,
+  makeFullRosterDtos,
+  makePokemonDto,
+  seedPokeCache,
+} from '@/test/pokeapi-test-helpers'
 
 function resetDexForTests() {
   useDexStore.setState({ dex: {}, saveSoftFail: false })
@@ -30,10 +35,13 @@ beforeEach(() => {
   useUiStore.setState({ dexSheetOpen: false })
   resetDexForTests()
   seedPokeCache(
-    Array.from({ length: 151 }, (_, i) =>
-      makePokemonDto(i + 1, {
-        name: i + 1 === 25 ? 'pikachu' : `p${i + 1}`,
-      }),
+    makeFullRosterDtos().map((pokemon) =>
+      pokemon.id === 25
+        ? {
+            ...pokemon,
+            name: 'pikachu',
+          }
+        : pokemon,
     ),
   )
   hydrateFromStorage()
@@ -63,16 +71,20 @@ function renderDexWithNav() {
 }
 
 describe('DexScreen browse + stub sheet (DEX-03)', () => {
-  it('renders Pokédex heading and Seen 0/151 · Caught 0/151', () => {
+  it('renders Pokédex heading and expanded National Dex counters', () => {
     renderDex()
     expect(screen.getByRole('heading', { name: 'Pokédex' })).toBeInTheDocument()
-    expect(screen.getByText(/Seen 0\/151\s*·\s*Caught 0\/151/)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        new RegExp(`Seen 0/${NATIONAL_DEX_COUNT}\\s*·\\s*Caught 0/${NATIONAL_DEX_COUNT}`),
+      ),
+    ).toBeInTheDocument()
   })
 
-  it('renders 151 tile buttons and no EmptyState placeholder', () => {
+  it('renders National Dex tile buttons and no EmptyState placeholder', () => {
     renderDex()
     const tiles = dexTileButtons()
-    expect(tiles.length).toBe(151)
+    expect(tiles.length).toBe(NATIONAL_DEX_COUNT)
     expect(screen.queryByText('Safari isn’t ready yet')).not.toBeInTheDocument()
   })
 
@@ -135,7 +147,11 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
     })
     renderDex()
 
-    expect(screen.getByText(/Seen 1\/151\s*·\s*Caught 1\/151/)).toBeInTheDocument()
+    expect(
+      screen.getByText(
+        new RegExp(`Seen 1/${NATIONAL_DEX_COUNT}\\s*·\\s*Caught 1/${NATIONAL_DEX_COUNT}`),
+      ),
+    ).toBeInTheDocument()
     const tile = screen.getByRole('button', { name: /#025 Pikachu/i })
     const img = within(tile).getByRole('img')
     expect(img.className).not.toMatch(/sprite-silhouette/)
@@ -159,10 +175,10 @@ describe('DexScreen filters (DEX filters)', () => {
       saveSoftFail: false,
     })
     renderDex()
-    expect(dexTileButtons().length).toBe(151)
+    expect(dexTileButtons().length).toBe(NATIONAL_DEX_COUNT)
 
     await user.click(screen.getByRole('button', { name: 'Missing' }))
-    expect(dexTileButtons().length).toBe(150)
+    expect(dexTileButtons().length).toBe(NATIONAL_DEX_COUNT - 1)
   })
 
   it('Shiny filter with no shinies shows empty-state heading', async () => {
@@ -181,11 +197,12 @@ describe('DexScreen caught detail + quota (DEX-01/02/03, D-21)', () => {
         ? 'When several of these Pokémon gather, their electricity can cause lightning storms.'
         : overrides.flavorText
     seedPokeCache(
-      Array.from({ length: 151 }, (_, i) =>
-        makePokemonDto(i + 1, {
-          name: i + 1 === 25 ? 'pikachu' : `p${i + 1}`,
-          flavorText: i + 1 === 25 ? flavorText : null,
-          ...(i + 1 === 25
+      makeFullRosterDtos().map((pokemon) =>
+        makePokemonDto(pokemon.id, {
+          ...pokemon,
+          name: pokemon.id === 25 ? 'pikachu' : pokemon.name,
+          flavorText: pokemon.id === 25 ? flavorText : pokemon.flavorText,
+          ...(pokemon.id === 25
             ? {
                 types: ['electric'],
                 genus: 'Mouse Pokémon',
