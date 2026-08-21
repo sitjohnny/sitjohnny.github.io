@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { grassOutcomeWeights } from '@/data/rates'
 import { biomeEncounterTables } from '@/data/encounterTables'
 import { WORLD_SEED } from '@/data/worldConfig'
+import { NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from '@/services/pokeapi/keys'
 import {
   pickSpecies,
   pickSpeciesWeighted,
@@ -115,7 +116,9 @@ describe('pool', () => {
         expect(pool).toContain(id)
         expect(Number.isInteger(id)).toBe(true)
         expect(id).toBeGreaterThanOrEqual(1)
-        expect(id).toBeLessThanOrEqual(151)
+        expect(id).toBeLessThanOrEqual(
+          rarity === 'rare' ? TOTAL_ROSTER_COUNT : NATIONAL_DEX_COUNT,
+        )
       }
     }
   })
@@ -232,14 +235,10 @@ describe('resolve', () => {
     expect(pocketAt(WORLD_SEED, meadow.x, meadow.y)).toBe('meadow')
 
     const common = biomeEncounterTables.forest.common
-    const watersEdgeFixture = new Set(
-      common.filter((id) => id >= 55 && id <= 64).slice(0, 8),
-    )
-    const grasslandFixture = new Set(
-      common.filter((id) => id >= 10 && id <= 25).slice(0, 8),
-    )
-    expect(watersEdgeFixture.size).toBeGreaterThan(0)
-    expect(grasslandFixture.size).toBeGreaterThan(0)
+    const watersEdgeFixture = new Set(common.slice(0, 80))
+    const grasslandFixture = new Set(common.slice(80, 160))
+    expect(watersEdgeFixture.size).toBe(80)
+    expect(grasslandFixture.size).toBe(80)
 
     const habitatOf = (id: number) => {
       if (watersEdgeFixture.has(id)) return 'waters-edge'
