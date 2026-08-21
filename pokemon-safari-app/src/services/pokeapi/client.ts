@@ -104,6 +104,8 @@ export function toPokemonDto(raw: PokeApiPokemon): PokemonDto {
     height: raw.height,
     weight: raw.weight,
     habitat: null,
+    kind: 'species',
+    baseSpeciesId: null,
   }
 }
 

@@ -19,6 +19,8 @@ export type TestPokemonDto = {
   height: number
   weight: number
   habitat: string | null
+  kind: 'species' | 'mega' | 'primal'
+  baseSpeciesId: number | null
 }
 
 export type TestCacheEnvelope = {
@@ -46,6 +48,8 @@ export function makePokemonDto(
     height: 7,
     weight: 69,
     habitat: null,
+    kind: 'species',
+    baseSpeciesId: null,
     ...overrides,
   }
 }

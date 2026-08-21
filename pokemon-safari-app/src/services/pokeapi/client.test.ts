@@ -50,6 +50,8 @@ describe('toPokemonDto', () => {
       height: 17,
       weight: 905,
       habitat: null,
+      kind: 'species',
+      baseSpeciesId: null,
     })
   })
 

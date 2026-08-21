@@ -7,6 +7,7 @@ import {
   CACHE_VERSION,
   EDU_STATS_KEY,
   EDU_STATS_VERSION,
+  NATIONAL_DEX_COUNT,
   SAVE_KEY,
 } from '@/services/pokeapi/keys'
 
@@ -14,9 +15,10 @@ const servicesDir = join(dirname(fileURLToPath(import.meta.url)), '..')
 const pokeapiDir = dirname(fileURLToPath(import.meta.url))
 
 describe('pokeapi keys (DATA-04, D-11)', () => {
-  it('uses namespaced versioned CACHE_KEY pokemon-safari:poke-cache:v3', () => {
-    expect(CACHE_VERSION).toBe(3)
-    expect(CACHE_KEY).toBe('pokemon-safari:poke-cache:v3')
+  it('exports National Dex ceiling 649 and cache v4', () => {
+    expect(NATIONAL_DEX_COUNT).toBe(649)
+    expect(CACHE_VERSION).toBe(4)
+    expect(CACHE_KEY).toBe('pokemon-safari:poke-cache:v4')
   })
 
   it('reserves SAVE_KEY as pokemon-safari:save:v1 distinct from CACHE_KEY', () => {

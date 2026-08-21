@@ -91,6 +91,15 @@ function fromStoredDto(raw: unknown): PokemonDto {
   if (!(habitat === null || typeof habitat === 'string')) {
     throw new Error('Invalid Pokémon habitat')
   }
+  const kindRaw = obj.kind
+  const kind =
+    kindRaw === 'species' || kindRaw === 'mega' || kindRaw === 'primal' ? kindRaw : 'species'
+  const baseSpeciesIdRaw = obj.baseSpeciesId
+  const baseSpeciesId =
+    baseSpeciesIdRaw === null ||
+    (typeof baseSpeciesIdRaw === 'number' && Number.isInteger(baseSpeciesIdRaw))
+      ? baseSpeciesIdRaw
+      : null
   return {
     id,
     name: obj.name,
@@ -107,6 +116,8 @@ function fromStoredDto(raw: unknown): PokemonDto {
     height,
     weight,
     habitat,
+    kind,
+    baseSpeciesId,
   }
 }
 
