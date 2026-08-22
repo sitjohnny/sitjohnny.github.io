@@ -89,51 +89,6 @@ export const trivialExclusions = {
 /** Max facts to fully enumerate before switching to sample+review (keeps L6 feasible). */
 export const maxEnumeratePoolSize = 12_000
 
-/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
-export const multiplicationRange = { min: 2, max: 9 } as const
-
-/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
-export const doubleDigitMultiplication = {
-  min: 10,
-  max: 20,
-} as const
-
-/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
-export const divisionProblems = {
-  numeratorMin: 10,
-  numeratorMax: 100,
-  divisorMin: 2,
-  divisorMax: 9,
-} as const
-
-/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
-export const longDivisionProblems = {
-  numeratorMin: 10,
-  numeratorMax: 100,
-  divisorMin: 10,
-  divisorMax: 100,
-  quotientMin: 2,
-} as const
-
-/** @deprecated Replaced by DEFAULT_MATH_EDUCATION_SETTINGS; removed in Task 3. */
-export const rarityEducationMix = {
-  common: {
-    division: 0.05,
-    double: 0.25,
-    longWithinDivision: 0,
-  },
-  rare: {
-    division: 0.4,
-    double: 0.45,
-    longWithinDivision: 0.15,
-  },
-  legendary: {
-    division: 0.75,
-    double: 0.25,
-    longWithinDivision: 0.4,
-  },
-} as const
-
 /** D-17 / D-19 adaptive weighting defaults from 04-RESEARCH. */
 export const adaptiveWeights = {
   starterWeight: 10,
