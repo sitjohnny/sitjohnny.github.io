@@ -2,6 +2,12 @@ import { MemoryRouter } from 'react-router-dom'
 import userEvent from '@testing-library/user-event'
 import { cleanup, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { mathSettingsCopy } from '@/data/educationConfig'
+import {
+  defaultMathEducationSettings,
+  MATH_SETTINGS_KEY,
+  persistMathEducationSettings,
+} from '@/game/education/mathSettings'
 import { CACHE_KEY, EDU_STATS_KEY, SAVE_KEY } from '@/services/pokeapi/keys'
 import { persistSave } from '@/services/save'
 import { useDexStore } from '@/store/dexStore'
@@ -52,10 +58,11 @@ afterEach(() => {
   localStorage.removeItem(SAVE_KEY)
   localStorage.removeItem(EDU_STATS_KEY)
   localStorage.removeItem(CACHE_KEY)
+  localStorage.removeItem(MATH_SETTINGS_KEY)
 })
 
 describe('SettingsScreen erase progress', () => {
-  it('shows only Reset Save (no Safari isn’t ready empty state)', () => {
+  it('shows Reset Save and math settings section', () => {
     render(
       <MemoryRouter>
         <SettingsScreen />
@@ -63,7 +70,42 @@ describe('SettingsScreen erase progress', () => {
     )
     expect(screen.getByRole('heading', { name: /^settings$/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /reset save/i })).toBeInTheDocument()
+    expect(
+      screen.getByRole('group', { name: mathSettingsCopy.operatorsHeading }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('group', { name: mathSettingsCopy.levelsHeading }),
+    ).toBeInTheDocument()
     expect(screen.queryByText(/safari isn’t ready yet/i)).not.toBeInTheDocument()
+  })
+
+  it('renders operator and level controls with level descriptions', () => {
+    render(
+      <MemoryRouter>
+        <SettingsScreen />
+      </MemoryRouter>,
+    )
+    expect(screen.getByRole('checkbox', { name: /addition/i })).toBeChecked()
+    expect(screen.getByText(/one-digit with two-digit/i)).toBeInTheDocument()
+    expect(screen.getByRole('checkbox', { name: /level 2/i })).toBeChecked()
+  })
+
+  it('does not allow unchecking the last operator', async () => {
+    const user = userEvent.setup()
+    render(
+      <MemoryRouter>
+        <SettingsScreen />
+      </MemoryRouter>,
+    )
+
+    await user.click(screen.getByRole('checkbox', { name: /addition/i }))
+    await user.click(screen.getByRole('checkbox', { name: /subtraction/i }))
+    await user.click(screen.getByRole('checkbox', { name: /multiplication/i }))
+
+    const division = screen.getByRole('checkbox', { name: /division/i })
+    expect(division).toBeChecked()
+    await user.click(division)
+    expect(division).toBeChecked()
   })
 
   it('eraseProgress clears save + edu-stats, keeps poke-cache, resets stores, reloads', () => {
@@ -79,6 +121,21 @@ describe('SettingsScreen erase progress', () => {
     expect(useExploreStore.getState().tile).toEqual(
       expect.objectContaining({ x: expect.any(Number), y: expect.any(Number) }),
     )
+    expect(reload).toHaveBeenCalledOnce()
+  })
+
+  it('eraseProgress clears math settings key', () => {
+    const custom = defaultMathEducationSettings()
+    custom.operators.addition = false
+    custom.levels[1] = true
+    persistMathEducationSettings(custom)
+
+    const reload = vi.fn()
+    vi.stubGlobal('location', { ...window.location, reload })
+
+    eraseProgress()
+
+    expect(localStorage.getItem(MATH_SETTINGS_KEY)).toBeNull()
     expect(reload).toHaveBeenCalledOnce()
   })
 
