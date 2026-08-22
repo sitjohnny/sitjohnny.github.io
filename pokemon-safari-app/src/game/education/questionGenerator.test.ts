@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { spellingMixProbability } from '@/data/educationConfig'
 import type { Rng } from '@/utils/rng'
-import { nextEducationQuestion } from './questionGenerator'
+import { mathEducationProvider, nextEducationQuestion } from './questionGenerator'
 
 function stubRng(values: number[]): Rng {
   let i = 0
@@ -29,6 +29,21 @@ function countingRng(values: number[]): { rng: Rng; getCount: () => number } {
     getCount: () => count,
   }
 }
+
+describe('mathEducationProvider', () => {
+  it('nextQuestion with default settings only yields multiplication or division', () => {
+    for (let i = 0; i < 50; i += 1) {
+      const q = mathEducationProvider.nextQuestion(
+        stubRng([0.1, 0.2, 0.3, 0.4, 0.5]),
+        {},
+        'common',
+      )
+      expect(q.category === 'multiplication' || q.category === 'division').toBe(
+        true,
+      )
+    }
+  })
+})
 
 describe('nextEducationQuestion', () => {
   it('nextEducationQuestion never picks spelling while mix probability is 0', () => {

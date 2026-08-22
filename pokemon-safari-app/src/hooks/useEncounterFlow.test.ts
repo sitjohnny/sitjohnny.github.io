@@ -9,12 +9,8 @@ import {
   postEncounterPokemonImmunitySteps,
   shinyRate,
 } from '@/data/rates'
-import {
-  allDivisionFacts,
-  allDoubleDigitFacts,
-  allFacts,
-  allLongDivisionFacts,
-} from '@/game/education/adaptiveLearning'
+import { factsFor } from '@/game/education/adaptiveLearning'
+import { defaultMathEducationSettings } from '@/game/education/mathSettings'
 import {
   loadAdaptiveStats,
   persistAdaptiveStats,
@@ -45,12 +41,25 @@ import {
 import type { EncounterCandidateEvent } from '@/types/map'
 import type { Rng } from '@/utils/rng'
 
-const FACT_SET = new Set([
-  ...allFacts(),
-  ...allDoubleDigitFacts(),
-  ...allDivisionFacts(),
-  ...allLongDivisionFacts(),
-])
+const MATH_LEVELS = [1, 2, 3, 4, 5, 6] as const
+
+/** Matches mathEducationProvider mul/div-only default settings (Task 3). */
+function mulDivFactSetForDefaultSettings(): Set<string> {
+  const settings = defaultMathEducationSettings()
+  const keys = new Set<string>()
+  for (const level of MATH_LEVELS) {
+    if (!settings.levels[level]) continue
+    if (settings.operators.multiplication) {
+      for (const key of factsFor('multiplication', level)) keys.add(key)
+    }
+    if (settings.operators.division) {
+      for (const key of factsFor('division', level)) keys.add(key)
+    }
+  }
+  return keys
+}
+
+const FACT_SET = mulDivFactSetForDefaultSettings()
 
 const candidate = (at = 1): EncounterCandidateEvent => ({
   type: 'encounter_candidate',
