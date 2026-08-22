@@ -11,6 +11,7 @@ import type { RarityBand } from '@/types/encounter'
 import type { Rng } from '@/utils/rng'
 import { selectFact } from './adaptiveLearning'
 import { validateAnswer } from './answerValidator'
+import { defaultMathEducationSettings } from './mathSettings'
 import { selectSpellingFact } from './spellingSelection'
 import type {
   AdaptiveStats,
@@ -91,10 +92,15 @@ export const mathEducationProvider: EducationProvider = {
   nextQuestion(
     rng: Rng,
     stats: AdaptiveStats,
-    rarity: RarityBand,
+    _rarity: RarityBand,
     excludeFactKey?: string | null,
   ): EducationQuestion {
-    const factKey = selectFact(rng, stats, excludeFactKey ?? null, rarity) as MathFactKey
+    const factKey = selectFact(
+      rng,
+      stats,
+      excludeFactKey ?? null,
+      defaultMathEducationSettings(),
+    ) as MathFactKey
     return buildMathQuestion(factKey)
   },
 

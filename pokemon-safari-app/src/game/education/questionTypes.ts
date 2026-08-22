@@ -14,6 +14,8 @@ export type SpellingFactKey = `spell:${string}`
 export type FactKey =
   | `${number}x${number}`
   | `${number}d${number}`
+  | `${number}p${number}`
+  | `${number}m${number}`
   | SpellingFactKey
 
 export type FactStat = { correct: number; incorrect: number }

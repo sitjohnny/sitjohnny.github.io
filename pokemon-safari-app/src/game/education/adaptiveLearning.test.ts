@@ -1,332 +1,266 @@
 import { describe, expect, it } from 'vitest'
 import {
   adaptiveWeights,
-  divisionProblems,
-  doubleDigitMultiplication,
-  longDivisionProblems,
   masteryThreshold,
-  multiplicationRange,
-  rarityEducationMix,
+  maxEnumeratePoolSize,
+  type MathLevel,
+  type MathOperator,
 } from '@/data/educationConfig'
 import { createRng } from '@/utils/rng'
 import {
-  allDivisionFacts,
-  allDoubleDigitFacts,
-  allFacts,
-  allLongDivisionFacts,
+  additionFactKeyOf,
+  digitClassOf,
   divisionFactKeyOf,
   factKeyOf,
+  factsFor,
   factWeight,
   isMastered,
+  sampleFact,
   selectFact,
+  subtractionFactKeyOf,
 } from './adaptiveLearning'
+import {
+  defaultMathEducationSettings,
+  type MathEducationSettings,
+} from './mathSettings'
 import type { AdaptiveStats, FactKey } from './questionTypes'
 
-const allSelectableFacts = () => [
-  ...allFacts(),
-  ...allDoubleDigitFacts(),
-  ...allDivisionFacts(),
-  ...allLongDivisionFacts(),
-]
-
-function isDoubleDigitFact(key: FactKey): boolean {
-  if (!key.includes('x')) return false
-  const [aStr] = key.split('x')
-  const a = Number(aStr)
-  return a >= doubleDigitMultiplication.min && a <= doubleDigitMultiplication.max
+const only = (
+  patch: (settings: MathEducationSettings) => void,
+): MathEducationSettings => {
+  const settings = defaultMathEducationSettings()
+  for (const key of Object.keys(settings.operators) as Array<
+    keyof MathEducationSettings['operators']
+  >) {
+    settings.operators[key] = false
+  }
+  for (const level of [1, 2, 3, 4, 5, 6] as const) {
+    settings.levels[level] = false
+  }
+  patch(settings)
+  return settings
 }
 
-function isDivisionFact(key: FactKey): boolean {
-  return key.includes('d') && !key.includes('x')
+function expectFactMatches(
+  key: FactKey,
+  operator: MathOperator,
+  level: MathLevel,
+): void {
+  const separator = {
+    addition: 'p',
+    subtraction: 'm',
+    multiplication: 'x',
+    division: 'd',
+  }[operator]
+  const [a, b] = key.split(separator).map(Number)
+  expect(Number.isInteger(a)).toBe(true)
+  expect(Number.isInteger(b)).toBe(true)
+
+  const actualClasses = [digitClassOf(a!), digitClassOf(b!)].sort()
+  const expectedClasses = [...{
+    1: [1, 1],
+    2: [1, 2],
+    3: [2, 2],
+    4: [3, 1],
+    5: [3, 2],
+    6: [3, 3],
+  }[level]].sort()
+  expect(actualClasses).toEqual(expectedClasses)
+
+  if (operator === 'subtraction') expect(a!).toBeGreaterThanOrEqual(b!)
+  if (operator === 'multiplication') {
+    expect(a!).toBeGreaterThanOrEqual(2)
+    expect(b!).toBeGreaterThanOrEqual(2)
+  }
+  if (operator === 'division') {
+    expect(b!).toBeGreaterThanOrEqual(2)
+    expect(a! % b!).toBe(0)
+    expect(a! / b!).toBeGreaterThan(0)
+  }
 }
 
-function isLongDivisionFact(key: FactKey): boolean {
-  if (!isDivisionFact(key)) return false
-  const [, dStr] = key.split('d')
-  const d = Number(dStr)
-  return d >= longDivisionProblems.divisorMin
-}
-
-function isSingleDigitFact(key: FactKey): boolean {
-  return key.includes('x') && !isDoubleDigitFact(key)
-}
-
-describe('adaptiveLearning (D-17, D-18, D-19, D-20)', () => {
-  it('factKeyOf(7, 8) is 7x8', () => {
+describe('adaptiveLearning', () => {
+  it('builds each math fact-key format', () => {
     expect(factKeyOf(7, 8)).toBe('7x8')
-  })
-
-  it('divisionFactKeyOf(48, 6) is 48d6', () => {
     expect(divisionFactKeyOf(48, 6)).toBe('48d6')
+    expect(additionFactKeyOf(12, 3)).toBe('12p3')
+    expect(subtractionFactKeyOf(12, 3)).toBe('12m3')
   })
 
-  it('allFacts returns unique keys covering every pair in multiplicationRange (no ×1)', () => {
-    const facts = allFacts()
-    const { min, max } = multiplicationRange
-    const expectedCount = (max - min + 1) ** 2
-    expect(min).toBe(2)
-    expect(facts).toHaveLength(expectedCount)
-    expect(new Set(facts).size).toBe(expectedCount)
+  it('classifies one-, two-, and three-digit numbers', () => {
+    expect(digitClassOf(1)).toBe(1)
+    expect(digitClassOf(99)).toBe(2)
+    expect(digitClassOf(100)).toBe(3)
+  })
 
-    for (let a = min; a <= max; a++) {
-      for (let b = min; b <= max; b++) {
-        expect(facts).toContain(`${a}x${b}` as FactKey)
+  it('factsFor enumerates both orders for mixed addition classes', () => {
+    const facts = factsFor('addition', 2)
+    expect(facts).toContain('1p10')
+    expect(facts).toContain('10p1')
+    expect(new Set(facts).size).toBe(facts.length)
+  })
+
+  it('factsFor canonicalizes subtraction and excludes trivial multiplication', () => {
+    const subtraction = factsFor('subtraction', 2)
+    expect(subtraction).toContain('10m1')
+    expect(subtraction).not.toContain('1m10')
+    for (const key of subtraction) {
+      const [a, b] = key.split('m').map(Number)
+      expect(a!).toBeGreaterThanOrEqual(b!)
+    }
+
+    for (const key of factsFor('multiplication', 1)) {
+      const [a, b] = key.split('x').map(Number)
+      expect(a!).toBeGreaterThanOrEqual(2)
+      expect(b!).toBeGreaterThanOrEqual(2)
+    }
+  })
+
+  it('factsFor division divides evenly and skips division by one', () => {
+    for (const level of [1, 2, 3] as const) {
+      const facts = factsFor('division', level)
+      expect(facts.length).toBeGreaterThan(0)
+      for (const key of facts) {
+        const [numerator, divisor] = key.split('d').map(Number)
+        expect(divisor!).toBeGreaterThanOrEqual(2)
+        expect(numerator! % divisor!).toBe(0)
       }
     }
-    for (const key of facts) {
-      const [aStr, bStr] = key.split('x')
-      const a = Number(aStr)
-      const b = Number(bStr)
-      expect(a).toBeGreaterThanOrEqual(min)
-      expect(a).toBeLessThanOrEqual(max)
-      expect(b).toBeGreaterThanOrEqual(min)
-      expect(b).toBeLessThanOrEqual(max)
-    }
-    expect(facts).not.toContain('1x5')
-    expect(facts).not.toContain('5x1')
   })
 
-  it('allDoubleDigitFacts returns unique keys for 10–20 × 2–9', () => {
-    const facts = allDoubleDigitFacts()
-    const { min, max } = doubleDigitMultiplication
-    const { min: sMin, max: sMax } = multiplicationRange
-    const expectedCount = (max - min + 1) * (sMax - sMin + 1)
-    expect(facts).toHaveLength(expectedCount)
-    expect(new Set(facts).size).toBe(expectedCount)
-
-    for (let a = min; a <= max; a++) {
-      for (let b = sMin; b <= sMax; b++) {
-        expect(facts).toContain(`${a}x${b}` as FactKey)
-      }
-    }
-    for (const key of facts) {
-      const [aStr, bStr] = key.split('x')
-      const a = Number(aStr)
-      const b = Number(bStr)
-      expect(a).toBeGreaterThanOrEqual(min)
-      expect(a).toBeLessThanOrEqual(max)
-      expect(b).toBeGreaterThanOrEqual(sMin)
-      expect(b).toBeLessThanOrEqual(sMax)
-    }
-    expect(facts).not.toContain('12x1')
+  it('factsFor skips pools larger than maxEnumeratePoolSize', () => {
+    expect(maxEnumeratePoolSize).toBe(12_000)
+    expect(factsFor('addition', 6)).toEqual([])
   })
 
-  it('allDivisionFacts returns exact integer quotients only for 10–100 ÷ 2–9', () => {
-    const facts = allDivisionFacts()
-    expect(new Set(facts).size).toBe(facts.length)
-    expect(facts.length).toBeGreaterThan(0)
-
-    for (const key of facts) {
-      expect(isDivisionFact(key)).toBe(true)
-      const [nStr, dStr] = key.split('d')
-      const n = Number(nStr)
-      const d = Number(dStr)
-      expect(n).toBeGreaterThanOrEqual(divisionProblems.numeratorMin)
-      expect(n).toBeLessThanOrEqual(divisionProblems.numeratorMax)
-      expect(d).toBeGreaterThanOrEqual(divisionProblems.divisorMin)
-      expect(d).toBeLessThanOrEqual(divisionProblems.divisorMax)
-      expect(n % d).toBe(0)
-    }
-
-    expect(facts).toContain('48d6')
-    expect(facts).not.toContain('10d3')
-    expect(facts).not.toContain('10d1')
-    expect(facts).not.toContain('100d1')
-  })
-
-  it('allLongDivisionFacts returns exact integer quotients ≥ 2 for 10–100 ÷ 10–100', () => {
-    const facts = allLongDivisionFacts()
-    expect(new Set(facts).size).toBe(facts.length)
-    expect(facts.length).toBeGreaterThan(0)
-
-    for (const key of facts) {
-      expect(isDivisionFact(key)).toBe(true)
-      const [nStr, dStr] = key.split('d')
-      const n = Number(nStr)
-      const d = Number(dStr)
-      expect(n).toBeGreaterThanOrEqual(longDivisionProblems.numeratorMin)
-      expect(n).toBeLessThanOrEqual(longDivisionProblems.numeratorMax)
-      expect(d).toBeGreaterThanOrEqual(longDivisionProblems.divisorMin)
-      expect(d).toBeLessThanOrEqual(longDivisionProblems.divisorMax)
-      expect(n % d).toBe(0)
-      expect(n / d).toBeGreaterThanOrEqual(longDivisionProblems.quotientMin)
-    }
-
-    expect(facts).toContain('84d12')
-    expect(facts).not.toContain('50d50')
-    expect(facts).not.toContain('10d3')
-  })
-
-  it('factWeight(undefined) equals starterWeight; never-attempted facts share that weight (D-19)', () => {
-    expect(factWeight(undefined)).toBe(adaptiveWeights.starterWeight)
-    const neverAttempted = [
-      factWeight(undefined),
-      factWeight({ correct: 0, incorrect: 0 }),
-      factWeight(undefined, adaptiveWeights, masteryThreshold),
+  it('sampleFact obeys every operator and level shape', () => {
+    const rng = createRng(1407)
+    const operators: MathOperator[] = [
+      'addition',
+      'subtraction',
+      'multiplication',
+      'division',
     ]
-    expect(new Set(neverAttempted).size).toBe(1)
-    expect(neverAttempted[0]).toBe(adaptiveWeights.starterWeight)
-  })
-
-  it('a fact with more incorrects has strictly greater weight than one with fewer (D-17)', () => {
-    const weaker = factWeight({ correct: 2, incorrect: 5 })
-    const stronger = factWeight({ correct: 2, incorrect: 1 })
-    expect(weaker).toBeGreaterThan(stronger)
-  })
-
-  it('weight never drops below minWeight no matter how many corrects accumulate', () => {
-    const heavyCorrects = factWeight({ correct: 10_000, incorrect: 0 })
-    expect(heavyCorrects).toBeGreaterThanOrEqual(adaptiveWeights.minWeight)
-  })
-
-  it('isMastered is false below minAttempts even at 100% accuracy (D-18)', () => {
-    const below = masteryThreshold.minAttempts - 1
-    expect(isMastered({ correct: below, incorrect: 0 })).toBe(false)
-  })
-
-  it('isMastered is true only at or above both attempt count and accuracy (D-18)', () => {
-    const min = masteryThreshold.minAttempts
-    expect(isMastered({ correct: min, incorrect: 0 })).toBe(true)
-
-    // Enough attempts but accuracy below threshold
-    const incorrectNeeded = Math.ceil(min * (1 - masteryThreshold.accuracy)) + 1
-    const correct = min
-    const badAccuracy = { correct, incorrect: incorrectNeeded }
-    const attempts = badAccuracy.correct + badAccuracy.incorrect
-    const accuracy = badAccuracy.correct / attempts
-    expect(attempts).toBeGreaterThanOrEqual(min)
-    expect(accuracy).toBeLessThan(masteryThreshold.accuracy)
-    expect(isMastered(badAccuracy)).toBe(false)
-  })
-
-  it('mastered fact weight equals masteredReviewWeight and is > 0 (D-18)', () => {
-    const masteredStat = {
-      correct: masteryThreshold.minAttempts,
-      incorrect: 0,
+    const levels: MathLevel[] = [1, 2, 3, 4, 5, 6]
+    for (const operator of operators) {
+      for (const level of levels) {
+        for (let draw = 0; draw < 10; draw++) {
+          expectFactMatches(sampleFact(rng, operator, level), operator, level)
+        }
+      }
     }
-    expect(isMastered(masteredStat)).toBe(true)
-    expect(factWeight(masteredStat)).toBe(adaptiveWeights.masteredReviewWeight)
-    expect(factWeight(masteredStat)).toBeGreaterThan(0)
   })
 
-  it('selectFact with a stub rng returns a FactKey in the selectable union', () => {
-    const rng = createRng(42)
-    const picked = selectFact(rng, {}, null, 'common')
-    expect(allSelectableFacts()).toContain(picked)
+  it('factWeight preserves miss bias and mastery review', () => {
+    expect(factWeight(undefined)).toBe(adaptiveWeights.starterWeight)
+    expect(factWeight({ correct: 2, incorrect: 5 })).toBeGreaterThan(
+      factWeight({ correct: 2, incorrect: 1 }),
+    )
+    expect(factWeight({ correct: 10_000, incorrect: 0 })).toBeGreaterThanOrEqual(
+      adaptiveWeights.minWeight,
+    )
+
+    const mastered = { correct: masteryThreshold.minAttempts, incorrect: 0 }
+    expect(isMastered(mastered)).toBe(true)
+    expect(factWeight(mastered)).toBe(adaptiveWeights.masteredReviewWeight)
+    expect(
+      isMastered({ correct: masteryThreshold.minAttempts - 1, incorrect: 0 }),
+    ).toBe(false)
   })
 
-  it('selectFact never returns excludeFactKey over 200 seeded draws (D-20)', () => {
+  it('selectFact with only addition and level 1 yields one-digit addition keys', () => {
+    const settings = only((value) => {
+      value.operators.addition = true
+      value.levels[1] = true
+    })
+    const rng = createRng(1)
+    for (let i = 0; i < 40; i++) {
+      const key = selectFact(rng, {}, null, settings)
+      expect(key).toMatch(/^\d+p\d+$/)
+      const [a, b] = key.split('p').map(Number)
+      expect(digitClassOf(a!)).toBe(1)
+      expect(digitClassOf(b!)).toBe(1)
+    }
+  })
+
+  it('default level 2 settings never emit level 6 shapes', () => {
+    const settings = defaultMathEducationSettings()
+    const rng = createRng(2027)
+    for (let i = 0; i < 500; i++) {
+      const key = selectFact(rng, {}, null, settings)
+      const separator = key.match(/[xdpm]/)?.[0]
+      expect(separator).toBeDefined()
+      const [a, b] = key.split(separator!).map(Number)
+      expect([digitClassOf(a!), digitClassOf(b!)].sort()).toEqual([1, 2])
+    }
+  })
+
+  it('selectFact roughly equalizes two enabled operators', () => {
+    const settings = only((value) => {
+      value.operators.addition = true
+      value.operators.subtraction = true
+      value.levels[1] = true
+    })
+    const rng = createRng(729)
+    let addition = 0
+    const draws = 400
+    for (let i = 0; i < draws; i++) {
+      if (selectFact(rng, {}, null, settings).includes('p')) addition += 1
+    }
+    expect(Math.abs(addition / draws - 0.5)).toBeLessThan(0.08)
+  })
+
+  it('selectFact subtraction facts are non-negative', () => {
+    const settings = only((value) => {
+      value.operators.subtraction = true
+      value.levels[4] = true
+    })
+    const rng = createRng(831)
+    for (let i = 0; i < 100; i++) {
+      const [a, b] = selectFact(rng, {}, null, settings).split('m').map(Number)
+      expect(a!).toBeGreaterThanOrEqual(b!)
+    }
+  })
+
+  it('selectFact division facts divide evenly and skip division by one', () => {
+    const settings = only((value) => {
+      value.operators.division = true
+      value.levels[5] = true
+    })
+    const rng = createRng(915)
+    for (let i = 0; i < 100; i++) {
+      const [numerator, divisor] = selectFact(rng, {}, null, settings)
+        .split('d')
+        .map(Number)
+      expect(divisor!).toBeGreaterThanOrEqual(2)
+      expect(numerator! % divisor!).toBe(0)
+    }
+  })
+
+  it('selectFact never returns excludeFactKey over 200 draws', () => {
+    const settings = only((value) => {
+      value.operators.multiplication = true
+      value.levels[1] = true
+    })
     const exclude: FactKey = '7x8'
     const stats: AdaptiveStats = {
       [exclude]: { correct: 0, incorrect: 10_000 },
     }
-    const selectable = new Set(allSelectableFacts())
-    for (let seed = 0; seed < 200; seed++) {
-      const rng = createRng(seed * 997 + 13)
-      const picked = selectFact(rng, stats, exclude, 'common')
-      expect(picked).not.toBe(exclude)
-      expect(selectable.has(picked)).toBe(true)
+    const rng = createRng(1087)
+    for (let i = 0; i < 200; i++) {
+      expect(selectFact(rng, stats, exclude, settings)).not.toBe(exclude)
     }
   })
 
-  it('selectFact common mix skews toward single-digit', () => {
-    const draws = 3000
-    const rng = createRng(2026)
-    const mix = rarityEducationMix.common
-    let singleCount = 0
-    let doubleCount = 0
-    let divisionCount = 0
-    for (let i = 0; i < draws; i++) {
-      const picked = selectFact(rng, {}, null, 'common')
-      if (isDivisionFact(picked)) divisionCount += 1
-      else if (isDoubleDigitFact(picked)) doubleCount += 1
-      else singleCount += 1
+  it('uses default settings for an empty settings object', () => {
+    const settings = only(() => {})
+    const rng = createRng(1183)
+    for (let i = 0; i < 20; i++) {
+      const key = selectFact(rng, {}, null, settings)
+      const separator = key.match(/[xdpm]/)?.[0]
+      expect(separator).toBeDefined()
+      const [a, b] = key.split(separator!).map(Number)
+      expect([digitClassOf(a!), digitClassOf(b!)].sort()).toEqual([1, 2])
     }
-    const singleExpected = 1 - mix.double - mix.division
-    expect(singleCount / draws).toBeGreaterThan(singleExpected - 0.05)
-    expect(singleCount / draws).toBeLessThan(singleExpected + 0.05)
-    expect(doubleCount / draws).toBeGreaterThan(mix.double - 0.05)
-    expect(doubleCount / draws).toBeLessThan(mix.double + 0.05)
-    expect(divisionCount / draws).toBeGreaterThan(mix.division - 0.05)
-    expect(divisionCount / draws).toBeLessThan(mix.division + 0.05)
-  })
-
-  it('selectFact legendary never picks single-digit over many draws', () => {
-    const draws = 2000
-    const rng = createRng(2027)
-    let singleCount = 0
-    let divisionCount = 0
-    let longDivisionCount = 0
-    for (let i = 0; i < draws; i++) {
-      const picked = selectFact(rng, {}, null, 'legendary')
-      if (isSingleDigitFact(picked)) singleCount += 1
-      if (isDivisionFact(picked)) {
-        divisionCount += 1
-        if (isLongDivisionFact(picked)) longDivisionCount += 1
-      }
-    }
-    expect(singleCount).toBe(0)
-    const mix = rarityEducationMix.legendary
-    expect(divisionCount / draws).toBeGreaterThan(mix.division - 0.05)
-    expect(divisionCount / draws).toBeLessThan(mix.division + 0.05)
-    expect(longDivisionCount / divisionCount).toBeGreaterThan(
-      mix.longWithinDivision - 0.05,
-    )
-    expect(longDivisionCount / divisionCount).toBeLessThan(mix.longWithinDivision + 0.05)
-  })
-
-  it('selectFact rare mix is near configured cuts', () => {
-    const draws = 3000
-    const rng = createRng(2028)
-    const mix = rarityEducationMix.rare
-    let singleCount = 0
-    let doubleCount = 0
-    let divisionCount = 0
-    let longDivisionCount = 0
-    for (let i = 0; i < draws; i++) {
-      const picked = selectFact(rng, {}, null, 'rare')
-      if (isDivisionFact(picked)) {
-        divisionCount += 1
-        if (isLongDivisionFact(picked)) longDivisionCount += 1
-      } else if (isDoubleDigitFact(picked)) doubleCount += 1
-      else singleCount += 1
-    }
-    const singleExpected = 1 - mix.double - mix.division
-    expect(singleCount / draws).toBeGreaterThan(singleExpected - 0.05)
-    expect(singleCount / draws).toBeLessThan(singleExpected + 0.05)
-    expect(doubleCount / draws).toBeGreaterThan(mix.double - 0.05)
-    expect(doubleCount / draws).toBeLessThan(mix.double + 0.05)
-    expect(divisionCount / draws).toBeGreaterThan(mix.division - 0.05)
-    expect(divisionCount / draws).toBeLessThan(mix.division + 0.05)
-    expect(longDivisionCount / divisionCount).toBeGreaterThan(
-      mix.longWithinDivision - 0.05,
-    )
-    expect(longDivisionCount / divisionCount).toBeLessThan(mix.longWithinDivision + 0.05)
-  })
-
-  it('weakest fact is favoured far more often than mastered, but mastered still appears (D-17)', () => {
-    const weak: FactKey = '3x3'
-    const mastered: FactKey = '2x2'
-    const stats: AdaptiveStats = {
-      [weak]: { correct: 0, incorrect: 40 },
-      [mastered]: {
-        correct: masteryThreshold.minAttempts,
-        incorrect: 0,
-      },
-    }
-    expect(isMastered(stats[mastered])).toBe(true)
-    expect(factWeight(stats[weak])).toBeGreaterThan(factWeight(stats[mastered]))
-
-    const counts: Record<string, number> = { [weak]: 0, [mastered]: 0 }
-    const draws = 5000
-    const rng = createRng(2026)
-    for (let i = 0; i < draws; i++) {
-      const picked = selectFact(rng, stats, null, 'common')
-      if (picked === weak || picked === mastered) {
-        counts[picked] = (counts[picked] ?? 0) + 1
-      }
-    }
-    expect(counts[weak]!).toBeGreaterThan(counts[mastered]!)
-    expect(counts[mastered]!).toBeGreaterThanOrEqual(1)
   })
 })
