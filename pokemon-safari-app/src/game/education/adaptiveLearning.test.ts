@@ -183,6 +183,29 @@ describe('adaptiveLearning', () => {
     }
   })
 
+  it('selectFact stays within the only enabled operator and level', () => {
+    const settings = only((value) => {
+      value.operators.addition = true
+      value.levels[6] = true
+    })
+    const rng = createRng(1947)
+    for (let i = 0; i < 500; i++) {
+      const key = selectFact(rng, {}, null, settings)
+      expect(key).not.toMatch(/[xmd]/)
+      expectFactMatches(key, 'addition', 6)
+    }
+  })
+
+  it('returns an enabled excluded fact after retry exhaustion', () => {
+    const settings = only((value) => {
+      value.operators.addition = true
+      value.levels[6] = true
+    })
+    const rng = { next: () => 0 }
+
+    expect(selectFact(rng, {}, '100p100', settings)).toBe('100p100')
+  })
+
   it('default level 2 settings never emit level 6 shapes', () => {
     const settings = defaultMathEducationSettings()
     const rng = createRng(2027)

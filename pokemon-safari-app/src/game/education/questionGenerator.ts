@@ -1,5 +1,5 @@
 /**
- * EducationProvider — multiplication, division, and spelling behind the D-22 seam.
+ * EducationProvider — adaptive math and spelling behind the D-22 seam.
  *
  * Selection and validation stay pure; config comes from data/. Keep free of
  * React, Zustand, and browser globals.

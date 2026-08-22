@@ -485,5 +485,5 @@ export function selectFact(
     }
   }
 
-  return sampleFact(rng, 'multiplication', 2)
+  return sampleFact(rng, firstOperator, firstLevel)
 }
