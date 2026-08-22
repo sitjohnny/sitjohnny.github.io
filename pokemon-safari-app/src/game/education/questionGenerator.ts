@@ -11,12 +11,16 @@ import type { RarityBand } from '@/types/encounter'
 import type { Rng } from '@/utils/rng'
 import { selectFact } from './adaptiveLearning'
 import { validateAnswer } from './answerValidator'
-import { defaultMathEducationSettings } from './mathSettings'
+import {
+  defaultMathEducationSettings,
+  type MathEducationSettings,
+} from './mathSettings'
 import { selectSpellingFact } from './spellingSelection'
 import type {
   AdaptiveStats,
   EducationProvider,
   EducationQuestion,
+  FactKey,
   MathEducationQuestion,
   SpellingEducationQuestion,
   SpellingFactKey,
@@ -40,6 +44,36 @@ function parseFactKey(key: string): {
 }
 
 type MathFactKey = `${number}x${number}` | `${number}d${number}`
+
+/** Task 3: generator only builds mul/div questions until Task 4. */
+function mulDivOnlySettings(base: MathEducationSettings): MathEducationSettings {
+  const settings: MathEducationSettings = {
+    operators: {
+      addition: false,
+      subtraction: false,
+      multiplication: base.operators.multiplication,
+      division: base.operators.division,
+    },
+    levels: structuredClone(base.levels),
+  }
+  if (!settings.operators.multiplication && !settings.operators.division) {
+    const fallback = defaultMathEducationSettings()
+    return {
+      operators: {
+        addition: false,
+        subtraction: false,
+        multiplication: true,
+        division: true,
+      },
+      levels: structuredClone(fallback.levels),
+    }
+  }
+  return settings
+}
+
+function isMulDivFactKey(key: FactKey): key is MathFactKey {
+  return /^(\d+)x(\d+)$/.test(key) || /^(\d+)d(\d+)$/.test(key)
+}
 
 function buildMathQuestion(factKey: MathFactKey): MathEducationQuestion {
   const { a, b, category } = parseFactKey(factKey)
@@ -95,12 +129,13 @@ export const mathEducationProvider: EducationProvider = {
     _rarity: RarityBand,
     excludeFactKey?: string | null,
   ): EducationQuestion {
-    const factKey = selectFact(
-      rng,
-      stats,
-      excludeFactKey ?? null,
-      defaultMathEducationSettings(),
-    ) as MathFactKey
+    const settings = mulDivOnlySettings(defaultMathEducationSettings())
+    const factKey = selectFact(rng, stats, excludeFactKey ?? null, settings)
+    if (!isMulDivFactKey(factKey)) {
+      throw new Error(
+        `mathEducationProvider: expected mul/div fact key, got ${factKey}`,
+      )
+    }
     return buildMathQuestion(factKey)
   },
 
