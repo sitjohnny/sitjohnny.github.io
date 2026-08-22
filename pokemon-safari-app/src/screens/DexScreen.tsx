@@ -5,11 +5,13 @@ import { DexHeader } from '@/components/dex/DexHeader'
 import { EmptyState } from '@/components/EmptyState'
 import { QuotaNote } from '@/components/QuotaNote'
 import { dexFilterEmptyCopy } from '@/data/dexFilterCopy'
-import { countCaught, countSeen } from '@/game/dex'
 import {
+  dexDenominator,
   filterDexSpeciesIds,
   type DexFilterState,
+  type DexModeFilter,
   type DexStatusFilter,
+  rosterIdsForMode,
 } from '@/game/dexFilters'
 import { hydrateFromStorage, getPokemon } from '@/services/pokeapi/cache'
 import { useUiStore } from '@/store'
@@ -28,6 +30,22 @@ function pokemonTypes(speciesId: number): string[] {
   }
 }
 
+function countSeenForMode(dex: ReturnType<typeof useDexStore.getState>['dex'], ids: number[]): number {
+  let n = 0
+  for (const id of ids) {
+    if (dex[String(id)]?.seen) n += 1
+  }
+  return n
+}
+
+function countCaughtForMode(dex: ReturnType<typeof useDexStore.getState>['dex'], ids: number[]): number {
+  let n = 0
+  for (const id of ids) {
+    if (dex[String(id)]?.firstCapturedAt != null) n += 1
+  }
+  return n
+}
+
 /**
  * Pokédex browse surface — sticky header + 151-tile grid + detail sheet
  * (D-01, D-04, D-07–D-13, D-21). No /dex/:id route; no PokéAPI calls from this screen.
@@ -40,8 +58,10 @@ export function DexScreen() {
   const [selectedId, setSelectedId] = useState<number | null>(null)
   const [filter, setFilter] = useState<DexFilterState>(DEFAULT_FILTER)
 
-  const seen = countSeen(dex)
-  const caught = countCaught(dex)
+  const denominator = useMemo(() => dexDenominator(filter.mode), [filter.mode])
+  const progressIds = useMemo(() => rosterIdsForMode(filter.mode), [filter.mode])
+  const seen = useMemo(() => countSeenForMode(dex, progressIds), [dex, progressIds])
+  const caught = useMemo(() => countCaughtForMode(dex, progressIds), [dex, progressIds])
 
   const speciesIds = useMemo(
     () => filterDexSpeciesIds(dex, filter, pokemonTypes),
@@ -82,14 +102,20 @@ export function DexScreen() {
     setFilter((prev) => ({ ...prev, type }))
   }, [])
 
+  const onModeChange = useCallback((mode: DexModeFilter) => {
+    setFilter((prev) => ({ ...prev, mode }))
+  }, [])
+
   return (
     <section className="relative flex min-h-0 flex-1 flex-col">
       <DexHeader
         seen={seen}
         caught={caught}
+        denominator={denominator}
         filter={filter}
         onStatusChange={onStatusChange}
         onTypeChange={onTypeChange}
+        onModeChange={onModeChange}
       />
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-[max(48px,env(safe-area-inset-bottom))] pt-6">
         {speciesIds.length === 0 ? (

@@ -3,8 +3,9 @@ import { cleanup, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { BottomNav } from '@/components/BottomNav'
+import { MEGA_CATALOG_LENGTH } from '@/data/megaCatalog'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
-import { NATIONAL_DEX_COUNT, SAVE_KEY, TOTAL_ROSTER_COUNT } from '@/services/pokeapi/keys'
+import { SAVE_KEY, TOTAL_ROSTER_COUNT } from '@/services/pokeapi/keys'
 import { DexScreen } from '@/screens/DexScreen'
 import { useUiStore } from '@/store'
 import { useDexStore } from '@/store/dexStore'
@@ -71,12 +72,12 @@ function renderDexWithNav() {
 }
 
 describe('DexScreen browse + stub sheet (DEX-03)', () => {
-  it('renders Pokédex heading and expanded National Dex counters', () => {
+  it('renders Pokédex heading and expanded All mode counters', () => {
     renderDex()
     expect(screen.getByRole('heading', { name: 'Pokédex' })).toBeInTheDocument()
     expect(
       screen.getByText(
-        new RegExp(`Seen 0/${NATIONAL_DEX_COUNT}\\s*·\\s*Caught 0/${NATIONAL_DEX_COUNT}`),
+        new RegExp(`Seen 0/${TOTAL_ROSTER_COUNT}\\s*·\\s*Caught 0/${TOTAL_ROSTER_COUNT}`),
       ),
     ).toBeInTheDocument()
   })
@@ -149,7 +150,7 @@ describe('DexScreen browse + stub sheet (DEX-03)', () => {
 
     expect(
       screen.getByText(
-        new RegExp(`Seen 1/${NATIONAL_DEX_COUNT}\\s*·\\s*Caught 1/${NATIONAL_DEX_COUNT}`),
+        new RegExp(`Seen 1/${TOTAL_ROSTER_COUNT}\\s*·\\s*Caught 1/${TOTAL_ROSTER_COUNT}`),
       ),
     ).toBeInTheDocument()
     const tile = screen.getByRole('button', { name: /#025 Pikachu/i })
@@ -187,6 +188,45 @@ describe('DexScreen filters (DEX filters)', () => {
     await user.click(screen.getByRole('button', { name: 'Shiny' }))
     expect(screen.getByRole('heading', { name: 'No shiny catches yet.' })).toBeInTheDocument()
     expect(dexTileButtons().length).toBe(0)
+  })
+
+  it('Mega mode shows the mega denominator and only Mega roster tiles', async () => {
+    const user = userEvent.setup()
+    renderDex()
+
+    await user.click(screen.getByRole('button', { name: 'Mega' }))
+
+    expect(
+      screen.getByText(
+        new RegExp(`Seen 0/${MEGA_CATALOG_LENGTH}\\s*·\\s*Caught 0/${MEGA_CATALOG_LENGTH}`),
+      ),
+    ).toBeInTheDocument()
+    expect(dexTileButtons().length).toBe(MEGA_CATALOG_LENGTH)
+  })
+
+  it('Mega mode progress ignores caught National species', async () => {
+    const user = userEvent.setup()
+    useDexStore.setState({
+      dex: {
+        '25': {
+          seen: true,
+          catchCount: 1,
+          firstEncounteredAt: '2026-01-01T00:00:00.000Z',
+          firstCapturedAt: '2026-01-01T00:00:00.000Z',
+          shinyOwned: false,
+        },
+      },
+      saveSoftFail: false,
+    })
+    renderDex()
+
+    await user.click(screen.getByRole('button', { name: 'Mega' }))
+
+    expect(
+      screen.getByText(
+        new RegExp(`Seen 0/${MEGA_CATALOG_LENGTH}\\s*·\\s*Caught 0/${MEGA_CATALOG_LENGTH}`),
+      ),
+    ).toBeInTheDocument()
   })
 })
 

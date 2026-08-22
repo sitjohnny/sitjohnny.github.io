@@ -3,6 +3,7 @@ import userEvent from '@testing-library/user-event'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
 import { DexDetailSheet } from '@/components/dex/DexDetailSheet'
 import { DexTile } from '@/components/dex/DexTile'
+import { MEGA_CATALOG } from '@/data/megaCatalog'
 import { hydrateFromStorage, resetCacheMemoryForTests } from '@/services/pokeapi/cache'
 import {
   clearPokeCacheKey,
@@ -202,5 +203,33 @@ describe('DexDetailSheet caught lore (D-03, D-09, D-16, D-20)', () => {
     expect(within(dialog).queryByRole('img')).not.toBeInTheDocument()
     expect(within(dialog).queryByText(/First seen/)).not.toBeInTheDocument()
     expect(within(dialog).queryByText(/Caught:/)).not.toBeInTheDocument()
+  })
+
+  it('caught Mega sheet shows the cached base species line', () => {
+    const mega = MEGA_CATALOG[0]!
+    seedPokeCache(
+      makeFullRosterDtos().map((pokemon) => {
+        if (pokemon.id === mega.baseSpeciesId) {
+          return makePokemonDto(mega.baseSpeciesId, { name: 'venusaur' })
+        }
+        if (pokemon.id === mega.id) {
+          return makePokemonDto(mega.id, {
+            name: mega.displayName,
+            kind: mega.kind,
+            baseSpeciesId: mega.baseSpeciesId,
+          })
+        }
+        return pokemon
+      }),
+    )
+    hydrateFromStorage()
+
+    render(
+      <DexDetailSheet speciesId={mega.id} entry={caughtEntry} onClose={() => {}} />,
+    )
+
+    const dialog = screen.getByRole('dialog')
+    expect(within(dialog).getByRole('heading', { name: mega.displayName })).toBeInTheDocument()
+    expect(within(dialog).getByText('Base: venusaur #003')).toBeInTheDocument()
   })
 })

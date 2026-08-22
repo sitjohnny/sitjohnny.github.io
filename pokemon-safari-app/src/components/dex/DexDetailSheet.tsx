@@ -22,6 +22,17 @@ function tryGetPokemon(speciesId: number): PokemonDto | null {
   }
 }
 
+function formatDexNumber(speciesId: number): string {
+  return String(speciesId).padStart(speciesId > 999 ? 4 : 3, '0')
+}
+
+function baseSpeciesLine(pokemon: PokemonDto): string | null {
+  if (pokemon.kind === 'species' || pokemon.baseSpeciesId === null) return null
+  const num = formatDexNumber(pokemon.baseSpeciesId)
+  const basePokemon = tryGetPokemon(pokemon.baseSpeciesId)
+  return basePokemon ? `Base: ${basePokemon.name} #${num}` : `Base: #${num}`
+}
+
 /**
  * Modal overlay for a single dex entry (D-08, D-09, D-13, D-16, D-20).
  * Stub branch is leak-free: ??? copy only — no name, sprite, or flavor.
@@ -33,6 +44,7 @@ export function DexDetailSheet({ speciesId, entry, onClose }: DexDetailSheetProp
   const isCaught = entry?.firstCapturedAt != null
   const labelledBy = isCaught ? 'dex-detail-caught-heading' : 'dex-detail-stub-heading'
   const pokemon = isCaught ? tryGetPokemon(speciesId) : null
+  const baseLine = pokemon ? baseSpeciesLine(pokemon) : null
   const [showShiny, setShowShiny] = useState(() => Boolean(entry?.shinyOwned))
 
   useEffect(() => {
@@ -64,7 +76,7 @@ export function DexDetailSheet({ speciesId, entry, onClose }: DexDetailSheetProp
     return () => window.removeEventListener('keydown', onKeyDown)
   }, [onClose])
 
-  const num = String(speciesId).padStart(3, '0')
+  const num = formatDexNumber(speciesId)
 
   return (
     <div
@@ -94,6 +106,11 @@ export function DexDetailSheet({ speciesId, entry, onClose }: DexDetailSheetProp
                 <p className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
                   #{num}
                 </p>
+                {baseLine ? (
+                  <p className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
+                    {baseLine}
+                  </p>
+                ) : null}
                 {pokemon.genus ? (
                   <p className="font-[family-name:var(--font-label)] text-[14px] font-normal leading-[1.4] text-muted">
                     {pokemon.genus}
