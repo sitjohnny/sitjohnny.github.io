@@ -1,10 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useState,
-  type ChangeEvent,
-  type KeyboardEvent,
-} from 'react'
+import { useEffect, useRef, useState, type ChangeEvent, type KeyboardEvent } from 'react'
 import { PixelButton } from '@/components/PixelButton'
 import { EncounterPokemonShowcase } from '@/components/encounter/EncounterPokemonShowcase'
 import { encounterDialogAccentProps } from '@/data/typeColors'
@@ -45,14 +39,15 @@ export function EducationQuestion({
   onImageError,
 }: EducationQuestionProps) {
   const [answer, setAnswer] = useState('')
+  const [submitted, setSubmitted] = useState(false)
+  const submittedRef = useRef(false)
   const [imageStatus, setImageStatus] = useState<ImageStatus>(() =>
     question.category === 'spelling' ? 'loading' : 'ready',
   )
   const [hintIndices, setHintIndices] = useState<number[] | null>(null)
   const imageErrorCalledRef = useRef(false)
 
-  const spellingImageKey =
-    question.category === 'spelling' ? question.imageUrl : ''
+  const spellingImageKey = question.category === 'spelling' ? question.imageUrl : ''
 
   useEffect(() => {
     if (question.category !== 'spelling' || imageStatus !== 'loading') return
@@ -68,15 +63,26 @@ export function EducationQuestion({
     return () => clearTimeout(timer)
   }, [question.category, spellingImageKey, imageStatus, onImageError])
 
-  const locked = feedback !== null
+  useEffect(() => {
+    submittedRef.current = false
+    setSubmitted(false)
+  }, [question.factKey])
+
+  const locked = feedback !== null || submitted
   const accentProps = encounterDialogAccentProps(pokemon.types)
+
+  function commitSubmit(raw: string) {
+    if (submittedRef.current) return
+    submittedRef.current = true
+    setSubmitted(true)
+    onSubmit(raw)
+  }
 
   if (question.category === 'spelling') {
     const wordLength = question.word.length
-    const canSubmit =
-      !locked && imageStatus === 'ready' && answer.trim().length > 0
+    const canSubmit = !locked && imageStatus === 'ready' && answer.trim().length > 0
     const hintUsed = hintIndices !== null
-    const canHint = imageStatus === 'ready' && feedback === null && !hintUsed
+    const canHint = imageStatus === 'ready' && !locked && !hintUsed
 
     function handleSpellingChange(event: ChangeEvent<HTMLInputElement>) {
       const filtered = event.target.value
@@ -88,7 +94,7 @@ export function EducationQuestion({
 
     function handleSubmit() {
       if (!canSubmit) return
-      onSubmit(answer)
+      commitSubmit(answer)
     }
 
     function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {
@@ -164,11 +170,7 @@ export function EducationQuestion({
           {attribution ? (
             <p className="font-[family-name:var(--font-label)] text-[12px] text-muted">
               {question.pexelsUrl ? (
-                <a
-                  href={question.pexelsUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={question.pexelsUrl} target="_blank" rel="noopener noreferrer">
                   {attribution}
                 </a>
               ) : (
@@ -255,7 +257,7 @@ export function EducationQuestion({
 
   function handleSubmit() {
     if (!canSubmit) return
-    onSubmit(answer)
+    commitSubmit(answer)
   }
 
   function handleKeyDown(event: KeyboardEvent<HTMLInputElement>) {

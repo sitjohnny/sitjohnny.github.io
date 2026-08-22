@@ -26,19 +26,19 @@
 
 ## File map
 
-| File | Responsibility |
-| ---- | -------------- |
-| `src/data/educationConfig.ts` | Digit ranges, level pairs, Settings copy, trivial exclusions; remove live `rarityEducationMix` / narrow double-digit band |
-| `src/game/education/mathSettings.ts` | Load / persist / validate `MathEducationSettings` |
-| `src/game/education/mathSettings.test.ts` | Persistence + validation tests |
-| `src/game/education/adaptiveLearning.ts` | Pool builders + new `selectFact` |
-| `src/game/education/adaptiveLearning.test.ts` | Replace rarity-mix tests with settings-driven tests |
-| `src/game/education/questionTypes.ts` | `addition` / `subtraction` categories + fact key unions |
-| `src/game/education/questionGenerator.ts` | Build prompts for four operators; pass settings into `selectFact` |
-| `src/hooks/useEncounterFlow.ts` | Load settings; pass into `nextEducationQuestion` / math provider |
-| `src/components/encounter/EducationQuestion.tsx` | `MAX_DIGITS = 6` |
-| `src/screens/SettingsScreen.tsx` | Operators + levels UI; reset prefs on erase |
-| `src/data/config-surface.test.ts` | Lock new config surface; drop rarity-mix expectations |
+| File                                             | Responsibility                                                                                                            |
+| ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------- |
+| `src/data/educationConfig.ts`                    | Digit ranges, level pairs, Settings copy, trivial exclusions; remove live `rarityEducationMix` / narrow double-digit band |
+| `src/game/education/mathSettings.ts`             | Load / persist / validate `MathEducationSettings`                                                                         |
+| `src/game/education/mathSettings.test.ts`        | Persistence + validation tests                                                                                            |
+| `src/game/education/adaptiveLearning.ts`         | Pool builders + new `selectFact`                                                                                          |
+| `src/game/education/adaptiveLearning.test.ts`    | Replace rarity-mix tests with settings-driven tests                                                                       |
+| `src/game/education/questionTypes.ts`            | `addition` / `subtraction` categories + fact key unions                                                                   |
+| `src/game/education/questionGenerator.ts`        | Build prompts for four operators; pass settings into `selectFact`                                                         |
+| `src/hooks/useEncounterFlow.ts`                  | Load settings; pass into `nextEducationQuestion` / math provider                                                          |
+| `src/components/encounter/EducationQuestion.tsx` | `MAX_DIGITS = 6`                                                                                                          |
+| `src/screens/SettingsScreen.tsx`                 | Operators + levels UI; reset prefs on erase                                                                               |
+| `src/data/config-surface.test.ts`                | Lock new config surface; drop rarity-mix expectations                                                                     |
 
 ---
 
@@ -55,26 +55,33 @@
 - Produces:
 
 ```ts
-export type MathOperator = 'addition' | 'subtraction' | 'multiplication' | 'division'
-export type MathLevel = 1 | 2 | 3 | 4 | 5 | 6
-export type DigitClass = 1 | 2 | 3
+export type MathOperator =
+  | "addition"
+  | "subtraction"
+  | "multiplication"
+  | "division";
+export type MathLevel = 1 | 2 | 3 | 4 | 5 | 6;
+export type DigitClass = 1 | 2 | 3;
 
 export const digitRanges: Record<DigitClass, { min: number; max: number }> = {
   1: { min: 1, max: 9 },
   2: { min: 10, max: 99 },
   3: { min: 100, max: 999 },
-}
+};
 
 /** Mutually exclusive operand digit classes [leftClass, rightClass] for display order;
  * generation may swap for subtraction / division rules. */
-export const levelDigitPairs: Record<MathLevel, readonly [DigitClass, DigitClass]> = {
+export const levelDigitPairs: Record<
+  MathLevel,
+  readonly [DigitClass, DigitClass]
+> = {
   1: [1, 1],
   2: [1, 2],
   3: [2, 2],
   4: [3, 1],
   5: [3, 2],
   6: [3, 3],
-}
+};
 
 export const DEFAULT_MATH_EDUCATION_SETTINGS = {
   operators: {
@@ -91,36 +98,51 @@ export const DEFAULT_MATH_EDUCATION_SETTINGS = {
     5: false,
     6: false,
   },
-} as const
+} as const;
 
 export const mathSettingsCopy = {
-  operatorsHeading: 'Math operators',
-  levelsHeading: 'Math levels',
-  allLevels: 'All levels',
+  operatorsHeading: "Math operators",
+  levelsHeading: "Math levels",
+  allLevels: "All levels",
   operators: {
-    addition: 'Addition (+)',
-    subtraction: 'Subtraction (−)',
-    multiplication: 'Multiplication (×)',
-    division: 'Division (÷)',
+    addition: "Addition (+)",
+    subtraction: "Subtraction (−)",
+    multiplication: "Multiplication (×)",
+    division: "Division (÷)",
   },
   levels: {
-    1: { label: 'Level 1', description: 'One-digit numbers only (e.g. 7 × 4)' },
-    2: { label: 'Level 2', description: 'One-digit with two-digit (e.g. 8 + 47)' },
-    3: { label: 'Level 3', description: 'Two-digit with two-digit (e.g. 36 − 19)' },
-    4: { label: 'Level 4', description: 'Three-digit with one-digit (e.g. 248 ÷ 4)' },
-    5: { label: 'Level 5', description: 'Three-digit with two-digit (e.g. 156 × 23)' },
-    6: { label: 'Level 6', description: 'Three-digit with three-digit (e.g. 412 + 307)' },
+    1: { label: "Level 1", description: "One-digit numbers only (e.g. 7 × 4)" },
+    2: {
+      label: "Level 2",
+      description: "One-digit with two-digit (e.g. 8 + 47)",
+    },
+    3: {
+      label: "Level 3",
+      description: "Two-digit with two-digit (e.g. 36 − 19)",
+    },
+    4: {
+      label: "Level 4",
+      description: "Three-digit with one-digit (e.g. 248 ÷ 4)",
+    },
+    5: {
+      label: "Level 5",
+      description: "Three-digit with two-digit (e.g. 156 × 23)",
+    },
+    6: {
+      label: "Level 6",
+      description: "Three-digit with three-digit (e.g. 412 + 307)",
+    },
   },
-} as const
+} as const;
 
 /** Skip ×0, ×1 and ÷1 (and symmetric × when either factor is 0 or 1). */
 export const trivialExclusions = {
   multiplyMinFactor: 2,
   divideMinDivisor: 2,
-} as const
+} as const;
 
 /** Max facts to fully enumerate before switching to sample+review (keeps L6 feasible). */
-export const maxEnumeratePoolSize = 12_000
+export const maxEnumeratePoolSize = 12_000;
 ```
 
 - Remove exports used only by the old selector: `rarityEducationMix`, `doubleDigitMultiplication`, `divisionProblems`, `longDivisionProblems`, `multiplicationRange` — **or** keep deprecated aliases only if something outside education still imports them; prefer delete + fix imports in this task / Task 3.
@@ -131,20 +153,22 @@ export const maxEnumeratePoolSize = 12_000
 In `config-surface.test.ts`, replace the block that expects `doubleDigitMultiplication` / `rarityEducationMix` / old division ranges with:
 
 ```ts
-it('exports math level digit ranges, pairs, defaults, and settings copy', () => {
+it("exports math level digit ranges, pairs, defaults, and settings copy", () => {
   expect(digitRanges).toEqual({
     1: { min: 1, max: 9 },
     2: { min: 10, max: 99 },
     3: { min: 100, max: 999 },
-  })
-  expect(levelDigitPairs[2]).toEqual([1, 2])
-  expect(levelDigitPairs[6]).toEqual([3, 3])
-  expect(DEFAULT_MATH_EDUCATION_SETTINGS.operators.addition).toBe(true)
-  expect(DEFAULT_MATH_EDUCATION_SETTINGS.levels[2]).toBe(true)
-  expect(DEFAULT_MATH_EDUCATION_SETTINGS.levels[1]).toBe(false)
-  expect(mathSettingsCopy.levels[2].description).toMatch(/one-digit with two-digit/i)
-  expect(maxEnumeratePoolSize).toBe(12_000)
-})
+  });
+  expect(levelDigitPairs[2]).toEqual([1, 2]);
+  expect(levelDigitPairs[6]).toEqual([3, 3]);
+  expect(DEFAULT_MATH_EDUCATION_SETTINGS.operators.addition).toBe(true);
+  expect(DEFAULT_MATH_EDUCATION_SETTINGS.levels[2]).toBe(true);
+  expect(DEFAULT_MATH_EDUCATION_SETTINGS.levels[1]).toBe(false);
+  expect(mathSettingsCopy.levels[2].description).toMatch(
+    /one-digit with two-digit/i,
+  );
+  expect(maxEnumeratePoolSize).toBe(12_000);
+});
 ```
 
 Remove imports of deleted symbols.
@@ -191,33 +215,39 @@ EOF
 - Produces:
 
 ```ts
-export const MATH_SETTINGS_KEY = 'pokemon-safari:math-education-settings'
+export const MATH_SETTINGS_KEY = "pokemon-safari:math-education-settings";
 
 export type MathEducationSettings = {
   operators: {
-    addition: boolean
-    subtraction: boolean
-    multiplication: boolean
-    division: boolean
-  }
+    addition: boolean;
+    subtraction: boolean;
+    multiplication: boolean;
+    division: boolean;
+  };
   levels: {
-    1: boolean
-    2: boolean
-    3: boolean
-    4: boolean
-    5: boolean
-    6: boolean
-  }
-}
+    1: boolean;
+    2: boolean;
+    3: boolean;
+    4: boolean;
+    5: boolean;
+    6: boolean;
+  };
+};
 
-export function defaultMathEducationSettings(): MathEducationSettings
-export function isValidMathEducationSettings(value: unknown): value is MathEducationSettings
+export function defaultMathEducationSettings(): MathEducationSettings;
+export function isValidMathEducationSettings(
+  value: unknown,
+): value is MathEducationSettings;
 /** At least one operator and one level enabled. */
-export function isUsableMathEducationSettings(settings: MathEducationSettings): boolean
-export function loadMathEducationSettings(): MathEducationSettings
+export function isUsableMathEducationSettings(
+  settings: MathEducationSettings,
+): boolean;
+export function loadMathEducationSettings(): MathEducationSettings;
 /** No-ops (returns false) if settings are not usable; otherwise persists and returns true. */
-export function persistMathEducationSettings(settings: MathEducationSettings): boolean
-export function clearMathEducationSettings(): void
+export function persistMathEducationSettings(
+  settings: MathEducationSettings,
+): boolean;
+export function clearMathEducationSettings(): void;
 ```
 
 JSON note: after `JSON.parse`, level keys may be strings `"1"`…`"6"`. Normalize to numeric keys `1`…`6` inside `isValidMathEducationSettings` / a `normalize` helper before accepting.
@@ -225,7 +255,7 @@ JSON note: after `JSON.parse`, level keys may be strings `"1"`…`"6"`. Normaliz
 - [ ] **Step 1: Write failing tests**
 
 ```ts
-import { afterEach, describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it } from "vitest";
 import {
   MATH_SETTINGS_KEY,
   clearMathEducationSettings,
@@ -233,53 +263,53 @@ import {
   isUsableMathEducationSettings,
   loadMathEducationSettings,
   persistMathEducationSettings,
-} from './mathSettings'
+} from "./mathSettings";
 
 afterEach(() => {
-  localStorage.removeItem(MATH_SETTINGS_KEY)
-})
+  localStorage.removeItem(MATH_SETTINGS_KEY);
+});
 
-describe('mathSettings', () => {
-  it('loadMathEducationSettings defaults to all operators and level 2 only', () => {
-    localStorage.removeItem(MATH_SETTINGS_KEY)
-    expect(loadMathEducationSettings()).toEqual(defaultMathEducationSettings())
-    expect(loadMathEducationSettings().levels[2]).toBe(true)
-    expect(loadMathEducationSettings().levels[1]).toBe(false)
-  })
+describe("mathSettings", () => {
+  it("loadMathEducationSettings defaults to all operators and level 2 only", () => {
+    localStorage.removeItem(MATH_SETTINGS_KEY);
+    expect(loadMathEducationSettings()).toEqual(defaultMathEducationSettings());
+    expect(loadMathEducationSettings().levels[2]).toBe(true);
+    expect(loadMathEducationSettings().levels[1]).toBe(false);
+  });
 
-  it('persistMathEducationSettings round-trips a custom usable set', () => {
-    const next = defaultMathEducationSettings()
-    next.operators.addition = false
-    next.levels[2] = false
-    next.levels[1] = true
-    expect(persistMathEducationSettings(next)).toBe(true)
-    expect(loadMathEducationSettings()).toEqual(next)
-  })
+  it("persistMathEducationSettings round-trips a custom usable set", () => {
+    const next = defaultMathEducationSettings();
+    next.operators.addition = false;
+    next.levels[2] = false;
+    next.levels[1] = true;
+    expect(persistMathEducationSettings(next)).toBe(true);
+    expect(loadMathEducationSettings()).toEqual(next);
+  });
 
-  it('persistMathEducationSettings rejects zero operators', () => {
-    const bad = defaultMathEducationSettings()
+  it("persistMathEducationSettings rejects zero operators", () => {
+    const bad = defaultMathEducationSettings();
     bad.operators = {
       addition: false,
       subtraction: false,
       multiplication: false,
       division: false,
-    }
-    expect(isUsableMathEducationSettings(bad)).toBe(false)
-    expect(persistMathEducationSettings(bad)).toBe(false)
-    expect(localStorage.getItem(MATH_SETTINGS_KEY)).toBeNull()
-  })
+    };
+    expect(isUsableMathEducationSettings(bad)).toBe(false);
+    expect(persistMathEducationSettings(bad)).toBe(false);
+    expect(localStorage.getItem(MATH_SETTINGS_KEY)).toBeNull();
+  });
 
-  it('loadMathEducationSettings returns defaults for corrupt JSON', () => {
-    localStorage.setItem(MATH_SETTINGS_KEY, '{not-json')
-    expect(loadMathEducationSettings()).toEqual(defaultMathEducationSettings())
-  })
+  it("loadMathEducationSettings returns defaults for corrupt JSON", () => {
+    localStorage.setItem(MATH_SETTINGS_KEY, "{not-json");
+    expect(loadMathEducationSettings()).toEqual(defaultMathEducationSettings());
+  });
 
-  it('clearMathEducationSettings removes the key', () => {
-    persistMathEducationSettings(defaultMathEducationSettings())
-    clearMathEducationSettings()
-    expect(localStorage.getItem(MATH_SETTINGS_KEY)).toBeNull()
-  })
-})
+  it("clearMathEducationSettings removes the key", () => {
+    persistMathEducationSettings(defaultMathEducationSettings());
+    clearMathEducationSettings();
+    expect(localStorage.getItem(MATH_SETTINGS_KEY)).toBeNull();
+  });
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -293,54 +323,67 @@ Expected: FAIL (module missing)
 Mirror `spellingSettings.ts` quota handling. Structure:
 
 ```ts
-import { DEFAULT_MATH_EDUCATION_SETTINGS } from '@/data/educationConfig'
+import { DEFAULT_MATH_EDUCATION_SETTINGS } from "@/data/educationConfig";
 
-export const MATH_SETTINGS_KEY = 'pokemon-safari:math-education-settings'
+export const MATH_SETTINGS_KEY = "pokemon-safari:math-education-settings";
 
-export type MathEducationSettings = { /* as above */ }
+export type MathEducationSettings = {
+  /* as above */
+};
 
 export function defaultMathEducationSettings(): MathEducationSettings {
-  return structuredClone(DEFAULT_MATH_EDUCATION_SETTINGS) as MathEducationSettings
+  return structuredClone(
+    DEFAULT_MATH_EDUCATION_SETTINGS,
+  ) as MathEducationSettings;
 }
 
-export function isUsableMathEducationSettings(settings: MathEducationSettings): boolean {
-  const ops = Object.values(settings.operators).some(Boolean)
-  const levels = Object.values(settings.levels).some(Boolean)
-  return ops && levels
+export function isUsableMathEducationSettings(
+  settings: MathEducationSettings,
+): boolean {
+  const ops = Object.values(settings.operators).some(Boolean);
+  const levels = Object.values(settings.levels).some(Boolean);
+  return ops && levels;
 }
 
-export function isValidMathEducationSettings(value: unknown): value is MathEducationSettings {
+export function isValidMathEducationSettings(
+  value: unknown,
+): value is MathEducationSettings {
   // require operators object with 4 booleans; levels 1–6 booleans (accept string keys)
   // return false if shape wrong
 }
 
 export function loadMathEducationSettings(): MathEducationSettings {
-  const raw = localStorage.getItem(MATH_SETTINGS_KEY)
-  if (raw == null) return defaultMathEducationSettings()
+  const raw = localStorage.getItem(MATH_SETTINGS_KEY);
+  if (raw == null) return defaultMathEducationSettings();
   try {
-    const parsed = JSON.parse(raw) as unknown
-    if (!isValidMathEducationSettings(parsed) || !isUsableMathEducationSettings(parsed)) {
-      return defaultMathEducationSettings()
+    const parsed = JSON.parse(raw) as unknown;
+    if (
+      !isValidMathEducationSettings(parsed) ||
+      !isUsableMathEducationSettings(parsed)
+    ) {
+      return defaultMathEducationSettings();
     }
-    return parsed
+    return parsed;
   } catch {
-    return defaultMathEducationSettings()
+    return defaultMathEducationSettings();
   }
 }
 
-export function persistMathEducationSettings(settings: MathEducationSettings): boolean {
-  if (!isUsableMathEducationSettings(settings)) return false
+export function persistMathEducationSettings(
+  settings: MathEducationSettings,
+): boolean {
+  if (!isUsableMathEducationSettings(settings)) return false;
   try {
-    localStorage.setItem(MATH_SETTINGS_KEY, JSON.stringify(settings))
-    return true
+    localStorage.setItem(MATH_SETTINGS_KEY, JSON.stringify(settings));
+    return true;
   } catch (e) {
-    if (isQuotaError(e)) return false
-    throw e
+    if (isQuotaError(e)) return false;
+    throw e;
   }
 }
 
 export function clearMathEducationSettings(): void {
-  localStorage.removeItem(MATH_SETTINGS_KEY)
+  localStorage.removeItem(MATH_SETTINGS_KEY);
 }
 ```
 
@@ -377,28 +420,28 @@ EOF
 - Produces:
 
 ```ts
-export function digitClassOf(n: number): DigitClass
-export function additionFactKeyOf(a: number, b: number): `${number}p${number}`
-export function subtractionFactKeyOf(a: number, b: number): `${number}m${number}`
+export function digitClassOf(n: number): DigitClass;
+export function additionFactKeyOf(a: number, b: number): `${number}p${number}`;
+export function subtractionFactKeyOf(
+  a: number,
+  b: number,
+): `${number}m${number}`;
 // keep factKeyOf / divisionFactKeyOf
 
-export function factsFor(
-  operator: MathOperator,
-  level: MathLevel,
-): FactKey[] // may return [] when enumeration skipped (size > maxEnumeratePoolSize)
+export function factsFor(operator: MathOperator, level: MathLevel): FactKey[]; // may return [] when enumeration skipped (size > maxEnumeratePoolSize)
 
 export function sampleFact(
   rng: Rng,
   operator: MathOperator,
   level: MathLevel,
-): FactKey
+): FactKey;
 
 export function selectFact(
   rng: Rng,
   stats: AdaptiveStats,
   excludeFactKey?: string | null,
   settings?: MathEducationSettings, // default = defaultMathEducationSettings()
-): FactKey
+): FactKey;
 ```
 
 **Selection algorithm (must match spec):**
@@ -413,11 +456,11 @@ export function selectFact(
 
 **Operator generation rules:**
 
-| Op | Rule |
-| -- | ---- |
-| `+` | Both orders when digit classes differ; keys `apb` |
-| `−` | Sample/enumerate pairs matching digit classes; if `a < b` swap so minuend ≥ subtrahend; key `amb` |
-| `×` | Factors ≥ `trivialExclusions.multiplyMinFactor`; both orders when classes differ |
+| Op  | Rule                                                                                                                                |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------- |
+| `+` | Both orders when digit classes differ; keys `apb`                                                                                   |
+| `−` | Sample/enumerate pairs matching digit classes; if `a < b` swap so minuend ≥ subtrahend; key `amb`                                   |
+| `×` | Factors ≥ `trivialExclusions.multiplyMinFactor`; both orders when classes differ                                                    |
 | `÷` | Asymmetric: longer class = dividend, shorter = divisor; symmetric: both in class; divisor ≥ 2; exact positive integer quotient only |
 
 **Remove:** rarity parameter and all `rarityEducationMix` branching; remove `allDoubleDigitFacts` / old division pool APIs **or** rewrite them as thin wrappers deleted from public tests.
@@ -430,56 +473,65 @@ export type FactKey =
   | `${number}d${number}`
   | `${number}p${number}`
   | `${number}m${number}`
-  | SpellingFactKey
+  | SpellingFactKey;
 ```
 
 - [ ] **Step 1: Write failing selection tests** (replace rarity-mix cases)
 
 ```ts
-import { defaultMathEducationSettings } from './mathSettings'
-import { selectFact, digitClassOf } from './adaptiveLearning'
-import { createRng } from '@/utils/rng'
+import { defaultMathEducationSettings } from "./mathSettings";
+import { selectFact, digitClassOf } from "./adaptiveLearning";
+import { createRng } from "@/utils/rng";
 
-const only = (patch: (s: ReturnType<typeof defaultMathEducationSettings>) => void) => {
-  const s = defaultMathEducationSettings()
+const only = (
+  patch: (s: ReturnType<typeof defaultMathEducationSettings>) => void,
+) => {
+  const s = defaultMathEducationSettings();
   // turn all levels/ops off then patch
-  for (const k of Object.keys(s.operators) as (keyof typeof s.operators)[]) s.operators[k] = false
-  for (const k of [1, 2, 3, 4, 5, 6] as const) s.levels[k] = false
-  patch(s)
-  return s
-}
+  for (const k of Object.keys(s.operators) as (keyof typeof s.operators)[])
+    s.operators[k] = false;
+  for (const k of [1, 2, 3, 4, 5, 6] as const) s.levels[k] = false;
+  patch(s);
+  return s;
+};
 
-it('selectFact with only addition + level 1 yields 1-digit + 1-digit keys', () => {
+it("selectFact with only addition + level 1 yields 1-digit + 1-digit keys", () => {
   const settings = only((s) => {
-    s.operators.addition = true
-    s.levels[1] = true
-  })
-  const rng = createRng(1)
+    s.operators.addition = true;
+    s.levels[1] = true;
+  });
+  const rng = createRng(1);
   for (let i = 0; i < 40; i++) {
-    const key = selectFact(rng, {}, null, settings)
-    expect(key).toMatch(/^\d+p\d+$/)
-    const [a, b] = key.split('p').map(Number)
-    expect(digitClassOf(a!)).toBe(1)
-    expect(digitClassOf(b!)).toBe(1)
+    const key = selectFact(rng, {}, null, settings);
+    expect(key).toMatch(/^\d+p\d+$/);
+    const [a, b] = key.split("p").map(Number);
+    expect(digitClassOf(a!)).toBe(1);
+    expect(digitClassOf(b!)).toBe(1);
   }
-})
+});
 
-it('selectFact ignores rarity — legendary settings Level 2 never emit level-6 shapes', () => {
+it("selectFact ignores rarity — legendary settings Level 2 never emit level-6 shapes", () => {
   // settings default level 2 only; call selectFact many times; assert no 3-digit⊗3-digit
-})
+});
 
-it('selectFact roughly equalizes two enabled operators over many draws', () => {
+it("selectFact roughly equalizes two enabled operators over many draws", () => {
   const settings = only((s) => {
-    s.operators.addition = true
-    s.operators.subtraction = true
-    s.levels[1] = true
-  })
+    s.operators.addition = true;
+    s.operators.subtraction = true;
+    s.levels[1] = true;
+  });
   // 400 draws; |addShare - 0.5| < 0.08
-})
+});
 
-it('subtraction facts are non-negative', () => { /* parse amb; a >= b */ })
-it('division facts divide evenly and skip ÷1', () => { /* n % d === 0; d >= 2 */ })
-it('never returns excludeFactKey over 200 draws', () => { /* keep existing intent */ })
+it("subtraction facts are non-negative", () => {
+  /* parse amb; a >= b */
+});
+it("division facts divide evenly and skip ÷1", () => {
+  /* n % d === 0; d >= 2 */
+});
+it("never returns excludeFactKey over 200 draws", () => {
+  /* keep existing intent */
+});
 ```
 
 Delete tests that assert `rarityEducationMix.common` / legendary never single-digit / etc.
@@ -497,15 +549,19 @@ Implement helpers and selection in `adaptiveLearning.ts`. Keep `factWeight` / `i
 For `sampleFact` multiplication example:
 
 ```ts
-function randomInDigitClass(rng: Rng, cls: DigitClass, minFactor?: number): number {
-  const { min, max } = digitRanges[cls]
-  const lo = minFactor != null ? Math.max(min, minFactor) : min
-  const span = max - lo + 1
-  return lo + Math.floor(rng.next() * span)
+function randomInDigitClass(
+  rng: Rng,
+  cls: DigitClass,
+  minFactor?: number,
+): number {
+  const { min, max } = digitRanges[cls];
+  const lo = minFactor != null ? Math.max(min, minFactor) : min;
+  const span = max - lo + 1;
+  return lo + Math.floor(rng.next() * span);
 }
 ```
 
-Division sampling: pick divisor in short class (≥2), pick quotient so dividend = divisor * quotient lands in long class (loop with capped retries).
+Division sampling: pick divisor in short class (≥2), pick quotient so dividend = divisor \* quotient lands in long class (loop with capped retries).
 
 - [ ] **Step 4: Run tests to verify they pass**
 
@@ -541,14 +597,18 @@ EOF
 
 ```ts
 export type MathEducationQuestion = {
-  category: 'addition' | 'subtraction' | 'multiplication' | 'division'
-  prompt: string
-  factKey: `${number}x${number}` | `${number}d${number}` | `${number}p${number}` | `${number}m${number}`
-  a: number
-  b: number
-  expected: number
-  recapLine: string
-}
+  category: "addition" | "subtraction" | "multiplication" | "division";
+  prompt: string;
+  factKey:
+    | `${number}x${number}`
+    | `${number}d${number}`
+    | `${number}p${number}`
+    | `${number}m${number}`;
+  a: number;
+  b: number;
+  expected: number;
+  recapLine: string;
+};
 
 // EducationProvider.nextQuestion gains optional settings:
 nextQuestion: (
@@ -557,17 +617,17 @@ nextQuestion: (
   rarity: RarityBand,
   excludeFactKey?: string | null,
   mathSettings?: MathEducationSettings,
-) => EducationQuestion
+) => EducationQuestion;
 ```
 
 `buildMathQuestion`:
 
-| key | category | prompt | expected |
-| --- | --- | --- | --- |
-| `p` | addition | `What is ${a} + ${b}?` | `a + b` |
-| `m` | subtraction | `What is ${a} − ${b}?` | `a - b` |
-| `x` | multiplication | unchanged | `a * b` |
-| `d` | division | unchanged | `a / b` |
+| key | category       | prompt                 | expected |
+| --- | -------------- | ---------------------- | -------- |
+| `p` | addition       | `What is ${a} + ${b}?` | `a + b`  |
+| `m` | subtraction    | `What is ${a} − ${b}?` | `a - b`  |
+| `x` | multiplication | unchanged              | `a * b`  |
+| `d` | division       | unchanged              | `a / b`  |
 
 `mathEducationProvider.nextQuestion` → `selectFact(rng, stats, exclude, mathSettings ?? defaultMathEducationSettings())`.
 
@@ -633,9 +693,9 @@ EOF
 - [ ] **Step 1: Write failing digit-cap test**
 
 ```ts
-it('caps digit length at six characters', async () => {
+it("caps digit length at six characters", async () => {
   // type 1234567 → value 123456
-})
+});
 ```
 
 Rename/remove the old four-character test.
@@ -647,17 +707,17 @@ Run: `cd pokemon-safari-app && npx vitest run src/components/encounter/Education
 - [ ] **Step 3: Set `MAX_DIGITS = 6` and pass settings in `useEncounterFlow`**
 
 ```ts
-import { loadMathEducationSettings } from '@/game/education/mathSettings'
+import { loadMathEducationSettings } from "@/game/education/mathSettings";
 
 // in doAdvanceFromAppear:
-const mathSettings = loadMathEducationSettings()
+const mathSettings = loadMathEducationSettings();
 const question = nextEducationQuestion(
   rng,
   loadAdaptiveStats(),
   session.rarity,
   state.lastFactKey,
   { spellingEnabled: false, mathSettings },
-)
+);
 
 // in doReplaceSpellingWithMath:
 mathEducationProvider.nextQuestion(
@@ -666,7 +726,7 @@ mathEducationProvider.nextQuestion(
   session.rarity,
   state.lastFactKey,
   loadMathEducationSettings(),
-)
+);
 ```
 
 - [ ] **Step 4: Run focused tests**
@@ -747,11 +807,11 @@ Run: `cd pokemon-safari-app && npx vitest run src/screens/SettingsScreen.test.ts
 Use native checkboxes with existing typography tokens (`font-body`, `text-text`, padding consistent with screen). Keep layout simple: stacked fieldsets, no card chrome unless interaction requires it.
 
 ```tsx
-const [math, setMath] = useState(loadMathEducationSettings)
+const [math, setMath] = useState(loadMathEducationSettings);
 
 function updateMath(next: MathEducationSettings) {
-  if (!persistMathEducationSettings(next)) return
-  setMath(next)
+  if (!persistMathEducationSettings(next)) return;
+  setMath(next);
 }
 ```
 
@@ -815,22 +875,22 @@ EOF
 
 ## Self-review (plan vs spec)
 
-| Spec requirement | Task |
-| --- | --- |
-| Global levels + operator checkboxes | 1, 2, 6 |
-| Descriptions next to levels | 1 (`mathSettingsCopy`), 6 |
-| Default all ops + Level 2 | 1, 2 |
-| Block last op/level off | 2, 6 |
-| Ignore rarity for math | 3, 4, 5 |
-| Equal op → equal level → adaptive | 3 |
-| Mutually exclusive digit pairs + full ranges | 1, 3 |
-| Kid-safe − / ÷ / trivial skip | 3 |
-| Fact keys `p` / `m` / `x` / `d` | 3, 4 |
-| Addition + subtraction questions | 4 |
-| Wire Settings into encounter | 5 |
-| MAX_DIGITS 6 | 5 |
-| Reset Save clears prefs | 6 |
-| Retire rarity mix / narrow double band | 1, 3, 7 |
-| Large pool feasibility (L6) | 3 (`maxEnumeratePoolSize` + sample/review) |
+| Spec requirement                             | Task                                       |
+| -------------------------------------------- | ------------------------------------------ |
+| Global levels + operator checkboxes          | 1, 2, 6                                    |
+| Descriptions next to levels                  | 1 (`mathSettingsCopy`), 6                  |
+| Default all ops + Level 2                    | 1, 2                                       |
+| Block last op/level off                      | 2, 6                                       |
+| Ignore rarity for math                       | 3, 4, 5                                    |
+| Equal op → equal level → adaptive            | 3                                          |
+| Mutually exclusive digit pairs + full ranges | 1, 3                                       |
+| Kid-safe − / ÷ / trivial skip                | 3                                          |
+| Fact keys `p` / `m` / `x` / `d`              | 3, 4                                       |
+| Addition + subtraction questions             | 4                                          |
+| Wire Settings into encounter                 | 5                                          |
+| MAX_DIGITS 6                                 | 5                                          |
+| Reset Save clears prefs                      | 6                                          |
+| Retire rarity mix / narrow double band       | 1, 3, 7                                    |
+| Large pool feasibility (L6)                  | 3 (`maxEnumeratePoolSize` + sample/review) |
 
 No TBD placeholders. Types aligned: `MathEducationSettings` owned by `mathSettings.ts`, defaults from `educationConfig.ts`, `selectFact(..., settings)` consumed by generator and encounter flow.

@@ -28,6 +28,7 @@ export function PixelButton({
         'touch-target inline-flex items-center justify-center px-4 py-3 font-[family-name:var(--font-body)] text-[16px] font-normal leading-[1.5]',
         'touch-manipulation transition-transform duration-[80ms] ease-out active:scale-95 motion-reduce:transition-none motion-reduce:active:scale-100',
         VARIANT_CLASS[variant],
+        'disabled:cursor-not-allowed disabled:bg-muted disabled:text-on-secondary disabled:shadow-none disabled:active:scale-100',
         className,
       ]
         .filter(Boolean)

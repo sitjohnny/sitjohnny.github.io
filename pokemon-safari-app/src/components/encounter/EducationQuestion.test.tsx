@@ -138,10 +138,28 @@ describe('EducationQuestion', () => {
     expect(input).toHaveValue('1234')
   })
 
-  it('submits once from the button and once from Enter', async () => {
+  it('submits from Enter when the button has not been used', async () => {
     const user = userEvent.setup()
     const onSubmit = vi.fn()
-    const { rerender } = render(
+    render(
+      <EducationQuestion
+        pokemon={pokemon}
+        question={question}
+        feedback={null}
+        onSubmit={onSubmit}
+      />,
+    )
+
+    const input = screen.getByLabelText('Your answer')
+    await user.type(input, '56{Enter}')
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    expect(onSubmit).toHaveBeenLastCalledWith('56')
+  })
+
+  it('disables submit on the first tap and ignores a second submit', async () => {
+    const user = userEvent.setup()
+    const onSubmit = vi.fn()
+    render(
       <EducationQuestion
         pokemon={pokemon}
         question={question}
@@ -152,22 +170,16 @@ describe('EducationQuestion', () => {
 
     const input = screen.getByLabelText('Your answer')
     await user.type(input, '56')
-    await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
+    const submit = screen.getByRole('button', { name: 'Submit Answer' })
+    await user.click(submit)
     expect(onSubmit).toHaveBeenCalledTimes(1)
-    expect(onSubmit).toHaveBeenLastCalledWith('56')
+    expect(submit).toBeDisabled()
+    expect(submit.className).toMatch(/disabled:bg-muted/)
+    expect(submit.className).toMatch(/disabled:shadow-none/)
 
-    onSubmit.mockClear()
-    rerender(
-      <EducationQuestion
-        pokemon={pokemon}
-        question={question}
-        feedback={null}
-        onSubmit={onSubmit}
-      />,
-    )
+    await user.click(submit)
     await user.type(input, '{Enter}')
     expect(onSubmit).toHaveBeenCalledTimes(1)
-    expect(onSubmit).toHaveBeenLastCalledWith('56')
   })
 
   it('announces correct feedback and blocks another submit', () => {

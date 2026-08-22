@@ -56,7 +56,7 @@ export const encounterTimingMs = {
 export const shinyRate = 1 / 50
 
 /** Committed tile steps (any tile) with no Pokémon after an encounter ends. */
-export const postEncounterPokemonImmunitySteps = 10
+export const postEncounterPokemonImmunitySteps = 5
 
 /** Debounced SAVE_KEY flush idle window in ms (D-19). */
 export const dexSaveDebounceMs = 800
