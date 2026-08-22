@@ -9,12 +9,12 @@ type PokemonSpriteProps = {
   alt: string
   /** Uncaught dex tiles pass true → `.sprite-silhouette` on the img (D-02 / D-07). */
   silhouette?: boolean
-  /** Grid tiles pass 'lazy' — 151 hotlinked images (T-06-11). */
+  /** Grid tiles pass 'lazy' to defer sprite requests (T-06-11). */
   loading?: 'lazy' | 'eager'
 }
 
 /**
- * Gen 1 sprite primitive — `.pixelated` scaling, shiny URL, silhouette on missing/broken (D-07–D-09).
+ * Sprite primitive — `.pixelated` scaling, shiny URL, silhouette on missing/broken (D-07–D-09).
  */
 function resolveSpriteSrc(
   sprites: PokemonDto['sprites'],

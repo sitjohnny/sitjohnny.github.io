@@ -30,7 +30,7 @@ export type TestCacheEnvelope = {
   pokemon: TestPokemonDto[]
 }
 
-/** Build a slim Gen 1–shaped DTO for tests. */
+/** Build a slim Pokémon DTO for tests. */
 export function makePokemonDto(
   id: number,
   overrides: Partial<TestPokemonDto> = {},

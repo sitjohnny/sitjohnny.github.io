@@ -17,7 +17,7 @@ import { useEncounterStore } from '@/store/encounterStore'
 import { useExploreStore } from '@/store/exploreStore'
 
 /**
- * Explore/Game — infinite procedural Forest, behind the Gen 1 cache gate (D-02).
+ * Explore/Game — infinite procedural Forest, behind the full roster cache gate (D-02).
  */
 export function GameScreen() {
   const storeReady = useUiStore((s) => s.cacheReady)

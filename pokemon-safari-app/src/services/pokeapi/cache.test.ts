@@ -86,7 +86,7 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
     expect(localStorage.getItem(SAVE_KEY)).toContain('keep-me')
   })
 
-  it('ensureCache / write path never clears SAVE_KEY (Gen 1 progress survives)', async () => {
+  it('ensureCache / write path never clears SAVE_KEY (existing progress survives)', async () => {
     const save = {
       version: 2,
       savedAt: '2026-01-01T00:00:00.000Z',
@@ -189,7 +189,7 @@ describe('quota soft-fail (D-06)', () => {
 describe('version mismatch (D-10)', () => {
   it('wrong version envelope fails hasValidCache and ensureCache re-fetches', async () => {
     seedPokeCache(
-      Array.from({ length: 151 }, (_, i) => makePokemonDto(i + 1)),
+      makeFullRosterDtos(),
       // Force stale version in stored JSON
       { version: 0 as 3 },
     )

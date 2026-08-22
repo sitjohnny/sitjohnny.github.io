@@ -47,7 +47,7 @@ function countCaughtForMode(dex: ReturnType<typeof useDexStore.getState>['dex'],
 }
 
 /**
- * Pokédex browse surface — sticky header + 151-tile grid + detail sheet
+ * Pokédex browse surface — sticky header + roster grid + detail sheet
  * (D-01, D-04, D-07–D-13, D-21). No /dex/:id route; no PokéAPI calls from this screen.
  */
 export function DexScreen() {

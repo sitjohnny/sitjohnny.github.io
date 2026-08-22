@@ -9,9 +9,6 @@ import type { RarityBand } from '@/types/encounter'
 
 export { FOREST_RARE_IDS } from '@/data/nationalRareIds'
 
-/** Classic Gen 1 legendaries / mythicals (compat alias). */
-export const GEN1_LEGENDARY_IDS = LEGENDARY_IDS.filter((id) => id <= 151)
-
 const legendarySet = new Set<number>(LEGENDARY_IDS)
 const rareNationalSet = new Set<number>(NATIONAL_RARE_IDS)
 

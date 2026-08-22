@@ -5,7 +5,6 @@ import { NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from './keys'
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2/pokemon'
 const POKEAPI_SPECIES_BASE = 'https://pokeapi.co/api/v2/pokemon-species'
 const DEFAULT_CONCURRENCY = 8
-const LEGACY_GEN1_COUNT = 151
 
 /** Emerald → Ruby → Sapphire → FireRed (D-15 / D-16). */
 export const FLAVOR_VERSION_PRIORITY = ['emerald', 'ruby', 'sapphire', 'firered'] as const
@@ -283,13 +282,6 @@ export async function fetchSpeciesFlavor(id: number): Promise<string | null> {
   return (await fetchSpeciesMeta(id)).flavorText
 }
 
-export type FetchGen1Options = {
-  concurrency?: number
-  onProgress?: (done: number, total: number) => void
-  /** When set, only these ids are fetched (resume / partial). */
-  ids?: number[]
-}
-
 export type FetchRosterOptions = {
   concurrency?: number
   onProgress?: (done: number, total: number) => void
@@ -331,14 +323,4 @@ export async function fetchRosterAll(options: FetchRosterOptions = {}): Promise<
     (item) => (item.kind === 'species' ? fetchPokemon(item.id) : fetchMegaPokemon(item.entry)),
     onProgress,
   )
-}
-
-export async function fetchGen1All(options: FetchGen1Options = {}): Promise<PokemonDto[]> {
-  const {
-    concurrency = DEFAULT_CONCURRENCY,
-    onProgress,
-    ids = Array.from({ length: LEGACY_GEN1_COUNT }, (_, i) => i + 1),
-  } = options
-
-  return fetchRosterAll({ concurrency, onProgress, nationalIds: ids, megaIds: [] })
 }

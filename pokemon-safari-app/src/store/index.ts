@@ -3,7 +3,7 @@ import { create } from 'zustand'
 type UiState = {
   lastRoute: string
   setLastRoute: (route: string) => void
-  /** Session flag — Gen 1 poke-cache ready in memory (no persist). */
+  /** Session flag — roster poke-cache ready in memory (no persist). */
   cacheReady: boolean
   setCacheReady: (ready: boolean) => void
   /** Session soft-fail when persist hit QuotaExceeded (D-06) — does not block Explore. */
