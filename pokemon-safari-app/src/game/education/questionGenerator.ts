@@ -20,63 +20,67 @@ import type {
   AdaptiveStats,
   EducationProvider,
   EducationQuestion,
-  FactKey,
   MathEducationQuestion,
   SpellingEducationQuestion,
   SpellingFactKey,
 } from './questionTypes'
 
-function isDivisionKey(key: string): boolean {
-  return key.includes('d') && !key.includes('x')
-}
+const FACT_KEY_PATTERN = /^(\d+)([xdpm])(\d+)$/
+
+type MathFactKey = MathEducationQuestion['factKey']
 
 function parseFactKey(key: string): {
   a: number
   b: number
-  category: 'multiplication' | 'division'
+  category: MathEducationQuestion['category']
 } {
-  if (isDivisionKey(key)) {
-    const [nStr, dStr] = key.split('d')
-    return { a: Number(nStr), b: Number(dStr), category: 'division' }
+  const match = key.match(FACT_KEY_PATTERN)
+  if (!match) {
+    throw new Error(`parseFactKey: invalid math fact key ${key}`)
   }
-  const [aStr, bStr] = key.split('x')
-  return { a: Number(aStr), b: Number(bStr), category: 'multiplication' }
-}
-
-type MathFactKey = `${number}x${number}` | `${number}d${number}`
-
-/** Task 3: generator only builds mul/div questions until Task 4. */
-function mulDivOnlySettings(base: MathEducationSettings): MathEducationSettings {
-  const settings: MathEducationSettings = {
-    operators: {
-      addition: false,
-      subtraction: false,
-      multiplication: base.operators.multiplication,
-      division: base.operators.division,
-    },
-    levels: structuredClone(base.levels),
+  const [, aStr, operator, bStr] = match
+  const a = Number(aStr)
+  const b = Number(bStr)
+  switch (operator) {
+    case 'p':
+      return { a, b, category: 'addition' }
+    case 'm':
+      return { a, b, category: 'subtraction' }
+    case 'x':
+      return { a, b, category: 'multiplication' }
+    case 'd':
+      return { a, b, category: 'division' }
+    default:
+      throw new Error(`parseFactKey: unknown operator ${operator}`)
   }
-  if (!settings.operators.multiplication && !settings.operators.division) {
-    const fallback = defaultMathEducationSettings()
-    return {
-      operators: {
-        addition: false,
-        subtraction: false,
-        multiplication: true,
-        division: true,
-      },
-      levels: structuredClone(fallback.levels),
-    }
-  }
-  return settings
-}
-
-function isMulDivFactKey(key: FactKey): key is MathFactKey {
-  return /^(\d+)x(\d+)$/.test(key) || /^(\d+)d(\d+)$/.test(key)
 }
 
 function buildMathQuestion(factKey: MathFactKey): MathEducationQuestion {
   const { a, b, category } = parseFactKey(factKey)
+  if (category === 'addition') {
+    const expected = a + b
+    return {
+      category: 'addition',
+      prompt: `What is ${a} + ${b}?`,
+      factKey,
+      a,
+      b,
+      expected,
+      recapLine: `${a} + ${b} = ${expected}`,
+    }
+  }
+  if (category === 'subtraction') {
+    const expected = a - b
+    return {
+      category: 'subtraction',
+      prompt: `What is ${a} − ${b}?`,
+      factKey,
+      a,
+      b,
+      expected,
+      recapLine: `${a} − ${b} = ${expected}`,
+    }
+  }
   if (category === 'division') {
     const expected = a / b
     return {
@@ -128,15 +132,11 @@ export const mathEducationProvider: EducationProvider = {
     stats: AdaptiveStats,
     _rarity: RarityBand,
     excludeFactKey?: string | null,
+    mathSettings?: MathEducationSettings,
   ): EducationQuestion {
-    const settings = mulDivOnlySettings(defaultMathEducationSettings())
+    const settings = mathSettings ?? defaultMathEducationSettings()
     const factKey = selectFact(rng, stats, excludeFactKey ?? null, settings)
-    if (!isMulDivFactKey(factKey)) {
-      throw new Error(
-        `mathEducationProvider: expected mul/div fact key, got ${factKey}`,
-      )
-    }
-    return buildMathQuestion(factKey)
+    return buildMathQuestion(factKey as MathFactKey)
   },
 
   validate(question, raw) {
@@ -167,16 +167,29 @@ export function nextEducationQuestion(
   stats: AdaptiveStats,
   rarity: RarityBand,
   excludeFactKey?: string | null,
-  options?: { spellingEnabled?: boolean },
+  options?: { spellingEnabled?: boolean; mathSettings?: MathEducationSettings },
 ): EducationQuestion {
   const spellingEnabled = options?.spellingEnabled ?? false
+  const mathSettings = options?.mathSettings
   if (!spellingEnabled) {
-    return mathEducationProvider.nextQuestion(rng, stats, rarity, excludeFactKey)
+    return mathEducationProvider.nextQuestion(
+      rng,
+      stats,
+      rarity,
+      excludeFactKey,
+      mathSettings,
+    )
   }
   if (rng.next() < spellingMixProbability) {
     return spellingEducationProvider.nextQuestion(rng, stats, rarity, excludeFactKey)
   }
-  return mathEducationProvider.nextQuestion(rng, stats, rarity, excludeFactKey)
+  return mathEducationProvider.nextQuestion(
+    rng,
+    stats,
+    rarity,
+    excludeFactKey,
+    mathSettings,
+  )
 }
 
 /** @deprecated Prefer mathEducationProvider or nextEducationQuestion. */

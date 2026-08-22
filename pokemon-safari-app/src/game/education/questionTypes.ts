@@ -9,6 +9,7 @@
 
 import type { RarityBand } from '@/types/encounter'
 import type { Rng } from '@/utils/rng'
+import type { MathEducationSettings } from './mathSettings'
 
 export type SpellingFactKey = `spell:${string}`
 export type FactKey =
@@ -23,9 +24,13 @@ export type FactStat = { correct: number; incorrect: number }
 export type AdaptiveStats = Record<string, FactStat>
 
 export type MathEducationQuestion = {
-  category: 'multiplication' | 'division'
+  category: 'addition' | 'subtraction' | 'multiplication' | 'division'
   prompt: string
-  factKey: `${number}x${number}` | `${number}d${number}`
+  factKey:
+    | `${number}x${number}`
+    | `${number}d${number}`
+    | `${number}p${number}`
+    | `${number}m${number}`
   a: number
   b: number
   expected: number
@@ -70,6 +75,7 @@ export type EducationProvider = {
     stats: AdaptiveStats,
     rarity: RarityBand,
     excludeFactKey?: string | null,
+    mathSettings?: MathEducationSettings,
   ) => EducationQuestion
   validate: (question: EducationQuestion, raw: string) => AnswerResult
 }
