@@ -122,7 +122,7 @@ describe('EducationQuestion', () => {
     expect(screen.getByRole('button', { name: 'Submit Answer' })).toBeEnabled()
   })
 
-  it('caps digit length at four characters', async () => {
+  it('caps digit length at six characters', async () => {
     const user = userEvent.setup()
     render(
       <EducationQuestion
@@ -134,8 +134,8 @@ describe('EducationQuestion', () => {
     )
 
     const input = screen.getByLabelText('Your answer')
-    await user.type(input, '12345')
-    expect(input).toHaveValue('1234')
+    await user.type(input, '1234567')
+    expect(input).toHaveValue('123456')
   })
 
   it('submits from Enter when the button has not been used', async () => {

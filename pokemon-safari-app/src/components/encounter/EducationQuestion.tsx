@@ -26,7 +26,7 @@ type EducationQuestionProps = {
   onImageError?: () => void
 }
 
-const MAX_DIGITS = 4
+const MAX_DIGITS = 6
 
 type ImageStatus = 'loading' | 'ready' | 'error'
 

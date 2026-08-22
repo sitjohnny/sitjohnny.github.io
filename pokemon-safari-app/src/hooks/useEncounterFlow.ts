@@ -14,6 +14,7 @@ import {
   recordAttempt,
 } from '@/game/education/adaptiveStore'
 import { captureBonusFor, validateAnswer } from '@/game/education/answerValidator'
+import { loadMathEducationSettings } from '@/game/education/mathSettings'
 import {
   mathEducationProvider,
   nextEducationQuestion,
@@ -86,12 +87,13 @@ function doAdvanceFromAppear(rng: Rng): void {
   const session = state.session
   if (!session) return
   // Spelling quizzes are disabled product-wide (image bank inconsistency).
+  const mathSettings = loadMathEducationSettings()
   const question = nextEducationQuestion(
     rng,
     loadAdaptiveStats(),
     session.rarity,
     state.lastFactKey,
-    { spellingEnabled: false },
+    { spellingEnabled: false, mathSettings },
   )
   useEncounterStore.getState().askQuestion(question)
 }
@@ -108,6 +110,7 @@ function doReplaceSpellingWithMath(rng: Rng): void {
     loadAdaptiveStats(),
     session.rarity,
     state.lastFactKey,
+    loadMathEducationSettings(),
   )
   useEncounterStore.getState().askQuestion(question)
 }
