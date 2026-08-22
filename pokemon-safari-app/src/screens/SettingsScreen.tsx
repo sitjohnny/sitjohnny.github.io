@@ -16,12 +16,7 @@ import { useEncounterStore } from '@/store/encounterStore'
 import { useDexStore } from '@/store/dexStore'
 import { useExploreStore } from '@/store/exploreStore'
 
-const OPERATOR_KEYS = [
-  'addition',
-  'subtraction',
-  'multiplication',
-  'division',
-] as const
+const OPERATOR_KEYS = ['addition', 'subtraction', 'multiplication', 'division'] as const
 
 const LEVEL_KEYS = [1, 2, 3, 4, 5, 6] as const
 
@@ -84,11 +79,11 @@ export function SettingsScreen() {
   }
 
   return (
-    <section className="flex flex-1 flex-col gap-6">
-      <header className="sticky top-0 z-10 bg-dominant px-4 pb-3 pt-[max(8px,env(safe-area-inset-top))]">
+    <section className="relative flex min-h-0 flex-1 flex-col">
+      <header className="shrink-0 bg-dominant px-4 pb-3 pt-[max(8px,env(safe-area-inset-top))]">
         <ScreenTitle>Settings</ScreenTitle>
       </header>
-      <div className="flex flex-1 flex-col gap-6 px-4 pb-6">
+      <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-y-auto px-4 pb-[max(48px,env(safe-area-inset-bottom))]">
         <fieldset className="flex flex-col gap-3 border-0 p-0">
           <legend className="font-[family-name:var(--font-display)] text-[18px] font-bold leading-[1.2] tracking-[0.02em] text-text">
             {mathSettingsCopy.operatorsHeading}

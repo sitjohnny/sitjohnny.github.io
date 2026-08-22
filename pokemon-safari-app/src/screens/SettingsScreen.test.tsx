@@ -79,6 +79,16 @@ describe('SettingsScreen erase progress', () => {
     expect(screen.queryByText(/safari isn’t ready yet/i)).not.toBeInTheDocument()
   })
 
+  it('puts math levels in a vertically scrollable region', () => {
+    render(
+      <MemoryRouter>
+        <SettingsScreen />
+      </MemoryRouter>,
+    )
+    const levels = screen.getByRole('group', { name: mathSettingsCopy.levelsHeading })
+    expect(levels.closest('.overflow-y-auto')).not.toBeNull()
+  })
+
   it('renders operator and level controls with level descriptions', () => {
     render(
       <MemoryRouter>

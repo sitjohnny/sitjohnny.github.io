@@ -3,6 +3,7 @@
 docs/
 docs/superpowers/
 *.log
+node_modules/
 
 # Git worktrees
 .worktrees/
