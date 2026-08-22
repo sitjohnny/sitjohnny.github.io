@@ -1,18 +1,104 @@
 /** Adaptive multiplication education knobs and copy — edit here only; UI must not hardcode these values. */
 
-/** D-08 single-digit multiplication range (excludes ×1). */
+export type MathOperator =
+  | 'addition'
+  | 'subtraction'
+  | 'multiplication'
+  | 'division'
+export type MathLevel = 1 | 2 | 3 | 4 | 5 | 6
+export type DigitClass = 1 | 2 | 3
+
+export const digitRanges: Record<DigitClass, { min: number; max: number }> = {
+  1: { min: 1, max: 9 },
+  2: { min: 10, max: 99 },
+  3: { min: 100, max: 999 },
+}
+
+/** Mutually exclusive operand digit classes [leftClass, rightClass] for display order;
+ * generation may swap for subtraction / division rules. */
+export const levelDigitPairs: Record<
+  MathLevel,
+  readonly [DigitClass, DigitClass]
+> = {
+  1: [1, 1],
+  2: [1, 2],
+  3: [2, 2],
+  4: [3, 1],
+  5: [3, 2],
+  6: [3, 3],
+}
+
+export const DEFAULT_MATH_EDUCATION_SETTINGS = {
+  operators: {
+    addition: true,
+    subtraction: true,
+    multiplication: true,
+    division: true,
+  },
+  levels: {
+    1: false,
+    2: true,
+    3: false,
+    4: false,
+    5: false,
+    6: false,
+  },
+} as const
+
+export const mathSettingsCopy = {
+  operatorsHeading: 'Math operators',
+  levelsHeading: 'Math levels',
+  allLevels: 'All levels',
+  operators: {
+    addition: 'Addition (+)',
+    subtraction: 'Subtraction (−)',
+    multiplication: 'Multiplication (×)',
+    division: 'Division (÷)',
+  },
+  levels: {
+    1: { label: 'Level 1', description: 'One-digit numbers only (e.g. 7 × 4)' },
+    2: {
+      label: 'Level 2',
+      description: 'One-digit with two-digit (e.g. 8 + 47)',
+    },
+    3: {
+      label: 'Level 3',
+      description: 'Two-digit with two-digit (e.g. 36 − 19)',
+    },
+    4: {
+      label: 'Level 4',
+      description: 'Three-digit with one-digit (e.g. 248 ÷ 4)',
+    },
+    5: {
+      label: 'Level 5',
+      description: 'Three-digit with two-digit (e.g. 156 × 23)',
+    },
+    6: {
+      label: 'Level 6',
+      description: 'Three-digit with three-digit (e.g. 412 + 307)',
+    },
+  },
+} as const
+
+/** Skip ×0, ×1 and ÷1 (and symmetric × when either factor is 0 or 1). */
+export const trivialExclusions = {
+  multiplyMinFactor: 2,
+  divideMinDivisor: 2,
+} as const
+
+/** Max facts to fully enumerate before switching to sample+review (keeps L6 feasible). */
+export const maxEnumeratePoolSize = 12_000
+
+/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
 export const multiplicationRange = { min: 2, max: 9 } as const
 
-/** Double-digit × single-digit facts (double-digit operand first). */
+/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
 export const doubleDigitMultiplication = {
   min: 10,
   max: 20,
 } as const
 
-/**
- * Exact integer division: numerator ÷ single-digit divisor.
- * Only facts with an integer quotient are generated (excludes ÷1).
- */
+/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
 export const divisionProblems = {
   numeratorMin: 10,
   numeratorMax: 100,
@@ -20,9 +106,7 @@ export const divisionProblems = {
   divisorMax: 9,
 } as const
 
-/**
- * Exact integer long division: two-digit ÷ two-digit within 10–100.
- */
+/** @deprecated Replaced by levelDigitPairs; removed in Task 3. */
 export const longDivisionProblems = {
   numeratorMin: 10,
   numeratorMax: 100,
@@ -31,11 +115,7 @@ export const longDivisionProblems = {
   quotientMin: 2,
 } as const
 
-/**
- * Per-rarity category mix for selectFact.
- * Cuts are absolute in order: division → double → single (remainder).
- * `longWithinDivision` is nested under division draws.
- */
+/** @deprecated Replaced by DEFAULT_MATH_EDUCATION_SETTINGS; removed in Task 3. */
 export const rarityEducationMix = {
   common: {
     division: 0.05,

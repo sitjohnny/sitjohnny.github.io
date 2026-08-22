@@ -15,11 +15,11 @@ import { LEGENDARY_IDS } from '@/data/legendaryIds'
 import { MEGA_CATALOG } from '@/data/megaCatalog'
 import { GEN2_TO_5_RARE_IDS, NATIONAL_RARE_IDS } from '@/data/nationalRareIds'
 import {
-  multiplicationRange,
-  doubleDigitMultiplication,
-  divisionProblems,
-  longDivisionProblems,
-  rarityEducationMix,
+  digitRanges,
+  levelDigitPairs,
+  DEFAULT_MATH_EDUCATION_SETTINGS,
+  mathSettingsCopy,
+  maxEnumeratePoolSize,
   adaptiveWeights,
   masteryThreshold,
   feedbackCopy,
@@ -177,27 +177,24 @@ describe('DATA-03 config surface', () => {
     }
   })
 
+  it('exports math level digit ranges, pairs, defaults, and settings copy', () => {
+    expect(digitRanges).toEqual({
+      1: { min: 1, max: 9 },
+      2: { min: 10, max: 99 },
+      3: { min: 100, max: 999 },
+    })
+    expect(levelDigitPairs[2]).toEqual([1, 2])
+    expect(levelDigitPairs[6]).toEqual([3, 3])
+    expect(DEFAULT_MATH_EDUCATION_SETTINGS.operators.addition).toBe(true)
+    expect(DEFAULT_MATH_EDUCATION_SETTINGS.levels[2]).toBe(true)
+    expect(DEFAULT_MATH_EDUCATION_SETTINGS.levels[1]).toBe(false)
+    expect(mathSettingsCopy.levels[2].description).toMatch(
+      /one-digit with two-digit/i,
+    )
+    expect(maxEnumeratePoolSize).toBe(12_000)
+  })
+
   it('exports education adaptive knobs and copy with {boost} placeholder', () => {
-    expect(multiplicationRange).toEqual({ min: 2, max: 9 })
-    expect(doubleDigitMultiplication).toEqual({ min: 10, max: 20 })
-    expect(divisionProblems).toEqual({
-      numeratorMin: 10,
-      numeratorMax: 100,
-      divisorMin: 2,
-      divisorMax: 9,
-    })
-    expect(longDivisionProblems).toEqual({
-      numeratorMin: 10,
-      numeratorMax: 100,
-      divisorMin: 10,
-      divisorMax: 100,
-      quotientMin: 2,
-    })
-    expect(rarityEducationMix).toEqual({
-      common: { division: 0.05, double: 0.25, longWithinDivision: 0 },
-      rare: { division: 0.4, double: 0.45, longWithinDivision: 0.15 },
-      legendary: { division: 0.75, double: 0.25, longWithinDivision: 0.4 },
-    })
     expect(typeof adaptiveWeights.starterWeight).toBe('number')
     expect(typeof adaptiveWeights.missBonus).toBe('number')
     expect(typeof adaptiveWeights.correctPenalty).toBe('number')
