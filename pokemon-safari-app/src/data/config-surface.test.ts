@@ -268,8 +268,8 @@ describe('DATA-03 config surface', () => {
     }
   })
 
-  it('exports typeColors for Gen 1 types and primaryTypeColor helper', () => {
-    const gen1Types = [
+  it('exports typeColors for Dex chip types and primaryTypeColor helper', () => {
+    const dexTypes = [
       'normal',
       'fire',
       'water',
@@ -285,8 +285,11 @@ describe('DATA-03 config surface', () => {
       'rock',
       'ghost',
       'dragon',
+      'dark',
+      'steel',
+      'fairy',
     ]
-    for (const name of gen1Types) {
+    for (const name of dexTypes) {
       expect(typeColors[name]).toMatch(/^#[0-9A-Fa-f]{6}$/)
     }
     expect(primaryTypeColor(['fire', 'flying'])).toBe(typeColors.fire)

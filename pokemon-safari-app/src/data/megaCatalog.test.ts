@@ -3,6 +3,58 @@ import { MEGA_CATALOG, MEGA_CATALOG_BY_ID, isMegaOrPrimalId } from './megaCatalo
 import { NATIONAL_DEX_COUNT } from '@/services/pokeapi/keys'
 
 describe('megaCatalog', () => {
+  it('freezes the 46-slot ordered Mega and Primal slug catalog', () => {
+    expect(MEGA_CATALOG).toHaveLength(46)
+    expect(MEGA_CATALOG.map((e) => e.pokeApiSlug)).toEqual([
+      'venusaur-mega',
+      'charizard-mega-x',
+      'charizard-mega-y',
+      'blastoise-mega',
+      'beedrill-mega',
+      'pidgeot-mega',
+      'alakazam-mega',
+      'slowbro-mega',
+      'gengar-mega',
+      'kangaskhan-mega',
+      'pinsir-mega',
+      'gyarados-mega',
+      'aerodactyl-mega',
+      'mewtwo-mega-x',
+      'mewtwo-mega-y',
+      'ampharos-mega',
+      'steelix-mega',
+      'scizor-mega',
+      'heracross-mega',
+      'houndoom-mega',
+      'tyranitar-mega',
+      'blaziken-mega',
+      'gardevoir-mega',
+      'mawile-mega',
+      'aggron-mega',
+      'medicham-mega',
+      'manectric-mega',
+      'sharpedo-mega',
+      'camerupt-mega',
+      'altaria-mega',
+      'banette-mega',
+      'absol-mega',
+      'glalie-mega',
+      'salamence-mega',
+      'metagross-mega',
+      'latias-mega',
+      'latios-mega',
+      'rayquaza-mega',
+      'kyogre-primal',
+      'groudon-primal',
+      'lopunny-mega',
+      'garchomp-mega',
+      'lucario-mega',
+      'abomasnow-mega',
+      'gallade-mega',
+      'audino-mega',
+    ])
+  })
+
   it('starts at 650 and is contiguous with unique slugs', () => {
     expect(MEGA_CATALOG[0]?.id).toBe(NATIONAL_DEX_COUNT + 1)
     for (let i = 0; i < MEGA_CATALOG.length; i++) {

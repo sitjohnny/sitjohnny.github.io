@@ -17,6 +17,9 @@ export const typeColors: Record<string, string> = {
   rock: '#B8A038',
   ghost: '#705898',
   dragon: '#7038F8',
+  dark: '#705848',
+  steel: '#B8B8D0',
+  fairy: '#EE99AC',
 }
 
 const FALLBACK_TYPE_COLOR = '#787878'

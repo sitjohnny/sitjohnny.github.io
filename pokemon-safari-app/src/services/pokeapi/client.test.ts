@@ -194,6 +194,39 @@ describe('fetchMegaPokemon', () => {
     expect(dto.baseSpeciesId).toBe(entry.baseSpeciesId)
     expect(dto.genus).toBe('Genus 6')
   })
+
+  it('uses provided base species meta without another species GET', async () => {
+    const entry = MEGA_CATALOG.find((e) => e.pokeApiSlug === 'charizard-mega-x')!
+    const fetchMock = stubPokeApiFetch({
+      bodyFor: () => ({
+        id: 10034,
+        name: 'charizard-mega-x',
+        types: [{ slot: 1, type: { name: 'fire' } }],
+        height: 17,
+        weight: 1105,
+        sprites: {
+          front_default: 'https://example.test/charizard-mega-x.png',
+          front_shiny: null,
+        },
+      }),
+    })
+
+    const dto = await fetchMegaPokemon(entry, {
+      speciesMeta: {
+        flavorText: 'Cached base flavor.',
+        genus: 'Cached Flame Pokémon',
+        habitat: 'mountain',
+      },
+    })
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      'https://pokeapi.co/api/v2/pokemon/charizard-mega-x',
+    )
+    expect(fetchMock).not.toHaveBeenCalledWith('https://pokeapi.co/api/v2/pokemon-species/6')
+    expect(dto.genus).toBe('Cached Flame Pokémon')
+    expect(dto.flavorText).toBe('Cached base flavor.')
+    expect(dto.habitat).toBe('mountain')
+  })
 })
 
 describe('fetchRosterAll', () => {

@@ -5,6 +5,7 @@ import { NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from './keys'
 const POKEAPI_BASE = 'https://pokeapi.co/api/v2/pokemon'
 const POKEAPI_SPECIES_BASE = 'https://pokeapi.co/api/v2/pokemon-species'
 const DEFAULT_CONCURRENCY = 8
+const DEFAULT_RETRY_DELAY_MS = 1
 
 /** Emerald → Ruby → Sapphire → FireRed (D-15 / D-16). */
 export const FLAVOR_VERSION_PRIORITY = ['emerald', 'ruby', 'sapphire', 'firered'] as const
@@ -189,25 +190,65 @@ export function selectFlavorText(entries: FlavorTextEntry[]): string | null {
     : null
 }
 
-/** Bounded concurrency pool; calls onProgress after each settle. */
+export type MapPoolOptions = {
+  retryAttempts?: number
+  retryDelayMs?: number
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
+}
+
+async function withRetry<R>(
+  worker: () => Promise<R>,
+  attempts: number,
+  delayMs: number,
+): Promise<R> {
+  let lastError: unknown
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await worker()
+    } catch (error) {
+      lastError = error
+      if (attempt < attempts) {
+        await delay(delayMs)
+      }
+    }
+  }
+  throw lastError
+}
+
+/** Bounded concurrency pool; calls onProgress after each item reaches a final settle. */
 export async function mapPool<T, R>(
   items: T[],
   concurrency: number,
   worker: (item: T) => Promise<R>,
   onProgress?: (done: number, total: number) => void,
+  options: MapPoolOptions = {},
 ): Promise<R[]> {
   const total = items.length
   const results = new Array<R>(total)
+  const errors = new Array<unknown>(total)
   let nextIndex = 0
   let done = 0
 
   const limit = Math.max(1, Math.min(concurrency, total || 1))
+  const retryAttempts = Math.max(1, Math.floor(options.retryAttempts ?? 1))
+  const retryDelayMs = Math.max(0, options.retryDelayMs ?? DEFAULT_RETRY_DELAY_MS)
 
   async function runWorker(): Promise<void> {
     while (nextIndex < total) {
       const index = nextIndex
       nextIndex += 1
-      results[index] = await worker(items[index]!)
+      try {
+        results[index] = await withRetry(
+          () => worker(items[index]!),
+          retryAttempts,
+          retryDelayMs,
+        )
+      } catch (error) {
+        errors[index] = error
+      }
       done += 1
       onProgress?.(done, total)
     }
@@ -215,6 +256,10 @@ export async function mapPool<T, R>(
 
   const workers = Array.from({ length: Math.min(limit, total) }, () => runWorker())
   await Promise.all(workers)
+  const failures = errors.filter((error): error is unknown => error !== undefined)
+  if (failures.length > 0) {
+    throw new AggregateError(failures, `mapPool failed for ${failures.length} item(s)`)
+  }
   return results
 }
 
@@ -228,7 +273,14 @@ export async function fetchPokemon(id: number): Promise<PokemonDto> {
   return toPokemonDto(json)
 }
 
-export async function fetchMegaPokemon(entry: MegaCatalogEntry): Promise<PokemonDto> {
+export type FetchMegaPokemonOptions = {
+  speciesMeta?: SpeciesMeta | Promise<SpeciesMeta>
+}
+
+export async function fetchMegaPokemon(
+  entry: MegaCatalogEntry,
+  options: FetchMegaPokemonOptions = {},
+): Promise<PokemonDto> {
   const res = await fetch(`${POKEAPI_BASE}/${entry.pokeApiSlug}`)
   if (!res.ok) {
     throw new Error(`PokéAPI failed for ${entry.pokeApiSlug}: ${res.status}`)
@@ -240,7 +292,9 @@ export async function fetchMegaPokemon(entry: MegaCatalogEntry): Promise<Pokemon
     kind: entry.kind,
     baseSpeciesId: entry.baseSpeciesId,
   })
-  const meta = await fetchSpeciesMeta(entry.baseSpeciesId)
+  const meta = options.speciesMeta
+    ? await options.speciesMeta
+    : await fetchSpeciesMeta(entry.baseSpeciesId)
   return { ...dto, ...meta }
 }
 

@@ -10,6 +10,8 @@ import {
 import { CACHE_KEY, CACHE_VERSION, NATIONAL_DEX_COUNT, TOTAL_ROSTER_COUNT } from './keys'
 
 const DEFAULT_CONCURRENCY = 8
+const FETCH_RETRY_ATTEMPTS = 3
+const FETCH_RETRY_DELAY_MS = 1
 
 /** Session memory — source of truth after hydrate / ensureCache. */
 let memory = new Map<number, PokemonDto>()
@@ -39,12 +41,12 @@ function parseEnvelope(raw: string | null): CacheEnvelope | null {
   }
 }
 
-function isValidEnvelope(envelope: CacheEnvelope | null): envelope is CacheEnvelope {
+function hasCurrentRosterProbe(envelope: CacheEnvelope | null): envelope is CacheEnvelope {
   return (
     envelope !== null &&
     envelope.version === CACHE_VERSION &&
     Array.isArray(envelope.pokemon) &&
-    pokemonMapFromStored(envelope.pokemon) !== null
+    envelope.pokemon.length === TOTAL_ROSTER_COUNT
   )
 }
 
@@ -194,10 +196,18 @@ function loadMemoryFromPokemon(pokemon: unknown[]): boolean {
   return true
 }
 
+function speciesMetaFromDto(dto: PokemonDto) {
+  return {
+    flavorText: dto.flavorText,
+    genus: dto.genus,
+    habitat: dto.habitat,
+  }
+}
+
 /** Sync hydrate from localStorage into memory (D-03). Invalid/missing → empty memory. */
 export function hydrateFromStorage(): void {
   const envelope = parseEnvelope(localStorage.getItem(CACHE_KEY))
-  if (!isValidEnvelope(envelope)) {
+  if (!hasCurrentRosterProbe(envelope)) {
     memory = new Map()
     return
   }
@@ -212,7 +222,7 @@ export function hasValidCache(): boolean {
   if (isCompleteRoster(memory)) {
     return true
   }
-  return isValidEnvelope(parseEnvelope(localStorage.getItem(CACHE_KEY)))
+  return hasCurrentRosterProbe(parseEnvelope(localStorage.getItem(CACHE_KEY)))
 }
 
 /** True when in-memory Map is fully populated for the full roster. */
@@ -232,6 +242,7 @@ export function getPokemon(id: number): PokemonDto {
 function removeOrphanPokeCacheKeys(): void {
   localStorage.removeItem('pokemon-safari:poke-cache:v1')
   localStorage.removeItem('pokemon-safari:poke-cache:v2')
+  localStorage.removeItem('pokemon-safari:poke-cache:v3')
 }
 
 /** Quota-safe write — never throws on QuotaExceededError (D-06). Touches CACHE_KEY only. */
@@ -295,8 +306,9 @@ export async function ensureCache(
       }
       return persistCache(envelope)
     }
-    const existing = parseEnvelope(localStorage.getItem(CACHE_KEY))
-    if (isValidEnvelope(existing)) {
+    const existing =
+      stored?.version === CACHE_VERSION ? stored : parseEnvelope(localStorage.getItem(CACHE_KEY))
+    if (hasCurrentRosterProbe(existing)) {
       if (loadMemoryFromPokemon(existing.pokemon)) {
         return 'ok'
       }
@@ -312,25 +324,47 @@ export async function ensureCache(
     ...missingNationalIds.map((id): CacheWorkItem => ({ kind: 'species', id })),
     ...missingMegaEntries.map((entry): CacheWorkItem => ({ kind: 'mega', entry })),
   ]
+  const speciesMetaMemo = new Map<number, Promise<ReturnType<typeof speciesMetaFromDto>>>()
+  const getSpeciesMeta = (id: number): Promise<ReturnType<typeof speciesMetaFromDto>> => {
+    const cached = memory.get(id)
+    if (cached) {
+      return Promise.resolve(speciesMetaFromDto(cached))
+    }
+    const existing = speciesMetaMemo.get(id)
+    if (existing) return existing
+    const next = fetchSpeciesMeta(id).catch((error) => {
+      speciesMetaMemo.delete(id)
+      throw error
+    })
+    speciesMetaMemo.set(id, next)
+    return next
+  }
 
   if (work.length > 0) {
     // One worker per roster id: fetch, merge, then commit (Pitfall 3).
-    // mapPool rejects on first failure, but prior successes remain in memory for resume.
-    await mapPool(
-      work,
-      concurrency,
-      async (item) => {
-        const full =
-          item.kind === 'species'
-            ? { ...(await fetchPokemon(item.id)), ...(await fetchSpeciesMeta(item.id)) }
-            : await fetchMegaPokemon(item.entry)
-        memory.set(full.id, full)
-        return full
-      },
-      () => {
-        onProgress?.(Math.min(memory.size, TOTAL_ROSTER_COUNT), TOTAL_ROSTER_COUNT)
-      },
-    )
+    // Retry per roster id; prior successes remain in memory for resume.
+    try {
+      await mapPool(
+        work,
+        concurrency,
+        async (item) => {
+          const full =
+            item.kind === 'species'
+              ? { ...(await fetchPokemon(item.id)), ...(await getSpeciesMeta(item.id)) }
+              : await fetchMegaPokemon(item.entry, {
+                  speciesMeta: getSpeciesMeta(item.entry.baseSpeciesId),
+                })
+          memory.set(full.id, full)
+          return full
+        },
+        () => {
+          onProgress?.(Math.min(memory.size, TOTAL_ROSTER_COUNT), TOTAL_ROSTER_COUNT)
+        },
+        { retryAttempts: FETCH_RETRY_ATTEMPTS, retryDelayMs: FETCH_RETRY_DELAY_MS },
+      )
+    } catch {
+      // Completion is checked below so callers get the missing roster id.
+    }
   } else {
     onProgress?.(TOTAL_ROSTER_COUNT, TOTAL_ROSTER_COUNT)
   }

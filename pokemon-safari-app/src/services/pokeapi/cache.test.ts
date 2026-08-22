@@ -86,6 +86,18 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
     expect(localStorage.getItem(SAVE_KEY)).toContain('keep-me')
   })
 
+  it('removes orphan v3 poke-cache during ensureCache and keeps SAVE_KEY untouched', async () => {
+    stubPokeApiFetch()
+    localStorage.setItem('pokemon-safari:poke-cache:v3', 'stale-v3')
+    localStorage.setItem(SAVE_KEY, 'save-marker')
+
+    await ensureCache({ concurrency: 8, onProgress: () => {} })
+
+    expect(localStorage.getItem('pokemon-safari:poke-cache:v3')).toBeNull()
+    expect(localStorage.getItem(CACHE_KEY)).toBeTruthy()
+    expect(localStorage.getItem(SAVE_KEY)).toBe('save-marker')
+  })
+
   it('ensureCache / write path never clears SAVE_KEY (existing progress survives)', async () => {
     const save = {
       version: 2,
@@ -119,7 +131,7 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
     const fetchMock = stubPokeApiFetch()
     await ensureCache({ concurrency: 8, onProgress: () => {} })
     const callsAfterEnsure = fetchMock.mock.calls.length
-    expect(callsAfterEnsure).toBe(TOTAL_ROSTER_COUNT * 2)
+    expect(callsAfterEnsure).toBe(NATIONAL_DEX_COUNT * 2 + MEGA_CATALOG.length)
 
     resetCacheMemoryForTests()
     hydrateFromStorage()
@@ -134,12 +146,26 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
     expect(fetchMock.mock.calls.length).toBe(callsAfterEnsure)
   })
 
-  it('hasValidCache requires national and mega ids', () => {
+  it('hasValidCache uses a cheap version and length probe', () => {
     seedPokeCache(Array.from({ length: NATIONAL_DEX_COUNT }, (_, i) => makePokemonDto(i + 1)))
     expect(hasValidCache()).toBe(false)
 
     seedPokeCache(makeFullRosterDtos())
     expect(hasValidCache()).toBe(true)
+
+    const wrongIdRoster = makeFullRosterDtos()
+    wrongIdRoster[0] = makePokemonDto(TOTAL_ROSTER_COUNT)
+    seedPokeCache(wrongIdRoster)
+    expect(hasValidCache()).toBe(true)
+  })
+
+  it('hydrate rejects incomplete stored data before use', () => {
+    seedPokeCache(makeFullRosterDtos().slice(1))
+
+    hydrateFromStorage()
+
+    expect(isCacheReady()).toBe(false)
+    expect(() => getPokemon(1)).toThrow('Pokémon 1 not in cache')
   })
 
   it('hydrate rejects stored DTOs without explicit kind and baseSpeciesId', () => {
@@ -154,6 +180,59 @@ describe('ensureCache / getPokemon (DATA-01, DATA-02, D-03)', () => {
 
     expect(isCacheReady()).toBe(false)
     expect(hasValidCache()).toBe(false)
+  })
+
+  it('retries an individual fetch failure and completes the roster', async () => {
+    const baseFetch = stubPokeApiFetch()
+    let pokemonOneAttempts = 0
+    const fetchMock = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith('/pokemon/1')) {
+        pokemonOneAttempts += 1
+        if (pokemonOneAttempts === 1) {
+          return { ok: false, status: 503, json: async () => ({}) }
+        }
+      }
+      return baseFetch(input)
+    })
+    vi.stubGlobal('fetch', fetchMock)
+
+    await ensureCache({ concurrency: 8, onProgress: () => {} })
+
+    expect(pokemonOneAttempts).toBe(2)
+    expect(isCacheReady()).toBe(true)
+    expect(getPokemon(1).id).toBe(1)
+  })
+
+  it('reuses cached base species meta when resuming a missing mega', async () => {
+    const entry = MEGA_CATALOG.find((e) => e.pokeApiSlug === 'charizard-mega-x')!
+    const firstBaseFetch = stubPokeApiFetch()
+    const firstFetch = vi.fn(async (input: RequestInfo | URL) => {
+      const url = String(input)
+      if (url.endsWith(`/pokemon/${entry.pokeApiSlug}`)) {
+        return { ok: false, status: 503, json: async () => ({}) }
+      }
+      return firstBaseFetch(input)
+    })
+    vi.stubGlobal('fetch', firstFetch)
+
+    await expect(ensureCache({ concurrency: 8, onProgress: () => {} })).rejects.toThrow(
+      `Missing Pokémon ${entry.id} after ensureCache`,
+    )
+    expect(getPokemon(entry.baseSpeciesId).genus).toBe(`Genus ${entry.baseSpeciesId}`)
+
+    const secondBaseFetch = stubPokeApiFetch()
+    const secondFetch = vi.fn(async (input: RequestInfo | URL) => secondBaseFetch(input))
+    vi.stubGlobal('fetch', secondFetch)
+
+    await ensureCache({ concurrency: 8, onProgress: () => {}, resume: true })
+
+    const urls = secondFetch.mock.calls.map(([input]) => String(input))
+    expect(urls).toContain(`https://pokeapi.co/api/v2/pokemon/${entry.pokeApiSlug}`)
+    expect(urls).not.toContain(
+      `https://pokeapi.co/api/v2/pokemon-species/${entry.baseSpeciesId}`,
+    )
+    expect(getPokemon(entry.id).genus).toBe(`Genus ${entry.baseSpeciesId}`)
   })
 })
 
@@ -208,7 +287,7 @@ describe('version mismatch (D-10)', () => {
     const fetchMock = stubPokeApiFetch()
     await ensureCache({ concurrency: 8, onProgress: () => {} })
 
-    expect(fetchMock.mock.calls.length).toBe(TOTAL_ROSTER_COUNT * 2)
+    expect(fetchMock.mock.calls.length).toBe(NATIONAL_DEX_COUNT * 2 + MEGA_CATALOG.length)
     expect(hasValidCache()).toBe(true)
     const stored = JSON.parse(localStorage.getItem(CACHE_KEY)!) as { version: number }
     expect(stored.version).toBe(4)
