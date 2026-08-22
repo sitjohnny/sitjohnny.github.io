@@ -104,6 +104,38 @@ function arrowFor(dir: 'up' | 'down' | 'left' | 'right') {
         : 'ArrowRight'
 }
 
+const MATH_PROMPT_RE = /What is \d+ [+−×÷] \d+\?/
+
+type ParsedMathPrompt = { expected: number; recapLine: string }
+
+function parseMathPrompt(text: string): ParsedMathPrompt {
+  const addition = text.match(/^What is (\d+) \+ (\d+)\?$/)
+  if (addition) {
+    const a = Number(addition[1])
+    const b = Number(addition[2])
+    return { expected: a + b, recapLine: `${a} + ${b} = ${a + b}` }
+  }
+  const subtraction = text.match(/^What is (\d+) − (\d+)\?$/)
+  if (subtraction) {
+    const a = Number(subtraction[1])
+    const b = Number(subtraction[2])
+    return { expected: a - b, recapLine: `${a} − ${b} = ${a - b}` }
+  }
+  const multiplication = text.match(/^What is (\d+) × (\d+)\?$/)
+  if (multiplication) {
+    const a = Number(multiplication[1])
+    const b = Number(multiplication[2])
+    return { expected: a * b, recapLine: `${a} × ${b} = ${a * b}` }
+  }
+  const division = text.match(/^What is (\d+) ÷ (\d+)\?$/)
+  if (division) {
+    const a = Number(division[1])
+    const b = Number(division[2])
+    return { expected: a / b, recapLine: `${a} ÷ ${b} = ${a / b}` }
+  }
+  throw new Error(`parseMathPrompt: unexpected prompt ${text}`)
+}
+
 async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>) {
   const step = findStepOnto('grass')
   const key = arrowFor(step.dir)
@@ -116,10 +148,9 @@ async function walkIntoPokemonEncounter(user: ReturnType<typeof userEvent.setup>
   fireEvent.keyUp(window, { code: key })
 
   await screen.findByRole('dialog')
-  const prompt = await screen.findByText(/What is \d+ × \d+\?/)
-  const match = prompt.textContent?.match(/What is (\d+) × (\d+)\?/)
-  expect(match).not.toBeNull()
-  return { a: Number(match![1]), b: Number(match![2]), user }
+  const prompt = await screen.findByText(MATH_PROMPT_RE)
+  const { expected, recapLine } = parseMathPrompt(prompt.textContent ?? '')
+  return { expected, recapLine, user }
 }
 
 describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
@@ -359,15 +390,12 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(dialog).toHaveTextContent(`A wild p${firstCommon} appeared!`)
     expect(useExploreStore.getState().pendingEncounters).toEqual([])
 
-    const prompt = await screen.findByText(/What is \d+ × \d+\?/)
+    const prompt = await screen.findByText(MATH_PROMPT_RE)
     expect(screen.getByLabelText('Your answer')).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: 'Ready to throw!' })).toBeNull()
 
-    const match = prompt.textContent?.match(/What is (\d+) × (\d+)\?/)
-    expect(match).not.toBeNull()
-    const a = Number(match![1])
-    const b = Number(match![2])
-    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    const { expected } = parseMathPrompt(prompt.textContent ?? '')
+    await user.type(screen.getByLabelText('Your answer'), String(expected))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     await waitFor(() => {
@@ -508,9 +536,9 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   it('shows Quick recap after a wrong answer flee Continue, then returns to the map', async () => {
     const user = userEvent.setup()
     renderExplore()
-    const { a, b } = await walkIntoPokemonEncounter(user)
+    const { expected, recapLine } = await walkIntoPokemonEncounter(user)
 
-    await user.type(screen.getByLabelText('Your answer'), String(a * b + 1))
+    await user.type(screen.getByLabelText('Your answer'), String(expected + 1))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     // Wrong education skips capture bar, Miss flash, and shake — flees immediately.
@@ -535,7 +563,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     expect(
       await screen.findByRole('heading', { name: 'Quick recap' }),
     ).toBeInTheDocument()
-    expect(screen.getByText(`${a} × ${b} = ${a * b}.`)).toBeInTheDocument()
+    expect(screen.getByText(`${recapLine}.`)).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: 'Continue' }))
 
@@ -552,9 +580,9 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   it('skips Quick recap after a correct-answer Gotcha and returns straight to the map', async () => {
     const user = userEvent.setup()
     renderExplore()
-    const { a, b } = await walkIntoPokemonEncounter(user)
+    const { expected } = await walkIntoPokemonEncounter(user)
 
-    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    await user.type(screen.getByLabelText('Your answer'), String(expected))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     expect(
@@ -586,13 +614,13 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
   it('marks Main nav inert while the encounter is open and clears it after close', async () => {
     const user = userEvent.setup()
     renderExploreWithNav()
-    const { a, b } = await walkIntoPokemonEncounter(user)
+    const { expected } = await walkIntoPokemonEncounter(user)
 
     const navOpen = document.querySelector('nav[aria-label="Main"]')
     expect(navOpen).not.toBeNull()
     expect(navOpen!.hasAttribute('inert')).toBe(true)
 
-    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    await user.type(screen.getByLabelText('Your answer'), String(expected))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
     expect(
       await screen.findByRole(
@@ -656,9 +684,9 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     try {
       const user = userEvent.setup()
       renderExplore()
-      const { a, b } = await walkIntoPokemonEncounter(user)
+      const { expected, recapLine } = await walkIntoPokemonEncounter(user)
 
-      await user.type(screen.getByLabelText('Your answer'), String(a * b + 1))
+      await user.type(screen.getByLabelText('Your answer'), String(expected + 1))
       await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
       expect(screen.queryByRole('button', { name: 'Capture' })).toBeNull()
@@ -684,7 +712,7 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
       expect(
         await screen.findByRole('heading', { name: 'Quick recap' }),
       ).toBeInTheDocument()
-      expect(screen.getByText(`${a} × ${b} = ${a * b}.`)).toBeInTheDocument()
+      expect(screen.getByText(`${recapLine}.`)).toBeInTheDocument()
     } finally {
       window.matchMedia = originalMatchMedia
     }
@@ -702,12 +730,9 @@ describe('GameScreen explore surface (MAP-01 / MAP-02 / MAP-04)', () => {
     await flushFrames(8)
     fireEvent.keyUp(window, { code: arrowFor(step.dir) })
 
-    const prompt = await screen.findByText(/What is \d+ × \d+\?/)
-    const match = prompt.textContent?.match(/What is (\d+) × (\d+)\?/)
-    expect(match).not.toBeNull()
-    const a = Number(match![1])
-    const b = Number(match![2])
-    await user.type(screen.getByLabelText('Your answer'), String(a * b))
+    const prompt = await screen.findByText(MATH_PROMPT_RE)
+    const { expected } = parseMathPrompt(prompt.textContent ?? '')
+    await user.type(screen.getByLabelText('Your answer'), String(expected))
     await user.click(screen.getByRole('button', { name: 'Submit Answer' }))
 
     expect(
