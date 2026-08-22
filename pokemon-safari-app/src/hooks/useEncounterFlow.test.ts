@@ -42,24 +42,39 @@ import type { EncounterCandidateEvent } from '@/types/map'
 import type { Rng } from '@/utils/rng'
 
 const MATH_LEVELS = [1, 2, 3, 4, 5, 6] as const
+const MATH_OPERATORS = [
+  'addition',
+  'subtraction',
+  'multiplication',
+  'division',
+] as const
 
-/** Matches mathEducationProvider mul/div-only default settings (Task 3). */
-function mulDivFactSetForDefaultSettings(): Set<string> {
+/** Enumerates all fact keys for enabled operators and levels in default math settings. */
+function factSetForDefaultMathSettings(): Set<string> {
   const settings = defaultMathEducationSettings()
   const keys = new Set<string>()
   for (const level of MATH_LEVELS) {
     if (!settings.levels[level]) continue
-    if (settings.operators.multiplication) {
-      for (const key of factsFor('multiplication', level)) keys.add(key)
-    }
-    if (settings.operators.division) {
-      for (const key of factsFor('division', level)) keys.add(key)
+    for (const operator of MATH_OPERATORS) {
+      if (!settings.operators[operator]) continue
+      for (const key of factsFor(operator, level)) keys.add(key)
     }
   }
   return keys
 }
 
-const FACT_SET = mulDivFactSetForDefaultSettings()
+const FACT_SET = factSetForDefaultMathSettings()
+
+function isMathCategory(
+  category: string,
+): category is 'addition' | 'subtraction' | 'multiplication' | 'division' {
+  return (
+    category === 'addition' ||
+    category === 'subtraction' ||
+    category === 'multiplication' ||
+    category === 'division'
+  )
+}
 
 const candidate = (at = 1): EncounterCandidateEvent => ({
   type: 'encounter_candidate',
@@ -285,7 +300,7 @@ describe('useEncounterFlow', () => {
     })
 
     const next = useEncounterStore.getState().question!
-    expect(next.category === 'multiplication' || next.category === 'division').toBe(true)
+    expect(isMathCategory(next.category)).toBe(true)
     expect(loadAdaptiveStats()[spelling.factKey]).toEqual(before)
   })
 
