@@ -7,4 +7,5 @@ node_modules/
 
 # Git worktrees
 .worktrees/
-
+.serena
+.claude/
